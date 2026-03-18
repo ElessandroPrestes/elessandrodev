@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      # Hot-reload: mapeia o código-fonte diretamente no container
+      - .:/app
+      # Isola node_modules do container para evitar conflitos com o host
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
