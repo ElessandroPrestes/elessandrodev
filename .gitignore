@@ -86,3 +86,13 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Vite build output
+dist/
+dist-ssr/
+
+# Local env files
+*.local
+
+# macOS
+.DS_Store
