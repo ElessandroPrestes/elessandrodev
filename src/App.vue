@@ -4,7 +4,7 @@ import Footer from './components/Footer.vue'
 import AboutMe from './components/AboutMe.vue'
 import Experience from './components/Experience.vue'
 
-const cvPath = '/Elessandro_Desenvolvedor_Full_Stack.pdf'
+const cvPath = `${import.meta.env.BASE_URL}Elessandro_Desenvolvedor_Full_Stack.pdf`
 </script>
 
 <template>
