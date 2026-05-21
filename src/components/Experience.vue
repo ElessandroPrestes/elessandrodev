@@ -1,7 +1,21 @@
 <script setup>
 const experiences = [
   {
-    role: 'Analista Programador Sênior',
+    role: 'Desenvolvedor Full Stack / Backend Engineer',
+    company: 'Amura Sistemas',
+    project: null,
+    period: 'Nov/2025 — Mai/2026',
+    highlights: [
+      { label: 'Modernização e Migração de Sistema', text: 'Responsável pela modernização e migração completa do sistema da empresa, conduzindo individualmente toda a arquitetura, desenvolvimento e evolução da aplicação utilizando PHP 8.2+ e Laravel 12.' },
+      { label: 'APIs e Integrações', text: 'Desenvolvimento de APIs REST, integrações com WhatsApp Business e implementação de fluxos de atendimento, notificações e gerenciamento de chamados.' },
+      { label: 'Boas Práticas de Engenharia', text: 'Estruturação do backend seguindo boas práticas de Clean Code, organização de código versionado, testes automatizados e documentação técnica.' },
+      { label: 'Performance e Otimização', text: 'Implementação de melhorias de performance, responsividade e otimização do fluxo operacional do sistema.' },
+      { label: 'DevOps', text: 'Gestão de deploys e automação de ambientes utilizando Docker e GitLab CI/CD.' },
+    ],
+    techs: ['PHP 8.2+', 'Laravel 12', 'REST', 'WhatsApp Business', 'Clean Code', 'Docker', 'GitLab CI/CD'],
+  },
+  {
+    role: 'Analista Programador',
     company: 'Datainfo',
     project: 'Projeto CAPES',
     period: 'Out/2024 — Set/2025',
