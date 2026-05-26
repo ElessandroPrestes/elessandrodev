@@ -29,7 +29,7 @@ const socialLinks = [
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
       <div>
         <span class="text-lg font-semibold tracking-tight text-white">Elessandro Prestes</span>
-        <span class="hidden sm:inline text-gray-500 ml-2 text-sm">/ Full Stack Engineer</span>
+        <span class="hidden sm:inline text-gray-500 ml-2 text-sm">/ Full Stack Software Engineer</span>
       </div>
 
       <nav aria-label="Redes sociais">
