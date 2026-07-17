@@ -1,8 +1,8 @@
 <script setup>
 const experiences = [
   {
-    role: 'Desenvolvedor Full Stack / Backend Engineer',
-    company: 'Amura Sistemas',
+    role: 'Engenheiro de Software com IA Aplicada',
+    company: 'EPM DEVTECH',
     project: null,
     period: 'Nov/2025 — Mai/2026',
     highlights: [
@@ -11,6 +11,7 @@ const experiences = [
       { label: 'Boas Práticas de Engenharia', text: 'Estruturação do backend seguindo boas práticas de Clean Code, organização de código versionado, testes automatizados e documentação técnica.' },
       { label: 'Performance e Otimização', text: 'Implementação de melhorias de performance, responsividade e otimização do fluxo operacional do sistema.' },
       { label: 'DevOps', text: 'Gestão de deploys e automação de ambientes utilizando Docker e GitLab CI/CD.' },
+      { label: 'IA Aplicada e SDD', text: 'Apliquei a metodologia Spec-Driven Development (SDD) no ciclo de desenvolvimento de software, utilizando o Claude Code como ferramenta de apoio na elaboração de especificações, implementação de features, refatorações e revisão de código, aumentando a qualidade, a rastreabilidade e a produtividade das entregas.' },
     ],
     techs: ['PHP 8.2+', 'Laravel 12', 'REST', 'WhatsApp Business', 'Clean Code', 'Docker', 'GitLab CI/CD'],
   },
