@@ -9,9 +9,16 @@ const cvPath = `${import.meta.env.BASE_URL}Elessandro_Engenheiro_de_Software_Ful
 
 <template>
   <div class="min-h-screen flex flex-col">
+    <a
+      href="#main-content"
+      class="fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-gray-950 shadow-lg transition-transform focus:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 motion-reduce:transition-none"
+    >
+      Pular para o conteúdo principal
+    </a>
+
     <Header />
 
-    <main id="main-content" class="flex-1 w-full">
+    <main id="main-content" tabindex="-1" class="flex-1 w-full focus:outline-none">
 
       <!-- Hero -->
       <section
@@ -54,6 +61,7 @@ const cvPath = `${import.meta.env.BASE_URL}Elessandro_Engenheiro_de_Software_Ful
               href="https://www.linkedin.com/in/elessandro-prestes-macedo/"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Ver LinkedIn (abre em nova aba)"
               class="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white font-semibold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
             >
               Ver LinkedIn
@@ -63,18 +71,18 @@ const cvPath = `${import.meta.env.BASE_URL}Elessandro_Engenheiro_de_Software_Ful
       </section>
 
       <!-- Sobre Mim -->
-      <section class="w-full border-b border-gray-800">
+      <div class="w-full border-b border-gray-800">
         <div class="max-w-3xl mx-auto px-6 py-16">
           <AboutMe />
         </div>
-      </section>
+      </div>
 
       <!-- Experiência -->
-      <section class="w-full">
+      <div class="w-full border-b border-gray-800">
         <div class="max-w-3xl mx-auto px-6 py-16 pb-24">
           <Experience />
         </div>
-      </section>
+      </div>
 
     </main>
 

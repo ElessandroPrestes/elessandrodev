@@ -112,12 +112,12 @@ const experiences = [
               </h3>
               <p class="text-sm font-medium text-indigo-400 mt-0.5">
                 {{ exp.company }}
-                <span v-if="exp.project" class="text-gray-500 font-normal">
+                <span v-if="exp.project" class="text-gray-400 font-normal">
                   &mdash; {{ exp.project }}
                 </span>
               </p>
             </div>
-            <time class="shrink-0 text-xs font-medium text-gray-500 uppercase tracking-wide sm:text-right mt-0.5">
+            <time class="shrink-0 text-xs font-medium text-gray-400 uppercase tracking-wide sm:text-right mt-0.5">
               {{ exp.period }}
             </time>
           </header>
