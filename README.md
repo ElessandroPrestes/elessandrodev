@@ -9,7 +9,7 @@
 
 ## Sobre o Projeto
 
-Este repositório contém o código-fonte do meu currículo online e portfólio profissional. O objetivo é apresentar minha trajetória de mais de **9 anos como Engenheiro de Software Full Stack e Tech Lead** — com passagens por projetos de grande porte como CAPES, ONS e o setor energético — e ao mesmo tempo demonstrar na prática minhas habilidades de desenvolvimento frontend moderno e orquestração de infraestrutura (DevOps).
+Este repositório contém o código-fonte do meu currículo online e portfólio profissional. O objetivo é apresentar minha trajetória de mais de **9 anos como Engenheiro de Software Full Stack e Tech Lead**, com passagens por projetos de grande porte como CAPES, ONS e o setor energético, e ao mesmo tempo demonstrar na prática minhas habilidades de desenvolvimento frontend moderno e orquestração de infraestrutura (DevOps).
 
 ---
 

@@ -3,6 +3,7 @@ import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
 import AboutMe from './components/AboutMe.vue'
 import Experience from './components/Experience.vue'
+import AiAssistant from './components/AiAssistant.vue'
 
 const cvPath = `${import.meta.env.BASE_URL}Elessandro_Engenheiro_de_Software_Full_Stack.pdf`
 </script>
@@ -87,5 +88,6 @@ const cvPath = `${import.meta.env.BASE_URL}Elessandro_Engenheiro_de_Software_Ful
     </main>
 
     <Footer />
+    <AiAssistant />
   </div>
 </template>

@@ -9,6 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@langchain/core": "^1.2.8",
+    "@langchain/google-genai": "^2.2.0",
+    "@langchain/openai": "^1.5.8",
+    "langchain": "^1.5.9",
     "vue": "^3.4.0"
   },
   "devDependencies": {
