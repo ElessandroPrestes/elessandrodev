@@ -9,13 +9,15 @@ const socialLinks = [
 </script>
 
 <template>
-  <footer class="w-full border-t border-gray-800 bg-gray-950 mt-auto">
-    <div class="max-w-5xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-400">
-      <p>
+  <footer class="w-full border-t border-gray-800 bg-gray-950 mt-auto relative z-10">
+    <div class="max-w-5xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
+      <!-- Copyright à esquerda -->
+      <p class="text-center md:text-left order-2 md:order-1">
         &copy; {{ year }} Elessandro Prestes Macedo. Todos os direitos reservados.
       </p>
 
-      <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
+      <!-- Acessibilidade e Links Sociais à direita com margem segura contra o botão flutuante -->
+      <div class="flex flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-4 order-1 md:order-2 md:mr-40">
         <span
           class="inline-flex min-h-10 items-center gap-1.5 px-2 font-medium text-indigo-300"
         >
@@ -38,7 +40,7 @@ const socialLinks = [
         </span>
 
         <nav aria-label="Links sociais do rodapé">
-          <ul class="flex items-center gap-1">
+          <ul class="flex items-center gap-1 sm:gap-2">
             <li v-for="link in socialLinks" :key="link.label">
               <a
                 :href="link.href"

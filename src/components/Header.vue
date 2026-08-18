@@ -1,6 +1,13 @@
 <script setup>
 const socialLinks = [
   {
+    label: 'WhatsApp',
+    href: 'https://wa.me/5545999178290',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.54 1.772.82 2.791.82 3.181 0 5.768-2.587 5.768-5.766.001-3.187-2.575-5.77-5.768-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.392-12.416C6.495 2 2 6.495 2 12.031c0 1.956.564 3.784 1.543 5.337L2 22l4.814-1.503c1.488.89 3.22 1.396 5.075 1.396 5.536 0 10.031-4.495 10.031-10.031C21.92 6.495 17.567 2 12.031 2z"/>
+    </svg>`,
+  },
+  {
     label: 'GitHub',
     href: 'https://github.com/ElessandroPrestes',
     icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
@@ -30,7 +37,7 @@ const socialLinks = [
       <div class="min-w-0">
         <span class="text-lg font-semibold tracking-tight text-white sm:hidden">Elessandro</span>
         <span class="hidden text-lg font-semibold tracking-tight text-white sm:inline">Elessandro Prestes</span>
-        <span class="hidden lg:inline text-gray-400 ml-2 text-sm">/ Full Stack Software Engineer</span>
+        <span class="hidden lg:inline text-gray-400 ml-2 text-sm">/ Senior Software Engineer</span>
       </div>
 
       <nav aria-label="Redes sociais">

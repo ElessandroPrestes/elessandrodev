@@ -18,12 +18,18 @@ Informações sobre Elessandro Prestes Macedo:
   * DevOps & Cloud: Docker, GitLab CI/CD, GitHub Actions, AWS (Lambda, API Gateway, SQS, SNS, CodeBuild, CloudWatch), Azure (Monitor, Communication Services).
   * IA & Metodologia: IA Aplicada ao desenvolvimento (Claude Code, Gemini, LangChain), Spec-Driven Development (SDD).
 - Histórico Profissional Relevante:
-  * EPM DEVTECH (2025 - 2026): Engenheiro de Software com IA Aplicada. Modernização completa de sistemas com PHP 8.2+ e Laravel 12, integrações WhatsApp Business, Docker, GitLab CI/CD e metodologia SDD.
-  * Datainfo / Projeto CAPES (2024 - 2025): Tech Lead no SISCAD (CAPES) e arquiteto de migração de legados para Microsserviços e BFF (Angular) no SIPREC. SonarQube, Oracle, Redis, RabbitMQ.
-  * Energia Pecém (2023 - 2024): Desenvolvedor Full Stack no Projeto SIGMA (rastreio e validação em tempo real de equipamentos), filas com RabbitMQ e Laravel Jobs, Azure Cloud.
-  * AMcom / Projeto GENIN - ONS (2022 - 2023): Integrações nacionais críticas com Itaipu e INMET via REST/SOAP, microsserviços para dados energéticos, AWS CodeBuild e CloudWatch.
-  * Grupo Intellectus (2021 - 2022): Plataforma de ensino em arquitetura Serverless (AWS Lambda, SQS, SNS) e frontend Angular.
-  * Grupo Paraíso (2016 - 2021): IoT Industrial, integrações de chão de fábrica, e-commerce na AWS, modernização de legados, mensageria com Kafka e RabbitMQ.
+  * EPM DEVTECH (Out/2025 - Mai/2026): Engenheiro de Software com IA Aplicada. Migração integral para PHP 8.2 e Laravel 12 eliminando 56.400+ linhas legadas; 2.399 testes automatizados (Pest/PHPUnit) em 241 arquivos; 384 endpoints REST e integrações WhatsApp Business reduzindo processos manuais em 35%; IA (Claude Code) e SDD reduzindo retrabalho em 40% com Docker e GitLab CI/CD.
+  * Datainfo / Projeto CAPES (Out/2024 - Set/2025): Analista Programador / Tech Lead. Migração para Microsserviços e BFF (Angular) no SIPREC para 448+ IES, 10.000 usuários simultâneos e 2.500 RPS (<300ms); Liderança técnica no SISCAD com PHP/Laravel, Oracle DB, Redis e RabbitMQ; SonarQube (+45% qualidade); Engenharia com IA aplicando SDD, RAG e MCP (GitHub Copilot) aumentando entregas da sprint em 25% com mentoria técnica.
+  * Energia Pecém (Mai/2023 - Jul/2024): Desenvolvedor Full Stack. Telemetria e validação de ativos com Node.js, Laravel e Vue.js (+40% rastreabilidade); Arquitetura orientada a eventos (EDA) com RabbitMQ, Redis e Laravel Jobs (-35% falhas, +50% processamento); 99,9% uptime e -45% incidentes com Azure Monitor.
+  * AMcom / Projeto GENIN - ONS (Jul/2022 - Abr/2023): Desenvolvedor de Sistemas. Integrações de missão crítica (Itaipu e INMET) para bandeiras tarifárias nacionais (ONS) via PHP/Laravel, REST/SOAP (100% integridade); Microsserviços com PostgreSQL e Redis (-40% latência na ingestão nacional); AWS CodeBuild, API Gateway e CloudWatch (-60% deploy time, 99,9% uptime).
+  * Grupo Intellectus (Out/2021 - Jul/2022): Desenvolvedor Full Stack. Plataforma Serverless na AWS (Lambda, SQS, SNS) com redução de 35% de custos; Plataforma educacional para 650+ escolas estaduais em 141 municípios (SEDUC-MT) com Angular e PHP/Laravel (99,9% uptime); ELK Stack (-50% MTTR) e GitHub Actions (+60% velocidade de entrega).
+  * Paraiso (Ago/2016 - Set/2021): Desenvolvedor Full Stack. Evolução de ERP com PHP (Laravel, Symfony), PostgreSQL e Oracle (+30% eficiência operacional); Migração de monólitos legados para microsserviços Node.js (-40% custo de manutenção); IoT Industrial e WebSockets integrando chão de fábrica via Azure IoT Cloud (-30% falhas); EDA na AWS com Kafka, RabbitMQ, Redis e PostgreSQL (99,9% uptime).
+- Principais Projetos em Destaque (GitHub):
+  * elessandrodev (Vue.js 3, LangChain, RAG / LLM, Docker): Portfólio interativo com assistente de IA conversacional integrado com LangChain e Gemini. Demo: https://elessandroprestes.github.io/elessandrodev/
+  * universal-sdd (SDD, AI Agents, Claude Code, DevOps): Framework universal para Spec-Driven Development com agentes autônomos de IA.
+  * event-driven-processing-system (EDA, RabbitMQ, Redis, Node.js, PostgreSQL): Pipeline assíncrono distribuído de eventos com mensageria e DLQ.
+  * iot-mqtt-simulator (IoT, MQTT, Node.js, Vue.js, WebSockets): Monitoramento e ingestão de telemetria industrial em tempo real.
+  * fintech-wallet-solution (PHP/Node.js, PostgreSQL, Redis, JWT, ACID): Core bancário e carteira digital full stack com controle transacional ACID de concorrência.
 
 Diretrizes de resposta:
 - Seja sempre profissional, educado, claro e conciso.

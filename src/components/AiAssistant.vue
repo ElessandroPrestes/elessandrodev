@@ -75,13 +75,13 @@ async function sendMessage(textToSend) {
 </script>
 
 <template>
-  <div class="fixed bottom-6 right-6 z-50 font-sans">
+  <div class="fixed bottom-6 right-6 z-[999] font-sans">
     <!-- Floating Trigger Button -->
     <button
       v-if="!isOpen"
       @click="toggleChat"
       type="button"
-      class="group flex items-center gap-3 px-5 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium shadow-2xl shadow-indigo-900/50 hover:shadow-indigo-600/30 transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-gray-950"
+      class="group flex items-center gap-3 px-5 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium shadow-2xl shadow-indigo-900/50 hover:shadow-indigo-600/30 transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-gray-950 cursor-pointer"
       aria-label="Abrir assistente de inteligência artificial"
     >
       <span class="relative flex h-3 w-3">
