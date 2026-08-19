@@ -1,23 +1,52 @@
 <script setup>
 import { ref, nextTick } from 'vue'
+import { marked } from 'marked'
 import { askAssistant } from '../services/aiService'
+
+// Configuração do Marked para conversão de markdown limpo
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+})
+
+const renderer = new marked.Renderer()
+renderer.link = ({ href, title, text }) => {
+  const titleAttr = title ? ` title="${title}"` : ''
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 underline font-medium underline-offset-2 break-all"${titleAttr}>${text}</a>`
+}
+marked.use({ renderer })
+
+function renderMarkdown(text) {
+  if (!text) return ''
+  try {
+    return marked.parse(text)
+  } catch (err) {
+    console.error('Erro ao renderizar markdown:', err)
+    return text
+  }
+}
 
 const isOpen = ref(false)
 const inputMessage = ref('')
 const isLoading = ref(false)
+const showSuggestions = ref(true)
 const chatContainer = ref(null)
 
-const suggestedQuestions = [
-  'Quais suas principais tecnologias?',
-  'Conte sobre sua experiência na CAPES e ONS.',
-  'Como você aplica IA no desenvolvimento?',
-  'Qual sua senioridade e tempo de mercado?',
+const suggestedTopics = [
+  { label: '💻 Tecnologias & Stack', query: 'Quais são as principais tecnologias e ferramentas que você domina?' },
+  { label: '🏛️ Projetos CAPES & ONS', query: 'Conte sobre sua atuação nos projetos de grande porte da CAPES e ONS.' },
+  { label: '🤖 IA Aplicada & SDD', query: 'Como você aplica Inteligência Artificial e Spec-Driven Development (SDD) no desenvolvimento?' },
+  { label: '📈 Senioridade & Tech Lead', query: 'Qual sua senioridade, tempo de mercado e experiência como Tech Lead?' },
+  { label: '⚙️ Backend & Microsserviços', query: 'Fale sobre sua experiência com PHP/Laravel, Node.js e migração para microsserviços.' },
+  { label: '📬 Contato & LinkedIn', query: 'Como posso entrar em contato ou me conectar diretamente com o Elessandro?' },
 ]
+
+const INITIAL_GREETING = 'Olá! Sou o assistente virtual do Elessandro Prestes. Escolha um dos tópicos abaixo ou digite sua pergunta para conhecer a carreira, projetos e especialidades dele:'
 
 const messages = ref([
   {
     role: 'assistant',
-    text: 'Olá! Sou o assistente virtual do Elessandro Prestes. Como posso te ajudar a conhecer melhor a trajetória e habilidades dele?',
+    text: INITIAL_GREETING,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   },
 ])
@@ -25,17 +54,34 @@ const messages = ref([
 function toggleChat() {
   isOpen.value = !isOpen.value
   if (isOpen.value) {
-    scrollToBottom()
+    scrollToBottom(100)
   }
 }
 
-function scrollToBottom() {
+function resetChat() {
+  messages.value = [
+    {
+      role: 'assistant',
+      text: INITIAL_GREETING,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    },
+  ]
+  inputMessage.value = ''
+  showSuggestions.value = true
+  scrollToBottom(50)
+}
+
+function scrollToBottom(delay = 50) {
   nextTick(() => {
-    if (chatContainer.value) {
-      chatContainer.value.scrollTop = chatContainer.value.scrollHeight
-    }
+    setTimeout(() => {
+      if (chatContainer.value) {
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+      }
+    }, delay)
   })
 }
+
+const MENU_KEYWORDS = ['menu', 'inicio', 'início', 'topico', 'topicos', 'tópicos', 'voltar', 'ajuda', 'help', 'reset', 'limpar', 'opcoes', 'opções']
 
 async function sendMessage(textToSend) {
   const content = (textToSend || inputMessage.value).trim()
@@ -49,8 +95,22 @@ async function sendMessage(textToSend) {
   })
 
   inputMessage.value = ''
-  isLoading.value = true
   scrollToBottom()
+
+  // Verificação de comandos de menu locais (UX rápida sem latência)
+  const normalized = content.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  if (MENU_KEYWORDS.includes(normalized)) {
+    showSuggestions.value = true
+    messages.value.push({
+      role: 'assistant',
+      text: 'Aqui estão os tópicos principais disponíveis para consulta. Clique em qualquer um deles ou digite uma pergunta específica:',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    })
+    scrollToBottom(50)
+    return
+  }
+
+  isLoading.value = true
 
   try {
     const aiResponse = await askAssistant(content)
@@ -69,13 +129,13 @@ async function sendMessage(textToSend) {
     })
   } finally {
     isLoading.value = false
-    scrollToBottom()
+    scrollToBottom(80)
   }
 }
 </script>
 
 <template>
-  <div class="fixed bottom-6 right-6 z-[999] font-sans">
+  <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[999] font-sans">
     <!-- Floating Trigger Button -->
     <button
       v-if="!isOpen"
@@ -105,13 +165,13 @@ async function sendMessage(textToSend) {
     >
       <div
         v-if="isOpen"
-        class="w-[92vw] sm:w-[420px] h-[580px] max-h-[85vh] bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/10"
+        class="w-[calc(100vw-2rem)] sm:w-[440px] h-[580px] max-h-[calc(100vh-5.5rem)] sm:max-h-[640px] bg-gray-900/95 backdrop-blur-md border border-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/10"
         role="dialog"
         aria-modal="true"
         aria-labelledby="chat-title"
       >
         <!-- Header -->
-        <header class="flex items-center justify-between px-5 py-4 bg-gray-900/90 border-b border-gray-800 backdrop-blur">
+        <header class="flex items-center justify-between px-4 sm:px-5 py-3.5 bg-gray-900 border-b border-gray-800 shrink-0">
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-full bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-bold text-sm">
               ✨
@@ -124,39 +184,62 @@ async function sendMessage(textToSend) {
               </p>
             </div>
           </div>
-          <button
-            @click="toggleChat"
-            class="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            aria-label="Fechar assistente de IA"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+
+          <!-- Actions: Reset & Close -->
+          <div class="flex items-center gap-1">
+            <button
+              @click="resetChat"
+              title="Reiniciar conversa e voltar ao menu principal"
+              class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-400 hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              aria-label="Reiniciar conversa e voltar ao início"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+            </button>
+            <button
+              @click="toggleChat"
+              class="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              aria-label="Fechar assistente de IA"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
         </header>
 
         <!-- Messages Area -->
         <div
           ref="chatContainer"
-          class="flex-1 p-4 overflow-y-auto space-y-3.5 bg-gray-950/60 scroll-smooth"
+          class="flex-1 min-h-0 p-3.5 sm:p-4 overflow-y-auto overflow-x-hidden space-y-3.5 bg-gray-950/70 scroll-smooth custom-scrollbar"
         >
           <div
             v-for="(msg, index) in messages"
             :key="index"
             :class="[
-              'flex flex-col max-w-[85%] text-sm rounded-2xl p-3.5 leading-relaxed',
+              'flex flex-col max-w-[88%] text-sm rounded-2xl p-3 sm:p-3.5 leading-relaxed break-words shadow-sm',
               msg.role === 'user'
                 ? 'ml-auto bg-indigo-600 text-white rounded-tr-sm'
                 : msg.isError
-                ? 'mr-auto bg-red-950/60 border border-red-800/80 text-red-200 rounded-tl-sm'
-                : 'mr-auto bg-gray-800/90 border border-gray-700/60 text-gray-200 rounded-tl-sm'
+                ? 'mr-auto bg-red-950/70 border border-red-800/80 text-red-200 rounded-tl-sm'
+                : 'mr-auto bg-gray-800/95 border border-gray-700/60 text-gray-200 rounded-tl-sm'
             ]"
           >
-            <p class="whitespace-pre-wrap">{{ msg.text }}</p>
+            <!-- Render Assistant Messages with parsed Markdown -->
+            <div
+              v-if="msg.role === 'assistant'"
+              class="markdown-content text-sm leading-relaxed"
+              v-html="renderMarkdown(msg.text)"
+            />
+            <!-- Render User Messages as plain text -->
+            <p v-else class="whitespace-pre-wrap break-words text-sm">{{ msg.text }}</p>
+
             <span
               :class="[
-                'text-[10px] mt-1.5 select-none self-end',
+                'text-[10px] mt-2 select-none self-end shrink-0',
                 msg.role === 'user' ? 'text-indigo-200' : 'text-gray-400'
               ]"
             >
@@ -173,25 +256,41 @@ async function sendMessage(textToSend) {
           </div>
         </div>
 
-        <!-- Suggestion Chips -->
-        <div v-if="messages.length <= 2 && !isLoading" class="px-4 py-2 border-t border-gray-800/60 bg-gray-900/60 flex flex-wrap gap-1.5">
-          <button
-            v-for="(chip, i) in suggestedQuestions"
-            :key="i"
-            @click="sendMessage(chip)"
-            class="text-[11px] text-left px-2.5 py-1 bg-gray-800 hover:bg-gray-700 hover:text-white text-gray-300 rounded-full border border-gray-700/80 transition-colors"
-          >
-            {{ chip }}
-          </button>
+        <!-- Suggestion Chips Bar (Persistente & Navegável) -->
+        <div class="px-3 py-2 border-t border-gray-800/80 bg-gray-900/90 shrink-0 flex flex-col gap-1.5">
+          <div class="flex items-center justify-between text-[11px] text-gray-400 px-0.5">
+            <span class="flex items-center gap-1 font-medium text-gray-300">
+              💡 Tópicos para explorar:
+            </span>
+            <button
+              @click="resetChat"
+              class="text-indigo-400 hover:text-indigo-300 text-[10px] underline underline-offset-2 flex items-center gap-1 transition-colors"
+            >
+              Voltar ao Início
+            </button>
+          </div>
+
+          <!-- Horizontal scrollable topics chips -->
+          <div class="flex gap-1.5 overflow-x-auto custom-scrollbar pb-1 pt-0.5">
+            <button
+              v-for="(topic, i) in suggestedTopics"
+              :key="i"
+              @click="sendMessage(topic.query)"
+              :disabled="isLoading"
+              class="whitespace-nowrap shrink-0 text-[11px] px-2.5 py-1 bg-gray-800 hover:bg-indigo-600 hover:text-white text-gray-300 rounded-full border border-gray-700/80 transition-all focus:outline-none focus:ring-1 focus:ring-indigo-400 disabled:opacity-50"
+            >
+              {{ topic.label }}
+            </button>
+          </div>
         </div>
 
         <!-- Footer / Input -->
-        <footer class="p-3 bg-gray-900 border-t border-gray-800">
+        <footer class="p-3 bg-gray-900 border-t border-gray-800 shrink-0">
           <form @submit.prevent="sendMessage()" class="flex items-center gap-2">
             <input
               v-model="inputMessage"
               type="text"
-              placeholder="Digite sua pergunta..."
+              placeholder="Pergunte algo ou digite 'menu'..."
               :disabled="isLoading"
               class="flex-1 bg-gray-800 text-white placeholder-gray-500 text-sm px-3.5 py-2.5 rounded-xl border border-gray-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
             />
@@ -212,3 +311,5 @@ async function sendMessage(textToSend) {
     </transition>
   </div>
 </template>
+
+

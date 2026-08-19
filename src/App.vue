@@ -6,7 +6,7 @@ import Projects from './components/Projects.vue'
 import Experience from './components/Experience.vue'
 import AiAssistant from './components/AiAssistant.vue'
 
-const cvPath = `${import.meta.env.BASE_URL}Elessandro_Engenheiro_de_Software_Full_Stack.pdf`
+const cvPath = `${import.meta.env.BASE_URL}Elessandro_Prestes_Macedo_Software_Engineer.pdf`
 </script>
 
 <template>
