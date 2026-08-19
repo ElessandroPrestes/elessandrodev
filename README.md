@@ -27,34 +27,34 @@ A aplicação adota o padrão **RAG** para enriquecer o contexto do modelo de li
 
 ```mermaid
 flowchart TD
-    subgraph Ingestion["1. Pipeline de Ingestão e Processamento"]
-        PDF["📄 Currículo PDF / Dados Brutos<br>(Elessandro_Prestes_Macedo_Software_Engineer.pdf)"]
-        Parser["⚙️ Extração de Texto & Chunking Semântico"]
-        Embedding["🔢 Geração de Embeddings Vetoriais"]
-        VectorDB[("🗄️ Base de Conhecimento Vetorial / Vector Store")]
-        
+    subgraph Ingestion["1. Pipeline de Ingestao e Processamento"]
+        PDF["Curriculo PDF: Elessandro_Prestes_Macedo_Software_Engineer.pdf"]
+        Parser["Extracao de Texto e Chunking Semantico"]
+        Embedding["Geracao de Embeddings Vetoriais"]
+        VectorDB[("Base de Conhecimento Vetorial / Vector Store")]
+
         PDF --> Parser
         Parser --> Embedding
         Embedding --> VectorDB
     end
 
-    subgraph Retrieval["2. Recuperação & Orquestração (Runtime)"]
-        UserQuery["💬 Pergunta do Usuário no Chat"]
-        QueryEmbedding["🔢 Vetorização da Query"]
-        Search["🔍 Busca Semântica / Top-K Cosine Similarity"]
-        PromptAugment["📝 Augmentação de Prompt + Template LangChain"]
-        
+    subgraph Retrieval["2. Recuperacao e Orquestracao em Tempo de Execucao"]
+        UserQuery["Pergunta do Visitante no Chat"]
+        QueryEmbedding["Vetorizacao da Pergunta"]
+        Search["Busca Semantica por Similaridade"]
+        PromptAugment["Augmentacao de Prompt e Template LangChain"]
+
         UserQuery --> QueryEmbedding
         QueryEmbedding --> Search
         VectorDB -.-> Search
         Search --> PromptAugment
     end
 
-    subgraph Generation["3. Inferência & Resposta"]
-        GeminiLLM["🤖 Google Gemini LLM API<br>(gemini-2.5-flash)"]
-        OutputParser["✨ String Output Parser"]
-        ChatUI["🖥️ Interface Conversacional (Chatbot UI)"]
-        
+    subgraph Generation["3. Inferencia e Resposta"]
+        GeminiLLM["Google Gemini LLM API (gemini-2.5-flash)"]
+        OutputParser["String Output Parser"]
+        ChatUI["Interface Conversacional (Chatbot UI)"]
+
         PromptAugment --> GeminiLLM
         GeminiLLM --> OutputParser
         OutputParser --> ChatUI
