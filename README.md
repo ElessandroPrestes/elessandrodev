@@ -7,12 +7,15 @@
 [![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![GNU Make](https://img.shields.io/badge/GNU_Make-0466C8?style=for-the-badge&logo=gnu&logoColor=white)](https://www.gnu.org/software/make/)
+[![Deploy Status](https://img.shields.io/badge/Deploy-GitHub_Pages-2ea44f?style=for-the-badge&logo=githubpages&logoColor=white)](https://elessandroprestes.github.io/elessandrodev/)
 
 ---
 
 ## 📌 Sobre o Projeto
 
-Este projeto consiste em uma Single Page Application (SPA) de alta performance que serve como portfólio profissional e currículo interativo de **Elessandro Prestes Macedo** (Senior Software Engineer & Tech Lead). 
+Este projeto consiste em uma Single Page Application (SPA) de alta performance que serve como portfólio profissional e currículo interativo de **Elessandro Prestes Macedo** (Senior Software Engineer & Tech Lead).
+
+> 🌐 **Deploy em Produção (Live Demo):** [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/)
 
 Além de apresentar a trajetória de mais de **9 anos de experiência em engenharia de software e arquiteturas distribuídas**, a aplicação integra um **Assistente Virtual Inteligente** fundamentado no padrão arquitetural **RAG (Retrieval-Augmented Generation)** com **Google Gemini LLM** e **LangChain**, permitindo que recrutadores, clientes e líderes técnicos realizem consultas em linguagem natural com respostas precisas e contextualizadas em tempo real.
 
@@ -169,7 +172,10 @@ Docker & Containers
 
 ## 📦 Build e Deploy
 
-Para gerar o pacote estático otimizado para produção:
+- **Deploy Automático (CI/CD):** Todo push ou merge na branch `main` dispara o pipeline no GitHub Actions e publica automaticamente em:  
+  👉 **[https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/)**
+
+- **Build Manual Local:** Para gerar o pacote estático otimizado para produção localmente:
 
 ```bash
 make build
@@ -183,6 +189,7 @@ Os artefatos minificados e otimizados serão gerados no diretório `dist/`, incl
 
 | Canal | Link |
 |---|---|
+| **Deploy / Portfólio Online** | [elessandroprestes.github.io/elessandrodev](https://elessandroprestes.github.io/elessandrodev/) |
 | **LinkedIn** | [linkedin.com/in/elessandro-prestes-macedo](https://www.linkedin.com/in/elessandro-prestes-macedo/) |
 | **GitHub** | [github.com/ElessandroPrestes](https://github.com/ElessandroPrestes) |
 | **GitLab** | [gitlab.com/elessandrodev](https://gitlab.com/elessandrodev) |
@@ -194,4 +201,5 @@ Os artefatos minificados e otimizados serão gerados no diretório `dist/`, incl
 <div align="center">
   <sub>Desenvolvido com foco em alta performance, arquitetura limpa e inteligência artificial aplicada por <strong>Elessandro Prestes Macedo</strong>.</sub>
 </div>
+
 
