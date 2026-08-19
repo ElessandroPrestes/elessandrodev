@@ -69,11 +69,11 @@ const experiences = [
     period: 'Ago/2016 - Set/2021',
     highlights: [
       { label: 'Evolução de ERP Corporativo', text: 'Elevei a eficiência operacional em 30% nas áreas financeira, logística e industrial, desenvolvendo módulos em PHP (Laravel, Symfony), PostgreSQL e Oracle.' },
-      { label: 'Modernização & Microsserviços', text: 'Reduzi em 40% os custos de manutenção liderando a migração de monólitos legados para microsserviços e sistemas distribuídos com Node.js.' },
+      { label: 'Modernização de Legados & Strangler Fig Pattern', text: 'Colaborei na redução de 40% nos custos de manutenção de software, participando de iniciativas de migração de sistemas monolíticos legados para uma arquitetura de microsserviços e sistemas distribuídos com Node.js, utilizando o Strangler Fig Pattern para viabilizar a evolução gradual sem impactar a operação.' },
       { label: 'IoT Industrial & Tempo Real', text: 'Reduzi falhas operacionais em 30% integrando máquinas de produção aos sistemas de gestão via Azure IoT Cloud e protocolos de comunicação bidirecional com WebSockets.' },
       { label: 'Resiliência & Mensageria', text: 'Coarquitei fluxos orientados a eventos (EDA) na AWS com Kafka, RabbitMQ, Redis e PostgreSQL, garantindo 99,9% de disponibilidade sob práticas de Clean Architecture e SOLID.' },
     ],
-    techs: ['PHP', 'Symfony', 'Laravel', 'Node.js', 'IoT Industrial', 'Azure Cloud', 'AWS', 'Apache Kafka', 'RabbitMQ', 'PostgreSQL', 'Oracle DB', 'WebSockets'],
+    techs: ['PHP', 'Symfony', 'Laravel', 'Node.js', 'Strangler Fig Pattern', 'IoT Industrial', 'Azure Cloud', 'AWS', 'Apache Kafka', 'RabbitMQ', 'PostgreSQL', 'Oracle DB', 'WebSockets'],
   },
 ]
 </script>
