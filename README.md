@@ -17,13 +17,13 @@ Este projeto consiste em uma Single Page Application (SPA) de alta performance q
 
 > 🌐 **Deploy em Produção (Live Demo):** [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/)
 
-Além de apresentar a trajetória de mais de **9 anos de experiência em engenharia de software e arquiteturas distribuídas**, a aplicação integra um **Assistente Virtual Inteligente** fundamentado no padrão arquitetural **RAG (Retrieval-Augmented Generation)** com **Google Gemini LLM** e **LangChain**, permitindo que recrutadores, clientes e líderes técnicos realizem consultas em linguagem natural com respostas precisas e contextualizadas em tempo real.
+Além de apresentar a trajetória de mais de **9 anos de experiência em engenharia de software e arquiteturas distribuídas**, a aplicação reflete como Elessandro aplica **Inteligência Artificial no seu ciclo de desenvolvimento utilizando SDD (Spec-Driven Development) e RAG (Retrieval-Augmented Generation)**, com um design system editorial sofisticado com suporte completo a **Light Mode & Dark Mode** (com prevenção de FOUC, persistência e conformidade WCAG 2.1 AA).
 
 ---
 
 ## 🧠 Arquitetura de IA: Padrão RAG (Retrieval-Augmented Generation)
 
-A aplicação adota o padrão **RAG** para enriquecer o contexto do modelo de linguagem em tempo de execução, garantindo que o assistente responda de forma factual, reduzindo alucinações e fornecendo métricas exatas sobre projetos anteriores (como CAPES, ONS, setor elétrico e automação industrial).
+A aplicação adota o padrão **RAG** para enriquecer o contexto do modelo de linguagem em tempo de execução, garantindo que o assistente responda de forma factual, reduzindo alucinações e fornecendo métricas exatas sobre projetos anteriores (como CAPES, ONS - Energia Pecém e automação industrial).
 
 ```mermaid
 flowchart TD
@@ -79,7 +79,8 @@ flowchart TD
 | Camada | Tecnologia | Descrição |
 |---|---|---|
 | **Frontend Framework** | **Vue.js 3** | Composition API, `<script setup>`, reatividade granular |
-| **Estilização** | **Tailwind CSS + PostCSS** | Design System responsivo, utilitários atômicos e Glassmorphism |
+| **Estilização & Temas** | **Tailwind CSS + PostCSS** | Design System editorial adaptativo (Light & Dark Mode), WCAG 2.1 AA |
+| **IA & Metodologia** | **SDD + RAG** | Aplicação de IA no ciclo de desenvolvimento com Spec-Driven Development e RAG |
 | **Build & Bundle Tool** | **Vite** | HMR ultrarrápido, otimização de assets e build modular com Rollup |
 | **Orquestração de IA** | **LangChain.js** | Cadeias de inferência (Chains), prompts estruturados e parsers |
 | **Modelo de Linguagem (LLM)** | **Google Gemini** | Modelo `gemini-2.5-flash` / `gemini-1.5-flash` de alta velocidade e precisão |

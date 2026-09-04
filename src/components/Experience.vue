@@ -1,161 +1,172 @@
 <script setup>
-const experiences = [
+const trajectory = [
   {
+    period: '2025 — 2026',
     role: 'Engenheiro de Software com IA Aplicada',
-    company: 'EPM DEVTECH',
-    project: null,
-    period: 'Out/2025 - Mai/2026',
+    company: 'Amura Sistemas',
+    project: 'Modernização de Plataforma & SDD',
+    summary: 'Liderança técnica na migração integral de monolito legado para PHP 8.2 e Laravel 12 através do Strangler Fig Pattern, estabelecendo esteiras CI/CD com Docker e governança com Spec-Driven Development (SDD).',
     highlights: [
-      { label: 'Modernização e Migração de Sistema', text: 'Liderei a modernização da plataforma monolítica legada para PHP 8.2 e Laravel 12 aplicando o Strangler Fig Pattern, eliminando mais de 56.400 linhas de código legado e preparando a base para uma evolução escalável.' },
-      { label: 'Testes Automatizados & Qualidade', text: 'Estruturei 2.399 testes automatizados em 241 arquivos com Pest/PHPUnit, aplicando SOLID e Clean Code para elevar a qualidade e a confiabilidade do software.' },
-      { label: 'APIs, Migrations & Automação', text: 'Evoluí a plataforma para 384 rotas/endpoints REST e 181 migrations, desenvolvendo integrações com WhatsApp Business e automações que reduziram atividades manuais em 35%.' },
-      { label: 'Arquitetura & Redução de Retrabalho', text: 'Reduzi o retrabalho em 40% através de Software Architecture, testes automatizados, documentação técnica e esteiras CI/CD com Docker e GitLab.' },
-      { label: 'IA Aplicada & SDD', text: 'Aumentei a produtividade e a rastreabilidade aplicando a metodologia Spec-Driven Development (SDD) e Engenharia de Software Assistida por IA com Claude Code, GitHub Copilot, Codex, RAG e MCP.' },
+      { metric: '56.400+ linhas legadas eliminadas', desc: 'substituídas por arquitetura limpa em Laravel 12 sem interrupção de serviço.' },
+      { metric: '2.399 testes automatizados', desc: 'estruturados em 241 arquivos com Pest/PHPUnit, assegurando zero regressão.' },
+      { metric: '384 rotas/endpoints REST e 181 migrations', desc: 'desenvolvendo automações com WhatsApp Business que reduziram processos manuais em 35%.' },
+      { metric: '-40% retrabalho técnico', desc: 'alcançado via Spec-Driven Development (SDD) integrado a Claude Code, Copilot e Codex.' },
     ],
-    techs: ['PHP 8.2+', 'Laravel 12', 'Strangler Fig Pattern', 'Claude Code (SDD)', 'Pest/PHPUnit', 'Docker', 'GitLab CI/CD', 'REST APIs', 'Clean Code'],
+    stack: 'PHP 8.2+ · Laravel 12 · Strangler Fig Pattern · Claude Code (SDD) · Pest/PHPUnit · Docker · GitLab CI/CD · REST APIs',
   },
   {
+    period: '2024 — 2025',
     role: 'Analista Programador / Tech Lead',
     company: 'Datainfo',
-    project: 'Projeto CAPES',
-    period: 'Out/2024 - Set/2025',
+    project: 'Projeto CAPES (SIPREC & SISCAD)',
+    summary: 'Coarquitetura da modernização do SIPREC para microsserviços e BFF (Angular) atendendo 448+ Instituições de Ensino Superior, além da concepção do SISCAD para automação de processos de cobrança administrativa.',
     highlights: [
-      { label: 'Modernização Arquitetural (SIPREC / CAPES)', text: 'Coarquitei e executei a modernização da plataforma SIPREC para 448+ IES (UAB e AUXPE), aplicando o Strangler Fig Pattern para migrar para microsserviços e BFF (Angular), suportando picos de 10.000 usuários simultâneos, 2.500 RPS e latência média abaixo de 300ms.' },
-      { label: 'Liderança Técnica (SISCAD / CAPES)', text: 'Liderei e executei do zero o desenvolvimento do SISCAD como Tech Lead e desenvolvedor, automatizando a gestão de milhares de processos de cobrança administrativa e acordos de parcelamento via PHP (Laravel), Oracle DB, Redis e mensageria com RabbitMQ.' },
-      { label: 'DevOps & Confiabilidade', text: 'Aumentei a confiabilidade operacional e reduzi falhas em produção gerenciando a infraestrutura e os processos de deploy de ambientes críticos com Docker, GitLab CI/CD e práticas DevOps.' },
-      { label: 'Garantia de Qualidade & SonarQube', text: 'Elevei os indicadores de qualidade de código em 45% e reduzi vulnerabilidades críticas implementando análise estática contínua via SonarQube.' },
-      { label: 'Produtividade & Mentoria com IA', text: 'Aumentei em 25% a entrega de features por sprint liderando a implementação do GitHub Copilot integrado ao SDD junto à equipe através de mentoria técnica e padronização de especificações.' },
+      { metric: '10.000 usuários simultâneos e 2.500 RPS', desc: 'suportados com latência média inferior a 300ms no ecossistema SIPREC.' },
+      { metric: 'Concepção do zero do SISCAD', desc: 'como Tech Lead via PHP/Laravel, Oracle DB, Redis e mensageria assíncrona com RabbitMQ.' },
+      { metric: '+45% em qualidade de código', desc: 'e erradicação de vulnerabilidades críticas através de esteiras contínuas no SonarQube.' },
+      { metric: '+25% de entrega de features por sprint', desc: 'via mentoria técnica e adoção do GitHub Copilot com SDD junto aos desenvolvedores.' },
     ],
-    techs: ['PHP', 'Laravel', 'Angular', 'Microservices', 'BFF', 'Oracle DB', 'Redis', 'RabbitMQ', 'SonarQube', 'Docker', 'GitLab CI/CD', 'SDD', 'RAG', 'MCP'],
+    stack: 'PHP · Laravel · Angular · Microservices · BFF · Oracle DB · Redis · RabbitMQ · SonarQube · Docker · GitLab CI/CD · SDD',
   },
   {
+    period: '2023 — 2024',
     role: 'Desenvolvedor Full Stack',
     company: 'Energia Pecém',
-    project: null,
-    period: 'Mai/2023 - Jul/2024',
+    project: 'Projeto SIGMA & Telemetria em Tempo Real',
+    summary: 'Desenvolvimento e arquitetura de rastreabilidade de ativos operacionais em tempo real para o setor de geração e distribuição de energia.',
     highlights: [
-      { label: 'Projeto SIGMA – Rastreabilidade Operacional', text: 'Aumentei a rastreabilidade operacional em 40%, desenvolvendo soluções de validação e acompanhamento de equipamentos em tempo real com Node.js, Laravel, Vue.js e PostgreSQL.' },
-      { label: 'Gestão de Dados & Estado em Tempo Real', text: 'Reduzi falhas operacionais em 35% e elevei a consistência de dados em toda a plataforma projetando fluxos de sincronização e gerenciamento de estado em tempo real com Redis.' },
-      { label: 'Arquitetura Assíncrona (EDA)', text: 'Elevei a capacidade de processamento em 50% e eliminei gargalos operacionais projetando uma arquitetura assíncrona e resiliente orientada a eventos (EDA) com RabbitMQ e Laravel Jobs.' },
-      { label: 'Monitoramento Cloud & Observabilidade', text: 'Reduzi incidentes críticos em produção em 45% e acelerei o MTTR implementando monitoramento preditivo e observabilidade via Azure Monitor e Azure Communication Services.' },
-      { label: 'Disponibilidade & Alta Escalabilidade', text: 'Garanti 99,9% de disponibilidade (uptime) da plataforma evoluindo a arquitetura com foco em alta escalabilidade, desacoplamento e suporte ao crescimento contínuo da operação.' },
+      { metric: '+40% de rastreabilidade operacional', desc: 'desenvolvendo soluções de telemetria com Node.js, Laravel, Vue.js e PostgreSQL.' },
+      { metric: '+50% de capacidade de processamento', desc: 'projetando arquitetura orientada a eventos (EDA) com RabbitMQ e Laravel Jobs.' },
+      { metric: '-45% em incidentes de produção', desc: 'e aceleração drástica do MTTR implementando observabilidade via Azure Monitor.' },
+      { metric: '99,9% de disponibilidade contínua', desc: 'garantida com desacoplamento de serviços e sincronização em memória com Redis.' },
     ],
-    techs: ['Node.js', 'Laravel', 'Vue.js', 'PostgreSQL', 'Redis', 'RabbitMQ', 'Event-Driven Architecture', 'Azure Monitor', 'Azure Communication Services'],
+    stack: 'Node.js · Laravel · Vue.js · PostgreSQL · Redis · RabbitMQ · Event-Driven Architecture · Azure Monitor',
   },
   {
+    period: '2022 — 2023',
     role: 'Desenvolvedor de Sistemas',
     company: 'AMcom',
-    project: 'Projeto GENIN - ONS',
-    period: 'Jul/2022 - Abr/2023',
+    project: 'Projeto GENIN — Operador Nacional do Sistema Elétrico (ONS)',
+    summary: 'Arquitetura de ingestão de dados em escala nacional para cálculo e consolidação regulatória da bandeira tarifária de energia elétrica no Brasil.',
     highlights: [
-      { label: 'Integrações Nacionais & Bandeira Tarifária', text: 'Viabilizei o cálculo de métricas para a alteração da bandeira tarifária nacional no Projeto Genin com 100% de integridade e zero perda de dados na consolidação regulatória, através de integrações de missão crítica com Itaipu e INMET via PHP (Laravel), REST e SOAP.' },
-      { label: 'Processamento Real-Time & Baixa Latência', text: 'Atuei na definição da arquitetura em tempo real de dados energéticos e climáticos em escala nacional, reduzindo a latência na ingestão de dados em 40% através de microsserviços desacoplados com PostgreSQL e Redis.' },
-      { label: 'Infraestrutura AWS & Automação CI/CD', text: 'Automatizei a infraestrutura e a esteira de entrega contínua na AWS, reduzindo o tempo de deploy em 60% e assegurando 99,9% de disponibilidade dos serviços com pipelines em CodeBuild, orquestração via API Gateway e CloudWatch.' },
+      { metric: '100% de integridade transacional', desc: 'em integrações de missão crítica com Itaipu Binacional e INMET via PHP/Laravel e SOAP/REST.' },
+      { metric: '-40% de latência na ingestão', desc: 'definindo microsserviços com Redis e PostgreSQL para consolidação climática e energética.' },
+      { metric: '-60% no tempo de deploy e 99,9% uptime', desc: 'automatizando pipelines na AWS via CodeBuild, API Gateway e CloudWatch.' },
     ],
-    techs: ['PHP', 'Laravel', 'REST/SOAP', 'PostgreSQL', 'Redis', 'AWS CodeBuild', 'Amazon API Gateway', 'Amazon CloudWatch', 'Microservices'],
+    stack: 'PHP · Laravel · REST/SOAP · PostgreSQL · Redis · AWS CodeBuild · Amazon API Gateway · Amazon CloudWatch',
   },
   {
+    period: '2021 — 2022',
     role: 'Desenvolvedor Full Stack',
     company: 'Grupo Intellectus',
-    project: 'Projeto Educacional – SEDUC-MT',
-    period: 'Out/2021 - Jul/2022',
+    project: 'Projeto Educacional — SEDUC-MT',
+    summary: 'Desenvolvimento de plataforma de ensino em Serverless Architecture na AWS atendendo mais de 650 escolas estaduais em 141 municípios.',
     highlights: [
-      { label: 'Arquitetura Serverless na AWS', text: 'Atuei no desenho da arquitetura e desenvolvi a plataforma de Xadrez Online em Serverless Architecture na AWS, reduzindo em 35% os custos e garantindo escalabilidade automática via AWS Lambda, SQS e SNS.' },
-      { label: 'Escala Pública Educacional (SEDUC-MT)', text: 'Desenvolvi e integrei a plataforma para mais de 650 escolas estaduais em 141 municípios de Mato Grosso, conectando a solução aos sistemas da SEDUC-MT através de Angular no frontend e APIs em PHP (Laravel) no backend com 99,9% de uptime.' },
-      { label: 'Observabilidade & Diagnóstico (MTTR)', text: 'Estruturei a camada de observabilidade e centralização de logs com ELK Stack, reduzindo em 50% o tempo médio de diagnóstico de incidentes (MTTR) da plataforma.' },
-      { label: 'CI/CD & Automação de Entregas', text: 'Acelerei o ciclo de entrega de novas funcionalidades em 60%, automatizando as esteiras de integração e entrega contínua via GitHub Actions com validações automatizadas de código.' },
-      { label: 'System Design & Disponibilidade', text: 'Assegurei 99,9% de disponibilidade durante picos de acesso simultâneo colaborando em soluções de System Design focadas em baixa latência, resiliência e desacoplamento de serviços.' },
+      { metric: '-35% de custos de infraestrutura', desc: 'com escalabilidade elástica automática na AWS via Lambda, SQS e SNS.' },
+      { metric: '99,9% de disponibilidade em picos', desc: 'atendendo rede de escolas públicas conectando Angular no frontend e APIs Laravel.' },
+      { metric: '-50% no tempo de diagnóstico (MTTR)', desc: 'estruturando centralização e observabilidade de logs com ELK Stack.' },
     ],
-    techs: ['AWS Lambda', 'Amazon SQS', 'Amazon SNS', 'Angular', 'PHP', 'Laravel', 'ELK Stack', 'GitHub Actions', 'Serverless'],
+    stack: 'AWS Lambda · Amazon SQS · Amazon SNS · Angular · PHP · Laravel · ELK Stack · GitHub Actions · Serverless',
   },
   {
+    period: '2016 — 2021',
     role: 'Desenvolvedor Full Stack',
-    company: 'Paraiso',
-    project: null,
-    period: 'Ago/2016 - Set/2021',
+    company: 'Grupo Paraíso',
+    project: 'Infraestrutura Têxtil, Chão de Fábrica (IoT), Varejo, E-commerce & CRM',
+    summary: 'Atuação em projetos de ponta a ponta na infraestrutura de software da indústria têxtil, desde o chão de fábrica e automação industrial (IoT) até operações de varejo como e-commerce, CRM corporativo e modernização gradual de ERP monolítico para microsserviços com Node.js.',
     highlights: [
-      { label: 'Modernização de ERP Corporativo', text: 'Contribuí para o aumento de 30% na eficiência operacional das áreas financeira, logística e industrial, atuando no desenvolvimento e evolução de módulos estratégicos de ERP corporativo com PHP (Laravel, Symfony), PostgreSQL e Oracle.' },
-      { label: 'Modernização de Legados & Strangler Fig Pattern', text: 'Colaborei na redução de 40% nos custos de manutenção de software, participando de iniciativas de migração de sistemas monolíticos legados para uma arquitetura de microsserviços e sistemas distribuídos com Node.js, utilizando o Strangler Fig Pattern para viabilizar a evolução gradual sem impactar a operação.' },
-      { label: 'IoT Industrial & Azure Cloud', text: 'Ajudei a reduzir em 30% as falhas operacionais e humanas, participando da implementação de integrações de IoT Industrial no ecossistema Azure Cloud para conectar equipamentos de produção aos sistemas corporativos.' },
-      { label: 'Comunicação em Tempo Real & WebSockets', text: 'Contribuí para a otimização e baixa latência na sincronização de dados, desenvolvendo soluções de comunicação bi-direcional em tempo real baseadas em WebSockets.' },
-      { label: 'Arquitetura Orientada a Eventos (EDA na AWS)', text: 'Colaborei para assegurar 99,9% de disponibilidade, coarquitetando soluções escaláveis na AWS orientadas a eventos (Event-Driven Architecture) com Kafka, RabbitMQ, Redis e PostgreSQL.' },
-      { label: 'Qualidade de Engenharia & Boas Práticas', text: 'Promovi junto ao time a elevação da qualidade e manutenibilidade dos sistemas, aplicando padrões como SOLID, Clean Architecture, TDD e arquitetura orientada a eventos.' },
+      { metric: 'Chão de Fábrica & IoT Industrial', desc: 'automação e telemetria de maquinário têxtil em nuvem Azure com comunicação bidirecional em tempo real via WebSockets.' },
+      { metric: 'Varejo, E-commerce & CRM', desc: 'integração de canais de vendas B2B/B2C, relacionamento e conciliação em tempo real com o ERP central corporativo.' },
+      { metric: '-40% em custos de manutenção', desc: 'migração progressiva de monolito legado para microsserviços Node.js utilizando Strangler Fig Pattern sem parada de produção.' },
+      { metric: '+30% de eficiência operacional', desc: 'em módulos corporativos financeiros, fiscais e industriais desenvolvidos com PHP (Laravel, Symfony) e Oracle DB.' },
     ],
-    techs: ['PHP', 'Symfony', 'Laravel', 'Node.js', 'Strangler Fig Pattern', 'IoT Industrial', 'Azure Cloud', 'AWS', 'Apache Kafka', 'RabbitMQ', 'PostgreSQL', 'Oracle DB', 'WebSockets', 'TDD'],
+    stack: 'PHP · Symfony · Laravel · Node.js · Strangler Fig · IoT Industrial · E-commerce · CRM · Azure · AWS · Kafka · RabbitMQ · WebSockets · TDD',
   },
 ]
 </script>
 
 <template>
-  <section aria-labelledby="experience-heading" class="max-w-3xl mx-auto w-full">
-    <h2
-      id="experience-heading"
-      class="text-xs font-semibold uppercase tracking-widest text-indigo-400 mb-10"
-    >
-      Experiência Profissional
-    </h2>
+  <section id="trajectory" aria-labelledby="trajectory-title" class="w-full border-b border-slate-200/80 dark:border-neutral-800/80">
+    <div class="max-w-6xl mx-auto px-4 sm:px-8 py-16 sm:py-24 space-y-16">
+      
+      <!-- Cabeçalho da Seção -->
+      <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 border-b border-slate-200 dark:border-neutral-800 pb-6">
+        <div>
+          <div class="flex items-center gap-3 font-mono text-xs text-indigo-600 dark:text-indigo-400 tracking-widest uppercase mb-3">
+            <span>04 / TRAJECTORY</span>
+            <span class="h-px w-8 bg-indigo-600/40 dark:bg-indigo-400/40" aria-hidden="true" />
+            <span class="text-slate-500 dark:text-neutral-400">REGISTRO CRONOLÓGICO DE ENGENHARIA</span>
+          </div>
+          <h2 id="trajectory-title" class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Experiência &amp; Liderança Técnica
+          </h2>
+        </div>
 
-    <ol class="relative border-l border-gray-800 space-y-0">
-      <li
-        v-for="(exp, index) in experiences"
-        :key="index"
-        class="relative pl-8 pb-12 last:pb-0"
-      >
-        <!-- Marcador da timeline -->
-        <span
-          class="absolute left-0 -translate-x-1/2 mt-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-indigo-600 ring-4 ring-gray-950"
-          aria-hidden="true"
-        />
+        <p class="font-mono text-xs text-slate-500 dark:text-neutral-400 max-w-sm sm:text-right">
+          Mais de 9 anos entregando resiliência, escalabilidade e modernização de plataformas críticas.
+        </p>
+      </div>
 
-        <article class="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-700 transition-colors">
+      <!-- Ledger Editorial Cronológico -->
+      <div class="divide-y divide-slate-200/80 dark:divide-neutral-800/80">
+        <article
+          v-for="(job, idx) in trajectory"
+          :key="idx"
+          class="py-12 sm:py-16 first:pt-0 last:pb-0 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12"
+        >
+          <!-- Coluna 1: Período e Metadados -->
+          <div class="lg:col-span-3 space-y-2">
+            <time class="font-mono text-lg sm:text-xl font-bold text-slate-900 dark:text-white block">
+              {{ job.period }}
+            </time>
+            <span class="font-mono text-xs text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">
+              {{ job.company }}
+            </span>
+            <span v-if="job.project" class="font-sans text-xs text-slate-500 dark:text-neutral-400 block">
+              {{ job.project }}
+            </span>
+          </div>
 
-          <!-- Topo: período + empresa -->
-          <header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 mb-4">
+          <!-- Coluna 2: Cargo, Síntese e Realizações Técnicas -->
+          <div class="lg:col-span-9 space-y-6">
             <div>
-              <h3 class="text-base font-semibold text-white leading-snug">
-                {{ exp.role }}
+              <h3 class="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-snug">
+                {{ job.role }}
               </h3>
-              <p class="text-sm font-medium text-indigo-400 mt-0.5">
-                {{ exp.company }}
-                <span v-if="exp.project" class="text-gray-400 font-normal">
-                  - {{ exp.project }}
-                </span>
+              <p class="font-sans text-sm sm:text-base text-slate-600 dark:text-neutral-300 leading-relaxed mt-2">
+                {{ job.summary }}
               </p>
             </div>
-            <time class="shrink-0 text-xs font-medium text-gray-400 uppercase tracking-wide sm:text-right mt-0.5">
-              {{ exp.period }}
-            </time>
-          </header>
 
-          <!-- Lista de tópicos -->
-          <ul class="space-y-2.5 mb-5" role="list">
-            <li
-              v-for="(item, i) in exp.highlights"
-              :key="i"
-              class="flex gap-2.5 text-sm text-gray-400 leading-relaxed"
-            >
-              <span class="mt-1.5 shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-500" aria-hidden="true" />
-              <span>
-                <strong class="text-gray-200 font-medium">{{ item.label }}:</strong>
-                {{ item.text }}
+            <!-- Lista de Impactos X-Y-Z -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div
+                v-for="(item, i) in job.highlights"
+                :key="i"
+                class="border-l-2 border-slate-300 dark:border-neutral-700 pl-3.5 space-y-1"
+              >
+                <span class="font-mono text-xs font-semibold text-slate-900 dark:text-neutral-200 block">
+                  {{ item.metric }}
+                </span>
+                <span class="font-sans text-xs text-slate-500 dark:text-neutral-400 block leading-relaxed">
+                  {{ item.desc }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Stack Curada da Posição -->
+            <div class="pt-2 font-mono text-xs text-slate-500 dark:text-neutral-400 border-t border-slate-100 dark:border-neutral-850 flex flex-wrap items-baseline gap-2">
+              <span class="text-[10px] uppercase text-slate-400 dark:text-neutral-500 font-semibold">
+                TECNOLOGIAS:
               </span>
-            </li>
-          </ul>
-
-          <!-- Badges de tecnologias -->
-          <ul
-            class="flex flex-wrap gap-2"
-            :aria-label="`Tecnologias utilizadas em ${exp.company}`"
-          >
-            <li v-for="tech in exp.techs" :key="tech">
-              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
-                {{ tech }}
+              <span class="text-slate-700 dark:text-neutral-300 font-medium">
+                {{ job.stack }}
               </span>
-            </li>
-          </ul>
-
+            </div>
+          </div>
         </article>
-      </li>
-    </ol>
+      </div>
+
+    </div>
   </section>
 </template>

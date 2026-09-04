@@ -1,62 +1,87 @@
 <script setup>
-const projects = [
+const caseStudies = [
   {
-    id: 'elessandrodev',
-    title: 'elessandrodev - Portfólio & Currículo Interativo com Assistente IA (RAG)',
-    subtitle: 'Aplicação Web Reativa com Chatbot Assistido por IA via LangChain, Google Gemini & RAG',
-    description:
-      'Portfólio e currículo online interativo desenvolvido em Vue.js 3 com containerização Docker, integrando um assistente de IA conversacional alimentado por arquitetura RAG (Retrieval-Augmented Generation) com LangChain e a LLM Google Gemini para consulta contextual em tempo real dos dados profissionais.',
-    highlights:
-      'Assistente de IA com RAG e Google Gemini, LangChain, Vue.js 3 (Composition API), Containerização com Docker Compose e Deploy Automatizado no GitHub Pages.',
-    techs: ['Vue.js 3', 'LangChain', 'Google Gemini', 'RAG / LLM', 'Docker', 'Tailwind CSS', 'Vite', 'JavaScript'],
-    repoUrl: 'https://github.com/ElessandroPrestes/elessandrodev',
-    liveUrl: 'https://elessandroprestes.github.io/elessandrodev/',
-  },
-  {
+    num: '01',
     id: 'universal-sdd',
-    title: 'universal-sdd - Framework Universal Spec-Driven Development',
-    subtitle: 'Engenharia de Software Orientada a Especificações com Agentes de IA',
-    description:
-      'Framework universal e agnóstico de linguagem para aplicação prática da metodologia Spec-Driven Development (SDD) com agentes autônomos de IA (Claude Code, GitHub Copilot, Gemini), padronizando especificações técnicas, testes automatizados e refatoração com alta rastreabilidade.',
-    highlights:
-      'Metodologia SDD estruturada, automação do ciclo de desenvolvimento, especificações executáveis e redução comprovada de retrabalho técnico.',
-    techs: ['SDD', 'AI Agents', 'Claude Code', 'GitOps', 'DevOps', 'Clean Architecture'],
+    title: 'universal-sdd',
+    subtitle: 'Framework Universal Spec-Driven Development com Agentes de IA',
+    tagline: 'Padronização metodológica agnóstica para desenvolvimento assistido por agentes de IA com rastreabilidade determinística.',
+    problem: 'O avanço de agentes autônomos de IA (Claude Code, GitHub Copilot, Gemini) frequentemente gera retrabalho, dívida técnica e alucinações quando operados sem especificações rigorosas e quality gates automatizados.',
+    solution: 'Criação de um framework universal e agnóstico de linguagem baseado no ciclo SPEC (draft/aprovada) → TASK → QA → REVIEW → RELEASE, transformando requisitos em contratos técnicos executáveis antes de qualquer codificação.',
+    architecture: 'Clean Architecture, Especificações Markdown determinísticas, Quality Gates automatizados e esteiras GitOps integradas.',
+    stack: 'Spec-Driven Development (SDD) · AI Agents · Claude Code · GitOps · Quality Gates · Clean Architecture',
+    metrics: [
+      { value: '-40%', label: 'Redução de Retrabalho Técnico' },
+      { value: '100%', label: 'Rastreabilidade Requisito ↔ Código' },
+    ],
     repoUrl: 'https://github.com/ElessandroPrestes/universal-sdd',
     liveUrl: null,
   },
   {
+    num: '02',
+    id: 'elessandrodev',
+    title: 'elessandrodev',
+    subtitle: 'Portfólio & Assistente Virtual RAG com LangChain e Gemini',
+    tagline: 'Single Page Application com orquestração conversacional de IA fundamentada na arquitetura Retrieval-Augmented Generation.',
+    problem: 'Visitantes técnicos e recrutadores necessitam consultar trajetórias, métricas de missão crítica e decisões arquiteturais de mais de 9 anos de forma instantânea e estritamente factual, sem respostas genéricas ou alucinações de LLM.',
+    solution: 'Implementação de um pipeline RAG com orquestração de chains determinísticas no LangChain.js e Google Gemini, integrando parsing tipográfico de Markdown, containerização Docker e deploy contínuo.',
+    architecture: 'RAG Pipeline, Chain de Prompt determinística, SPA Vue 3 Composition API, Webpack/Vite modular, Docker Compose e GitHub Pages.',
+    stack: 'Vue.js 3 · LangChain.js · Google Gemini (2.5 Flash) · RAG · Tailwind CSS · Docker · Vite',
+    metrics: [
+      { value: '< 1.2s', label: 'Latência Média de Inferência' },
+      { value: 'Zero', label: 'Alucinações Factuais sobre Experiência' },
+    ],
+    repoUrl: 'https://github.com/ElessandroPrestes/elessandrodev',
+    liveUrl: 'https://elessandroprestes.github.io/elessandrodev/',
+  },
+  {
+    num: '03',
     id: 'event-driven-processing-system',
-    title: 'event-driven-processing-system - Pipeline de Processamento Distribuído (EDA)',
-    subtitle: 'Arquitetura Orientada a Eventos com Alta Vazão e Mensageria Assíncrona',
-    description:
-      'Solução arquitetural de alta resiliência demonstrando um pipeline de ingestão e processamento assíncrono de eventos, integrando brokers de mensageria (RabbitMQ), estratégias de cache distribuído (Redis) e persistência escalável.',
-    highlights:
-      'Arquitetura desacoplada (EDA), tolerância a falhas com Dead Letter Queues (DLQ), processamento concorrente e observabilidade.',
-    techs: ['EDA', 'RabbitMQ', 'Redis', 'Node.js', 'PostgreSQL', 'Docker', 'Microservices'],
+    title: 'event-driven-processing-system',
+    subtitle: 'Pipeline de Processamento Distribuído e Assíncrono (EDA)',
+    tagline: 'Arquitetura resiliente de alta vazão para ingestão e consumo de eventos concorrentes com tolerância a falhas.',
+    problem: 'Sistemas que processam requisições transacionais síncronas enfrentam gargalos severos de throughput sob picos de demanda, gerando perda de dados quando downstream services entram em saturação.',
+    solution: 'Desenho de um pipeline assíncrono orientado a eventos (EDA) utilizando RabbitMQ com Dead Letter Queues (DLQ) para retry ordenado, Redis para deduplicação em memória e persistência relacional resiliente.',
+    architecture: 'Event-Driven Architecture (EDA), Workers Concorrentes, Retry Policies com Exponential Backoff, DLQ e Cache Distribuído.',
+    stack: 'EDA · RabbitMQ · Redis · Node.js / TypeScript · PostgreSQL · Docker · Microservices',
+    metrics: [
+      { value: 'Zero', label: 'Perda de Eventos sob Falha Downstream' },
+      { value: '+50%', label: 'Capacidade de Throughput Elástico' },
+    ],
     repoUrl: 'https://github.com/ElessandroPrestes/event-driven-processing-system',
     liveUrl: null,
   },
   {
+    num: '04',
     id: 'iot-mqtt-simulator',
-    title: 'iot-mqtt-simulator - Plataforma de Telemetria e IoT em Nuvem',
-    subtitle: 'Monitoramento e Ingestão de Sensores em Tempo Real via MQTT & WebSockets',
-    description:
-      'Ecossistema de telemetria industrial simulada integrando broker MQTT para captura contínua de métricas de sensores, microsserviço de processamento em tempo real com Node.js e visualização interativa em dashboard Vue.js.',
-    highlights:
-      'Comunicação bidirecional de baixa latência, simulação de parque fabril, telemetria em tempo real e integração cloud.',
-    techs: ['IoT', 'MQTT', 'Node.js', 'Vue.js', 'WebSockets', 'Telemetria', 'Cloud'],
+    title: 'iot-mqtt-simulator',
+    subtitle: 'Plataforma de Telemetria Industrial & IoT em Nuvem',
+    tagline: 'Ingestão e processamento de dados contínuos de sensores com visualização bidirecional em tempo real.',
+    problem: 'Parques fabris operam centenas de sensores gerando telemetria em alta frequência, exigindo canal de baixa latência e consumo em tempo real sem degradação do banco de dados operacional.',
+    solution: 'Simulador de sensores industriais conectado a broker MQTT com processamento concorrente em microsserviço Node.js e streaming bidirecional via WebSockets para dashboards de monitoramento operacional.',
+    architecture: 'Publish-Subscribe (Pub/Sub) MQTT, WebSocket Streaming bidirecional, microsserviço de normalização e dashboard Vue.',
+    stack: 'IoT · MQTT · Node.js · WebSockets · Vue.js · Time-Series Ingestion · Cloud Architecture',
+    metrics: [
+      { value: '< 50ms', label: 'Latência de Telemetria Real-Time' },
+      { value: '100%', label: 'Integridade de Pacotes de Sensores' },
+    ],
     repoUrl: 'https://github.com/ElessandroPrestes/iot-mqtt-simulator',
     liveUrl: null,
   },
   {
+    num: '05',
     id: 'fintech-wallet-solution',
-    title: 'fintech-wallet-solution - Core Bancário & Carteira Digital Full Stack',
-    subtitle: 'Simulador de Carteira Digital com Transações Concorrentes e ACID',
-    description:
-      'Plataforma completa de serviços financeiros para gestão de carteira digital, abrangendo autenticação segura (JWT/OAuth), cadastro de contas, depósitos, extratos em tempo real e transferências com controle estrito de concorrência e transações ACID.',
-    highlights:
-      'Controle de concorrência transacional (mitigação de race conditions e double-spending), arquitetura desacoplada, logs de auditoria e segurança.',
-    techs: ['PHP / Node.js', 'PostgreSQL', 'Redis', 'JWT', 'REST API', 'ACID', 'Docker'],
+    title: 'fintech-wallet-solution',
+    subtitle: 'Core Bancário & Carteira Digital com Concorrência Estrita (ACID)',
+    tagline: 'Plataforma financeira de liquidação transacional com mitigação estrita de race conditions e double-spending.',
+    problem: 'Transferências financeiras e extratos simultâneos em contas compartilhadas demandam controle absoluto de isolamento e concorrência para evitar saldo negativo ou dupla liquidação sob alta frequência.',
+    solution: 'Arquitetura transacional bancária com controle de concorrência pessimista/otimista no PostgreSQL, tokens seguros com JWT, idempotência de requisições financeiras e logs de auditoria imutáveis.',
+    architecture: 'Transações ACID, Row-Level Locking, Idempotency Keys, Arquitetura em Camadas (Controller-Service-Repository) e JWT/OAuth2.',
+    stack: 'PHP 8.2 / Node.js · PostgreSQL · Redis · ACID · REST API · Docker · Audit Logs',
+    metrics: [
+      { value: '100% ACID', label: 'Isolamento de Concorrência' },
+      { value: 'Zero', label: 'Risco de Double-Spending' },
+    ],
     repoUrl: 'https://github.com/ElessandroPrestes/fintech-wallet-solution',
     liveUrl: null,
   },
@@ -64,109 +89,140 @@ const projects = [
 </script>
 
 <template>
-  <section aria-labelledby="projects-heading" class="max-w-3xl mx-auto w-full">
-    <div class="mb-10">
-      <h2
-        id="projects-heading"
-        class="text-xs font-semibold uppercase tracking-widest text-indigo-400 mb-2"
-      >
-        Projetos em Destaque
-      </h2>
-      <p class="text-sm text-gray-400">
-        Repositórios open-source e soluções técnicas comprovando arquitetura distribuída, IA aplicada, IoT e backend de alta escala.
-      </p>
-    </div>
+  <section id="selected-work" aria-labelledby="work-title" class="w-full border-b border-slate-200/80 dark:border-neutral-800/80">
+    <div class="max-w-6xl mx-auto px-4 sm:px-8 py-16 sm:py-24 space-y-16 sm:space-y-20">
+      
+      <!-- Cabeçalho da Seção -->
+      <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 border-b border-slate-200 dark:border-neutral-800 pb-6">
+        <div>
+          <div class="flex items-center gap-3 font-mono text-xs text-indigo-600 dark:text-indigo-400 tracking-widest uppercase mb-3">
+            <span>02 / SELECTED WORK</span>
+            <span class="h-px w-8 bg-indigo-600/40 dark:bg-indigo-400/40" aria-hidden="true" />
+            <span class="text-slate-500 dark:text-neutral-400">ESTUDOS DE CASO DE ENGENHARIA</span>
+          </div>
+          <h2 id="work-title" class="font-display text-2xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Projetos &amp; Decisões Arquiteturais
+          </h2>
+        </div>
 
-    <div class="space-y-6">
-      <article
-        v-for="project in projects"
-        :key="project.id"
-        class="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-700 transition-colors flex flex-col gap-4"
-      >
-        <!-- Header do Card -->
-        <header class="space-y-1">
-          <h3 class="text-base sm:text-lg font-semibold text-white leading-snug">
-            {{ project.title }}
-          </h3>
-          <p class="text-xs sm:text-sm font-medium text-indigo-400">
-            {{ project.subtitle }}
-          </p>
-        </header>
-
-        <!-- Descrição -->
-        <p class="text-sm text-gray-300 leading-relaxed">
-          {{ project.description }}
+        <p class="font-mono text-xs text-slate-500 dark:text-neutral-400 max-w-sm sm:text-right">
+          Casos reais avaliados pelo problema de negócio, estratégia arquitetural e métricas comprovadas.
         </p>
+      </div>
 
-        <!-- Destaques -->
-        <div class="text-xs text-gray-400 bg-gray-950/60 border border-gray-800/80 rounded-lg p-3">
-          <strong class="text-gray-200 font-medium">Destaques Técnicos:</strong>
-          {{ project.highlights }}
-        </div>
-
-        <!-- Badges de Tecnologias -->
-        <ul
-          class="flex flex-wrap gap-2 pt-1"
-          :aria-label="`Tecnologias utilizadas em ${project.title}`"
+      <!-- Lista Editorial de Case Studies -->
+      <div class="space-y-16 sm:space-y-24">
+        <article
+          v-for="cs in caseStudies"
+          :key="cs.id"
+          class="border-b border-slate-200/80 dark:border-neutral-800/80 pb-16 sm:pb-24 last:border-0 last:pb-0"
         >
-          <li v-for="tech in project.techs" :key="tech">
-            <span
-              class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700"
-            >
-              {{ tech }}
+          <!-- Topo do Case: Número + Título e Subtítulo -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start mb-8 sm:mb-12">
+            
+            <div class="lg:col-span-1">
+              <span class="font-mono text-4xl sm:text-5xl font-bold tracking-tighter text-slate-300 dark:text-neutral-700">
+                {{ cs.num }}
+              </span>
+            </div>
+
+            <div class="lg:col-span-8 space-y-2">
+              <h3 class="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                {{ cs.title }}
+              </h3>
+              <p class="font-sans text-base sm:text-lg font-medium text-indigo-600 dark:text-indigo-400 leading-snug">
+                {{ cs.subtitle }}
+              </p>
+              <p class="font-sans text-sm text-slate-500 dark:text-neutral-400 leading-relaxed pt-1">
+                {{ cs.tagline }}
+              </p>
+            </div>
+
+            <!-- Links de Ação -->
+            <div class="lg:col-span-3 flex flex-wrap lg:flex-col items-start lg:items-end gap-3 pt-2 font-mono text-xs">
+              <a
+                :href="cs.repoUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 border-b border-slate-900 dark:border-white hover:border-indigo-600 dark:hover:border-indigo-400 pb-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                :aria-label="`Ver código de ${cs.title} no GitHub`"
+              >
+                <span>REPOSITÓRIO GITHUB</span>
+                <span aria-hidden="true">&nearr;</span>
+              </a>
+
+              <a
+                v-if="cs.liveUrl"
+                :href="cs.liveUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:underline pb-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                :aria-label="`Ver aplicação ${cs.title} ao vivo`"
+              >
+                <span>DEMONSTRAÇÃO ONLINE</span>
+                <span aria-hidden="true">&rarr;</span>
+              </a>
+            </div>
+
+          </div>
+
+          <!-- Grade Analítica: Problema, Solução & Métricas -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 bg-slate-50 dark:bg-[#12141a] p-6 sm:p-8 border border-slate-200/80 dark:border-neutral-800/80">
+            
+            <!-- O Desafio Técnico -->
+            <div class="md:col-span-5 space-y-3">
+              <h4 class="font-mono text-[11px] text-slate-500 dark:text-neutral-400 uppercase tracking-widest font-semibold flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-amber-500 rounded-full" aria-hidden="true" />
+                O PROBLEMA ARQUITETURAL
+              </h4>
+              <p class="font-sans text-xs sm:text-sm text-slate-600 dark:text-neutral-300 leading-relaxed">
+                {{ cs.problem }}
+              </p>
+            </div>
+
+            <!-- A Solução & Arquitetura -->
+            <div class="md:col-span-4 space-y-3">
+              <h4 class="font-mono text-[11px] text-slate-500 dark:text-neutral-400 uppercase tracking-widest font-semibold flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full" aria-hidden="true" />
+                DECISÃO &amp; ARQUITETURA
+              </h4>
+              <p class="font-sans text-xs sm:text-sm text-slate-600 dark:text-neutral-300 leading-relaxed">
+                {{ cs.solution }}
+              </p>
+            </div>
+
+            <!-- Métricas de Impacto -->
+            <div class="md:col-span-3 space-y-4 border-t md:border-t-0 md:border-l border-slate-200 dark:border-neutral-800 pt-4 md:pt-0 md:pl-6">
+              <h4 class="font-mono text-[11px] text-slate-500 dark:text-neutral-400 uppercase tracking-widest font-semibold">
+                IMPACTO MENSURADO
+              </h4>
+              <div class="space-y-3">
+                <div v-for="(m, mi) in cs.metrics" :key="mi">
+                  <span class="block font-mono text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {{ m.value }}
+                  </span>
+                  <span class="block font-sans text-xs text-slate-500 dark:text-neutral-400 leading-snug">
+                    {{ m.label }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Stack Editorial em Linha (Sem Badges Repetitivas) -->
+          <div class="pt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-xs">
+            <span class="text-slate-400 dark:text-neutral-500 uppercase tracking-wider text-[10px]">
+              STACK:
             </span>
-          </li>
-        </ul>
+            <span class="text-slate-700 dark:text-neutral-300 font-medium">
+              {{ cs.stack }}
+            </span>
+          </div>
 
-        <!-- Links de Ação -->
-        <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-800/80">
-          <a
-            :href="project.repoUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-            :aria-label="`Ver repositório de ${project.title} no GitHub (abre em nova aba)`"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-3.5 h-3.5 fill-current"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"
-              />
-            </svg>
-            Repositório (GitHub)
-          </a>
+        </article>
+      </div>
 
-          <a
-            v-if="project.liveUrl"
-            :href="project.liveUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-            :aria-label="`Ver demonstração ao vivo de ${project.title} (abre em nova aba)`"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-3.5 h-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-            Live Demo
-          </a>
-        </div>
-      </article>
     </div>
   </section>
 </template>

@@ -1,60 +1,79 @@
 <script setup>
 const year = new Date().getFullYear()
 
-const socialLinks = [
-  { label: 'GitHub', href: 'https://github.com/ElessandroPrestes' },
-  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/elessandro-prestes-macedo/' },
-  { label: 'GitLab', href: 'https://gitlab.com/elessandrodev' },
+const channels = [
+  { label: 'E-MAIL', value: 'elessandrodev@gmail.com', href: 'mailto:elessandrodev@gmail.com' },
+  { label: 'WHATSAPP', value: '+55 (45) 99917-8290', href: 'https://wa.me/5545999178290' },
+  { label: 'LINKEDIN', value: 'in/elessandro-prestes-macedo', href: 'https://www.linkedin.com/in/elessandro-prestes-macedo/' },
+  { label: 'GITHUB', value: 'github.com/ElessandroPrestes', href: 'https://github.com/ElessandroPrestes' },
+  { label: 'GITLAB', value: 'gitlab.com/elessandrodev', href: 'https://gitlab.com/elessandrodev' },
 ]
 </script>
 
 <template>
-  <footer class="w-full border-t border-gray-800 bg-gray-950 mt-auto relative z-10">
-    <div class="max-w-5xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-      <!-- Copyright à esquerda -->
-      <p class="text-center md:text-left order-2 md:order-1">
-        &copy; {{ year }} Elessandro Prestes Macedo. Todos os direitos reservados.
-      </p>
+  <footer id="contact" class="w-full bg-[#fbfbfb] dark:bg-[#0a0b0e] transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-8 py-16 sm:py-24 space-y-16">
+      
+      <!-- Cabeçalho da Seção -->
+      <div class="space-y-6">
+        <div class="flex items-center gap-3 font-mono text-xs text-indigo-600 dark:text-indigo-400 tracking-widest uppercase">
+          <span>06 / CONTACT &amp; INQUIRY</span>
+          <span class="h-px w-8 bg-indigo-600/40 dark:bg-indigo-400/40" aria-hidden="true" />
+          <span class="text-slate-500 dark:text-neutral-400">DISPONIBILIDADE PROFISSIONAL</span>
+        </div>
 
-      <!-- Acessibilidade e Links Sociais à direita com margem segura contra o botão flutuante -->
-      <div class="flex flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-4 order-1 md:order-2 md:mr-40">
-        <span
-          class="inline-flex min-h-10 items-center gap-1.5 px-2 font-medium text-indigo-300"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <circle cx="12" cy="4" r="2" />
-            <path d="M5 8h14M12 6v6M8 21l4-9 4 9M8 15h8" />
-          </svg>
-          Acessibilidade
-        </span>
+        <h2 class="font-display text-3xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-white max-w-3xl leading-[1.1]">
+          Vamos conversar sobre arquitetura, liderança técnica ou novos projetos.
+        </h2>
 
-        <nav aria-label="Links sociais do rodapé">
-          <ul class="flex items-center gap-1 sm:gap-2">
-            <li v-for="link in socialLinks" :key="link.label">
-              <a
-                :href="link.href"
-                :aria-label="`${link.label} (abre em nova aba)`"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex min-h-10 items-center rounded px-2 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
-              >
-                {{ link.label }}
-              </a>
-            </li>
-          </ul>
-        </nav>
+        <p class="font-sans text-sm sm:text-base text-slate-600 dark:text-neutral-300 max-w-xl leading-relaxed">
+          Atuo na condução de migrações complexas, modernização de sistemas legados, consultoria arquitetural e implementação de inteligência artificial no ciclo de desenvolvimento com rigor técnico.
+        </p>
       </div>
+
+      <!-- Canais de Contato Diretos -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t border-slate-200 dark:border-neutral-800">
+        <div
+          v-for="c in channels"
+          :key="c.label"
+          class="border-b border-slate-200/80 dark:border-neutral-800/80 pb-4 space-y-1"
+        >
+          <span class="font-mono text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-widest block font-semibold">
+            {{ c.label }}
+          </span>
+          <a
+            :href="c.href"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-mono text-sm sm:text-base text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+          >
+            <span>{{ c.value }}</span>
+            <span aria-hidden="true" class="text-xs">&nearr;</span>
+          </a>
+        </div>
+
+        <div class="border-b border-slate-200/80 dark:border-neutral-800/80 pb-4 space-y-1">
+          <span class="font-mono text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-widest block font-semibold">
+            LOCALIZAÇÃO &amp; FUSO
+          </span>
+          <p class="font-mono text-sm sm:text-base text-slate-900 dark:text-white">
+            Brasil (UTC-3 / Horário de Brasília)
+          </p>
+        </div>
+      </div>
+
+      <!-- Bottom Bar Editorial -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-8 border-t border-slate-200 dark:border-neutral-800 font-mono text-xs text-slate-500 dark:text-neutral-400">
+        <p>
+          &copy; {{ year }} ELESSANDRO PRESTES MACEDO. ALL RIGHTS RESERVED.
+        </p>
+
+        <p class="flex items-center gap-2 text-[11px]">
+          <span class="text-emerald-600 dark:text-emerald-400 font-bold">&bull;</span>
+          <span>IA APLICADA (SDD &amp; RAG) &bull; WCAG 2.1 AA COMPLIANT</span>
+        </p>
+      </div>
+
     </div>
   </footer>
 </template>
