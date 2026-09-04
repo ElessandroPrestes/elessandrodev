@@ -308,7 +308,7 @@ export default {
       {
         domain: 'FRONTEND SYSTEMS',
         description: 'High-performance modular reactive interfaces with strict accessibility standards.',
-        items: ['React', 'Next.js', 'Vue.js', 'Angular', 'TypeScript', 'Tailwind CSS', 'Vite', 'WCAG Accessibility'],
+        items: ['React', 'Next.js', 'Vue.js', 'Angular', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Vite', 'WCAG Accessibility'],
       },
     ],
   },
