@@ -1,7 +1,10 @@
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, watch } from 'vue'
 import { marked } from 'marked'
 import { askAssistant } from '../services/aiService'
+import { useI18n } from '../composables/useI18n.js'
+
+const { messages: i18n, locale } = useI18n()
 
 // Configuração do Marked para conversão de markdown limpo
 marked.setOptions({
@@ -31,23 +34,19 @@ const inputMessage = ref('')
 const isLoading = ref(false)
 const chatContainer = ref(null)
 
-const suggestedTopics = [
-  { label: '🏛️ Projetos CAPES & ONS', query: 'Conte em detalhes sobre sua atuação técnica e arquitetural nos projetos de missão crítica da CAPES e ONS.' },
-  { label: '🤖 SDD & IA Aplicada', query: 'Como você aplica Inteligência Artificial, SDD e RAG no seu ciclo de desenvolvimento?' },
-  { label: '⚙️ Strangler Fig & Legados', query: 'Como você conduziu a modernização de monolitos com Strangler Fig Pattern e eliminação de código legado?' },
-  { label: '📈 Tech Lead & Concorrência', query: 'Fale sobre sua experiência como Tech Lead suportando 2.500 RPS e alta concorrência.' },
-  { label: '📬 Contato Direto', query: 'Como posso falar diretamente com o Elessandro?' },
-]
-
-const INITIAL_GREETING = 'Terminal interativo RAG ativo. Consulte dados técnicos factuais, métricas de produção, decisões de arquitetura e histórico profissional do Elessandro Prestes:'
-
 const messages = ref([
   {
     role: 'assistant',
-    text: INITIAL_GREETING,
+    text: i18n.value.aiAssistant.greeting,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   },
 ])
+
+watch(locale, () => {
+  if (messages.value.length === 1 && messages.value[0].role === 'assistant') {
+    messages.value[0].text = i18n.value.aiAssistant.greeting
+  }
+})
 
 function toggleChat() {
   isOpen.value = !isOpen.value
@@ -60,7 +59,7 @@ function resetChat() {
   messages.value = [
     {
       role: 'assistant',
-      text: INITIAL_GREETING,
+      text: i18n.value.aiAssistant.greeting,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]
@@ -78,7 +77,7 @@ function scrollToBottom(delay = 50) {
   })
 }
 
-const MENU_KEYWORDS = ['menu', 'inicio', 'início', 'topico', 'topicos', 'tópicos', 'voltar', 'ajuda', 'help', 'reset', 'limpar']
+const MENU_KEYWORDS = ['menu', 'inicio', 'início', 'topico', 'topicos', 'tópicos', 'voltar', 'ajuda', 'help', 'reset', 'limpar', 'clear']
 
 async function sendMessage(textToSend) {
   const content = (textToSend || inputMessage.value).trim()
@@ -98,7 +97,9 @@ async function sendMessage(textToSend) {
   if (MENU_KEYWORDS.includes(normalized)) {
     messages.value.push({
       role: 'assistant',
-      text: 'Selecione um dos tópicos de consulta acima ou formule uma pergunta direta sobre arquitetura, métricas ou histórico técnico:',
+      text: locale.value === 'pt'
+        ? 'Selecione um dos tópicos de consulta acima ou formule uma pergunta direta sobre arquitetura, métricas ou histórico técnico:'
+        : 'Select one of the query topics above or type a direct question regarding architecture, metrics, or technical history:',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     })
     scrollToBottom(50)
@@ -108,7 +109,7 @@ async function sendMessage(textToSend) {
   isLoading.value = true
 
   try {
-    const aiResponse = await askAssistant(content)
+    const aiResponse = await askAssistant(content, locale.value)
     messages.value.push({
       role: 'assistant',
       text: aiResponse,
@@ -118,7 +119,9 @@ async function sendMessage(textToSend) {
     console.error('Erro na chamada do Gemini:', err)
     messages.value.push({
       role: 'assistant',
-      text: 'Desculpe, ocorreu uma instabilidade na consulta à IA. Verifique se a variável VITE_GEMINI_API_KEY está configurada.',
+      text: locale.value === 'pt'
+        ? 'Desculpe, ocorreu uma instabilidade na consulta à IA. Verifique se a variável VITE_GEMINI_API_KEY está configurada.'
+        : 'Sorry, an error occurred while connecting to the AI. Please verify that the VITE_GEMINI_API_KEY environment variable is properly configured.',
       isError: true,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     })
@@ -137,7 +140,7 @@ async function sendMessage(textToSend) {
       @click="toggleChat"
       type="button"
       class="group inline-flex items-center gap-2.5 px-4 py-2.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#12141a] dark:text-neutral-100 dark:hover:bg-[#191c24] border border-slate-700 dark:border-neutral-700 hover:border-indigo-500 shadow-xl transition-all font-mono text-xs tracking-wider cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-      aria-label="Abrir terminal de consulta RAG com Inteligência Artificial"
+      :aria-label="locale === 'pt' ? 'Abrir terminal de consulta RAG com Inteligência Artificial' : 'Open RAG query terminal with Artificial Intelligence'"
     >
       <span class="relative flex h-2 w-2">
         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -169,10 +172,10 @@ async function sendMessage(textToSend) {
             <span class="font-mono text-xs text-indigo-600 dark:text-indigo-400 font-bold">&gt;_</span>
             <div>
               <h2 id="terminal-title" class="font-mono text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
-                ASSISTENTE RAG // GEMINI
+                {{ i18n.aiAssistant.badgeTitle }}
               </h2>
               <p class="font-mono text-[10px] text-slate-500 dark:text-neutral-400">
-                CONTEXTO VETORIAL DETERMINÍSTICO
+                {{ locale === 'pt' ? 'CONTEXTO VETORIAL DETERMINÍSTICO' : 'DETERMINISTIC VECTOR CONTEXT' }}
               </p>
             </div>
           </div>
@@ -180,16 +183,16 @@ async function sendMessage(textToSend) {
           <div class="flex items-center gap-2">
             <button
               @click="resetChat"
-              title="Reiniciar consulta"
+              :title="locale === 'pt' ? 'Reiniciar consulta' : 'Reset session'"
               class="p-1 rounded text-slate-500 hover:text-indigo-600 hover:bg-slate-200 dark:text-neutral-400 dark:hover:text-indigo-400 dark:hover:bg-neutral-800 transition-colors font-mono text-xs"
-              aria-label="Reiniciar conversa"
+              :aria-label="locale === 'pt' ? 'Reiniciar conversa' : 'Reset chat'"
             >
-              RESET
+              {{ i18n.aiAssistant.clearChat }}
             </button>
             <button
               @click="toggleChat"
               class="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-200 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800 transition-colors font-mono text-xs"
-              aria-label="Fechar terminal de IA"
+              :aria-label="i18n.aiAssistant.closeAria"
             >
               &times;
             </button>
@@ -233,7 +236,7 @@ async function sendMessage(textToSend) {
           <!-- Loading Indicator -->
           <div v-if="isLoading" class="flex items-center gap-2 mr-auto bg-white border border-slate-200 dark:bg-[#12141a] dark:border-neutral-800 rounded px-3 py-2 text-slate-600 dark:text-neutral-400 text-xs font-mono">
             <span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span>CONSULTANDO MODELO GEMINI...</span>
+            <span>{{ locale === 'pt' ? 'CONSULTANDO MODELO GEMINI...' : 'QUERYING GEMINI MODEL...' }}</span>
           </div>
         </div>
 
@@ -241,7 +244,7 @@ async function sendMessage(textToSend) {
         <div class="px-3 py-2 border-t border-slate-200 dark:border-neutral-800 bg-slate-100/70 dark:bg-[#12141a] shrink-0">
           <div class="flex gap-1.5 overflow-x-auto custom-scrollbar pb-1">
             <button
-              v-for="(topic, i) in suggestedTopics"
+              v-for="(topic, i) in i18n.aiAssistant.suggestedTopics"
               :key="i"
               @click="sendMessage(topic.query)"
               :disabled="isLoading"
@@ -258,7 +261,7 @@ async function sendMessage(textToSend) {
             <input
               v-model="inputMessage"
               type="text"
-              placeholder="Digite uma pergunta técnica..."
+              :placeholder="i18n.aiAssistant.placeholder"
               :disabled="isLoading"
               class="flex-1 font-mono text-xs bg-slate-50 text-slate-900 placeholder-slate-400 px-3 py-2 rounded border border-slate-200 focus:outline-none focus:border-indigo-600 dark:bg-[#0a0b0e] dark:text-white dark:placeholder-neutral-500 dark:border-neutral-750 dark:focus:border-indigo-500 disabled:opacity-50"
             />
@@ -267,7 +270,7 @@ async function sendMessage(textToSend) {
               :disabled="!inputMessage.trim() || isLoading"
               class="font-mono text-xs px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
             >
-              ENVIAR
+              {{ locale === 'pt' ? 'ENVIAR' : 'SEND' }}
             </button>
           </form>
         </footer>

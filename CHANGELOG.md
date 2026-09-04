@@ -7,6 +7,18 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.3.0] - 2026-09-04
+
+### Adicionado
+- **Internacionalização Bilíngue Completa (i18n PT-BR & EN)**:
+  - Criação dos dicionários completos e tipados `src/i18n/locales/pt.js` e `src/i18n/locales/en.js`.
+  - Implementação do composable reativo `src/composables/useI18n.js` com persistência em `localStorage`, detecção automática de preferência de idioma do navegador (`navigator.language`) e sincronização reativa de `<html lang>`.
+  - Componente `LanguageToggle.vue` com UX-UI design editorial suíço (controle segmentado em monospace `[ PT / EN ]`, contraste WCAG 2.1 AA, acessibilidade com `role="group"` e `aria-pressed`).
+  - Tradução técnica e editorial de 100% das seções: Statement, Selected Work (5 Case Studies), Architecture (4 pilares), Trajectory (6 posições com métricas X-Y-Z), Toolbox (8 domínios) e Footer.
+  - Suporte a múltiplos idiomas no terminal do Assistente Virtual RAG (`AiAssistant.vue` e `aiService.js`), alternando prompts sugeridos, mensagens de sistema e instruindo a cadeia do Gemini a responder no idioma selecionado.
+
+---
+
 ## [1.2.0] - 2026-09-04
 
 ### Adicionado

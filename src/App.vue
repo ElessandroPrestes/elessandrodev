@@ -7,6 +7,9 @@ import Experience from './components/Experience.vue'
 import Toolbox from './components/Toolbox.vue'
 import Footer from './components/Footer.vue'
 import AiAssistant from './components/AiAssistant.vue'
+import { useI18n } from './composables/useI18n.js'
+
+const { locale } = useI18n()
 </script>
 
 <template>
@@ -17,7 +20,7 @@ import AiAssistant from './components/AiAssistant.vue'
       href="#statement"
       class="fixed left-4 top-4 z-[100] -translate-y-24 rounded bg-slate-900 text-white dark:bg-white dark:text-slate-950 px-4 py-2 text-xs font-mono font-medium shadow-lg transition-transform focus:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
     >
-      [PULAR PARA O CONTEÚDO PRINCIPAL]
+      {{ locale === 'pt' ? '[PULAR PARA O CONTEÚDO PRINCIPAL]' : '[SKIP TO MAIN CONTENT]' }}
     </a>
 
     <!-- 00 / Masthead & System Status -->

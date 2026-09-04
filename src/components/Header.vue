@@ -1,13 +1,18 @@
 <script setup>
+import { computed } from 'vue'
 import ThemeToggle from './ThemeToggle.vue'
+import LanguageToggle from './LanguageToggle.vue'
+import { useI18n } from '../composables/useI18n.js'
 
-const navItems = [
-  { num: '01', label: 'Work', href: '#selected-work' },
-  { num: '02', label: 'Architecture', href: '#core-engineering' },
-  { num: '03', label: 'Trajectory', href: '#trajectory' },
-  { num: '04', label: 'Toolbox', href: '#toolbox' },
-  { num: '05', label: 'Contact', href: '#contact' },
-]
+const { messages, locale } = useI18n()
+
+const navItems = computed(() => [
+  { num: '01', label: locale.value === 'pt' ? 'Projetos' : 'Work', href: '#selected-work' },
+  { num: '02', label: locale.value === 'pt' ? 'Arquitetura' : 'Architecture', href: '#core-engineering' },
+  { num: '03', label: locale.value === 'pt' ? 'Trajetória' : 'Trajectory', href: '#trajectory' },
+  { num: '04', label: locale.value === 'pt' ? 'Habilidades' : 'Toolbox', href: '#toolbox' },
+  { num: '05', label: locale.value === 'pt' ? 'Contato' : 'Contact', href: '#contact' },
+])
 </script>
 
 <template>
@@ -30,12 +35,12 @@ const navItems = [
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
-        <span>STATUS: DISPONÍVEL · IA NO DEV, SDD &amp; ARQUITETURA</span>
+        <span>{{ messages.header.status }}</span>
       </div>
 
-      <!-- Navegação por Coordenadas Numéricas & Toggle -->
-      <div class="flex items-center gap-3 sm:gap-6">
-        <nav aria-label="Navegação editorial" class="hidden md:block">
+      <!-- Navegação por Coordenadas Numéricas, Idioma & Tema -->
+      <div class="flex items-center gap-3 sm:gap-4 lg:gap-6">
+        <nav :aria-label="locale === 'pt' ? 'Navegação editorial' : 'Editorial navigation'" class="hidden md:block">
           <ul class="flex items-center gap-4 lg:gap-6 font-mono text-xs">
             <li v-for="item in navItems" :key="item.num">
               <a
@@ -50,6 +55,9 @@ const navItems = [
         </nav>
 
         <div class="h-4 w-px bg-slate-200 dark:bg-neutral-800 hidden md:block" aria-hidden="true" />
+
+        <!-- Seletor de Idioma (PT / EN) -->
+        <LanguageToggle />
 
         <!-- Theme Toggle -->
         <ThemeToggle />

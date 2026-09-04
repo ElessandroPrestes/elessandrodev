@@ -1,13 +1,8 @@
 <script setup>
-const cvPath = `${import.meta.env.BASE_URL}Elessandro_Prestes_Macedo_Software_Engineer.pdf`
+import { useI18n } from '../composables/useI18n.js'
 
-const highlights = [
-  { metric: '2.500+ RPS', label: 'Throughput Concorrente', context: 'SIPREC / CAPES (<300ms de latência)' },
-  { metric: '56.400+ Linhas', label: 'Legado Eliminado', context: 'Migração Strangler Fig para Laravel 12 (Amura Sistemas)' },
-  { metric: 'IA + SDD + RAG', label: 'Ciclo de Engenharia', context: 'IA aplicada com Claude Code, Gemini e RAG' },
-  { metric: '2.399 Testes', label: 'Cobertura Automatizada', context: 'Em 241 arquivos com Pest/PHPUnit' },
-  { metric: '99.9% Uptime', label: 'Disponibilidade Operacional', context: 'Plataformas distribuídas (ONS - Energia Pecém)' },
-]
+const { messages, locale } = useI18n()
+const cvPath = `${import.meta.env.BASE_URL}Elessandro_Prestes_Macedo_Software_Engineer.pdf`
 </script>
 
 <template>
@@ -17,16 +12,16 @@ const highlights = [
       <!-- Seção & Título de Abertura -->
       <div class="space-y-6">
         <div class="flex items-center gap-3 font-mono text-xs text-indigo-600 dark:text-indigo-400 tracking-widest uppercase">
-          <span>01 / STATEMENT</span>
+          <span>{{ messages.statement.tag }}</span>
           <span class="h-px w-12 bg-indigo-600/40 dark:bg-indigo-400/40" aria-hidden="true" />
-          <span class="text-slate-500 dark:text-neutral-400">IA APLICADA, SDD &amp; ARQUITETURA DE SISTEMAS</span>
+          <span class="text-slate-500 dark:text-neutral-400">{{ messages.statement.subtag }}</span>
         </div>
 
         <h1
           id="statement-title"
           class="font-display text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.1] max-w-4xl"
         >
-          Construo arquiteturas resilientes, modernizo monolitos críticos e aplico IA no meu ciclo de desenvolvimento.
+          {{ messages.statement.title }}
         </h1>
       </div>
 
@@ -35,12 +30,18 @@ const highlights = [
         
         <!-- Coluna Esquerda: Manifesto de Posicionamento -->
         <div class="lg:col-span-7 space-y-6">
-          <p class="text-lg sm:text-xl text-slate-600 dark:text-neutral-300 font-normal leading-relaxed">
+          <p v-if="locale === 'pt'" class="text-lg sm:text-xl text-slate-600 dark:text-neutral-300 font-normal leading-relaxed">
             Sou <strong class="text-slate-900 dark:text-white font-semibold">Elessandro Prestes Macedo</strong>, Engenheiro de Software Sênior &amp; Tech Lead com mais de 9 anos projetando ecossistemas distribuídos, microsserviços de alta concorrência e liderando modernizações de missão crítica para instituições como <strong class="text-slate-900 dark:text-white font-semibold">CAPES</strong> e o <strong class="text-slate-900 dark:text-white font-semibold">Operador Nacional do Sistema Elétrico (ONS - Energia Pecém)</strong>.
           </p>
+          <p v-else class="text-lg sm:text-xl text-slate-600 dark:text-neutral-300 font-normal leading-relaxed">
+            I am <strong class="text-slate-900 dark:text-white font-semibold">Elessandro Prestes Macedo</strong>, Senior Software Engineer &amp; Tech Lead with 9+ years architecting distributed ecosystems, high-concurrency microservices, and leading mission-critical modernizations for institutions like <strong class="text-slate-900 dark:text-white font-semibold">CAPES</strong> and the <strong class="text-slate-900 dark:text-white font-semibold">National Grid Operator (ONS - Energia Pecém)</strong>.
+          </p>
 
-          <p class="text-base sm:text-lg text-slate-700 dark:text-neutral-200 font-medium leading-relaxed">
+          <p v-if="locale === 'pt'" class="text-base sm:text-lg text-slate-700 dark:text-neutral-200 font-medium leading-relaxed">
             Nos últimos anos, venho aplicando Inteligência Artificial no ciclo de desenvolvimento de software, utilizando <strong class="text-indigo-600 dark:text-indigo-400 font-semibold">SDD (Spec-Driven Development)</strong>, <strong class="text-indigo-600 dark:text-indigo-400 font-semibold">RAG (Retrieval-Augmented Generation)</strong> e <strong class="text-indigo-600 dark:text-indigo-400 font-semibold">integrações com LLMs</strong> para blindar contratos de software, acelerar entregas e eliminar retrabalho com rigor técnico.
+          </p>
+          <p v-else class="text-base sm:text-lg text-slate-700 dark:text-neutral-200 font-medium leading-relaxed">
+            In recent years, I have been applying Artificial Intelligence across the software development lifecycle, utilizing <strong class="text-indigo-600 dark:text-indigo-400 font-semibold">SDD (Spec-Driven Development)</strong>, <strong class="text-indigo-600 dark:text-indigo-400 font-semibold">RAG (Retrieval-Augmented Generation)</strong>, and <strong class="text-indigo-600 dark:text-indigo-400 font-semibold">LLM integrations</strong> to shield software contracts, accelerate delivery, and eliminate rework with rigorous engineering discipline.
           </p>
 
           <!-- Ações Editoriais / Links Diretos -->
@@ -50,7 +51,7 @@ const highlights = [
               download
               class="inline-flex items-center gap-2 text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors border-b border-slate-900 dark:border-white hover:border-indigo-600 dark:hover:border-indigo-400 pb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
-              <span>DOWNLOAD CURRÍCULO (PDF)</span>
+              <span>{{ messages.statement.cvButton }}</span>
               <span aria-hidden="true">&darr;</span>
             </a>
 
@@ -60,7 +61,7 @@ const highlights = [
               rel="noopener noreferrer"
               class="inline-flex items-center gap-2 text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors border-b border-slate-900 dark:border-white hover:border-emerald-600 dark:hover:border-emerald-400 pb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
-              <span>WHATSAPP DIRETO</span>
+              <span>{{ messages.statement.whatsappButton }}</span>
               <span aria-hidden="true">&rarr;</span>
             </a>
 
@@ -90,16 +91,16 @@ const highlights = [
         <div class="lg:col-span-5 border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#12141a] p-6 sm:p-8 space-y-6">
           <div class="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 pb-3">
             <span class="font-mono text-[11px] text-slate-500 dark:text-neutral-400 uppercase tracking-widest">
-              SYSTEM BENCHMARKS &amp; METRICS
+              {{ messages.statement.ledgerTitle }}
             </span>
             <span class="font-mono text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">
-              // PRODUCTION
+              {{ messages.statement.ledgerBadge }}
             </span>
           </div>
 
           <div class="space-y-5">
             <div
-              v-for="(item, idx) in highlights"
+              v-for="(item, idx) in messages.statement.highlights"
               :key="idx"
               class="flex flex-col gap-1 border-b border-slate-100 dark:border-neutral-850 last:border-0 pb-4 last:pb-0"
             >

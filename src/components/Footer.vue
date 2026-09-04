@@ -1,4 +1,7 @@
 <script setup>
+import { useI18n } from '../composables/useI18n.js'
+
+const { messages, locale } = useI18n()
 const year = new Date().getFullYear()
 
 const channels = [
@@ -17,17 +20,17 @@ const channels = [
       <!-- Cabeçalho da Seção -->
       <div class="space-y-6">
         <div class="flex items-center gap-3 font-mono text-xs text-indigo-600 dark:text-indigo-400 tracking-widest uppercase">
-          <span>06 / CONTACT &amp; INQUIRY</span>
+          <span>{{ messages.footer.tag }}</span>
           <span class="h-px w-8 bg-indigo-600/40 dark:bg-indigo-400/40" aria-hidden="true" />
-          <span class="text-slate-500 dark:text-neutral-400">DISPONIBILIDADE PROFISSIONAL</span>
+          <span class="text-slate-500 dark:text-neutral-400">{{ messages.footer.subtag }}</span>
         </div>
 
         <h2 class="font-display text-3xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-white max-w-3xl leading-[1.1]">
-          Vamos conversar sobre arquitetura, liderança técnica ou novos projetos.
+          {{ messages.footer.title }}
         </h2>
 
         <p class="font-sans text-sm sm:text-base text-slate-600 dark:text-neutral-300 max-w-xl leading-relaxed">
-          Atuo na condução de migrações complexas, modernização de sistemas legados, consultoria arquitetural e implementação de inteligência artificial no ciclo de desenvolvimento com rigor técnico.
+          {{ messages.footer.description }}
         </p>
       </div>
 
@@ -54,10 +57,10 @@ const channels = [
 
         <div class="border-b border-slate-200/80 dark:border-neutral-800/80 pb-4 space-y-1">
           <span class="font-mono text-[10px] text-slate-400 dark:text-neutral-500 uppercase tracking-widest block font-semibold">
-            LOCALIZAÇÃO &amp; FUSO
+            {{ locale === 'pt' ? 'LOCALIZAÇÃO & FUSO' : 'LOCATION & TIMEZONE' }}
           </span>
           <p class="font-mono text-sm sm:text-base text-slate-900 dark:text-white">
-            Brasil (UTC-3 / Horário de Brasília)
+            {{ locale === 'pt' ? 'Brasil (UTC-3 / Horário de Brasília)' : 'Brazil (UTC-3 / Brasília Time)' }}
           </p>
         </div>
       </div>
@@ -70,7 +73,7 @@ const channels = [
 
         <p class="flex items-center gap-2 text-[11px]">
           <span class="text-emerald-600 dark:text-emerald-400 font-bold">&bull;</span>
-          <span>IA APLICADA (SDD &amp; RAG) &bull; WCAG 2.1 AA COMPLIANT</span>
+          <span>{{ locale === 'pt' ? 'IA APLICADA (SDD & RAG) • WCAG 2.1 AA COMPLIANT' : 'APPLIED AI (SDD & RAG) • WCAG 2.1 AA COMPLIANT' }}</span>
         </p>
       </div>
 

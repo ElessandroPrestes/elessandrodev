@@ -40,7 +40,7 @@ Diretrizes de resposta:
 - Se não souber responder com precisão sobre um detalhe específico não mencionado, indique cordialmente que o visitante pode entrar em contato via LinkedIn.
 `
 
-export async function askAssistant(question) {
+export async function askAssistant(question, locale = 'pt') {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY
 
   if (!apiKey || apiKey.trim() === '') {
@@ -49,12 +49,18 @@ export async function askAssistant(question) {
 
   const model = new ChatGoogleGenerativeAI({
     apiKey,
-    model: 'gemini-3.6-flash',
+    model: 'gemini-2.5-flash',
     temperature: 0.4,
   })
 
+  const languageInstruction = locale === 'en'
+    ? 'IMPORTANT INSTRUCTION: Respond strictly in professional, fluent English suitable for senior engineering recruiters and technical directors.'
+    : 'INSTRUÇÃO DE IDIOMA: Responda estritamente em português brasileiro técnico e profissional.'
+
   const prompt = PromptTemplate.fromTemplate(`
 {context}
+
+{languageInstruction}
 
 Histórico/Contexto da conversa atual:
 Pergunta do visitante: {question}
@@ -66,6 +72,7 @@ Resposta:
 
   return await chain.invoke({
     context: ELESSANDRO_CONTEXT,
+    languageInstruction,
     question,
   })
 }
