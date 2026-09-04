@@ -320,8 +320,8 @@ export default {
     whatsappButton: 'DIRECT WHATSAPP',
     cvButton: 'DOWNLOAD FULL RESUME',
     emailButton: 'SEND EMAIL',
-    designedBy: 'DESIGNED & ENGINEERED BY ELESSANDRO PRESTES MACEDO.',
-    stackInfo: 'VUE 3 · TAILWIND CSS · LANGCHAIN RAG · GEMINI 2.5 FLASH.',
+    designedBy: 'DESIGNED & CODED BY ELESSANDRO PRESTES MACEDO.',
+    stackInfo: 'VUE 3 · TAILWIND CSS · LANGCHAIN RAG · GEMINI FLASH.',
     backToTop: 'BACK TO TOP',
   },
   aiAssistant: {

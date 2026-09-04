@@ -321,7 +321,7 @@ export default {
     cvButton: 'DOWNLOAD CV COMPLETO',
     emailButton: 'ENVIAR E-MAIL',
     designedBy: 'PROJETADO & CODIFICADO POR ELESSANDRO PRESTES MACEDO.',
-    stackInfo: 'VUE 3 · TAILWIND CSS · LANGCHAIN RAG · GEMINI 2.5 FLASH.',
+    stackInfo: 'VUE 3 · TAILWIND CSS · LANGCHAIN RAG · GEMINI FLASH.',
     backToTop: 'VOLTAR AO TOPO',
   },
   aiAssistant: {

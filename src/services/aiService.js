@@ -47,9 +47,11 @@ export async function askAssistant(question, locale = 'pt') {
     throw new Error('Chave VITE_GEMINI_API_KEY não configurada no arquivo .env')
   }
 
+  const modelName = import.meta.env.VITE_GEMINI_MODEL || 'gemini-flash-latest'
+
   const model = new ChatGoogleGenerativeAI({
     apiKey,
-    model: 'gemini-2.5-flash',
+    model: modelName,
     temperature: 0.4,
   })
 

@@ -117,11 +117,16 @@ async function sendMessage(textToSend) {
     })
   } catch (err) {
     console.error('Erro na chamada do Gemini:', err)
+    const isMissingKey = !import.meta.env.VITE_GEMINI_API_KEY
     messages.value.push({
       role: 'assistant',
-      text: locale.value === 'pt'
-        ? 'Desculpe, ocorreu uma instabilidade na consulta à IA. Verifique se a variável VITE_GEMINI_API_KEY está configurada.'
-        : 'Sorry, an error occurred while connecting to the AI. Please verify that the VITE_GEMINI_API_KEY environment variable is properly configured.',
+      text: isMissingKey
+        ? (locale.value === 'pt'
+            ? 'A variável de ambiente VITE_GEMINI_API_KEY não foi encontrada. Configure-a no arquivo .env.'
+            : 'The VITE_GEMINI_API_KEY environment variable was not found. Please set it in your .env file.')
+        : (locale.value === 'pt'
+            ? 'Desculpe, ocorreu uma instabilidade temporária na consulta à IA. Por favor, tente novamente em alguns instantes.'
+            : 'Sorry, a temporary error occurred while querying the AI. Please try again in a few moments.'),
       isError: true,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     })
