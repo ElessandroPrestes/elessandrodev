@@ -273,7 +273,7 @@ export default {
       {
         domain: 'BACKEND CORE & RUNTIMES',
         description: 'Scalable high-density services, RESTful APIs, and asynchronous concurrency.',
-        items: ['PHP 8.2+', 'Laravel 12', 'Symfony', 'Node.js', 'TypeScript', 'Express', 'REST APIs', 'Clean Code'],
+        items: ['PHP', 'Laravel', 'Symfony', 'Node.js', 'TypeScript', 'Express', 'REST APIs', 'Clean Code'],
       },
       {
         domain: 'ARCHITECTURE & DISTRIBUTED SYSTEMS',
@@ -303,12 +303,12 @@ export default {
       {
         domain: 'QUALITY ASSURANCE & TESTING',
         description: 'Automated test suite engineering and continuous static code inspection.',
-        items: ['TDD (Test-Driven Development)', 'Pest PHP', 'PHPUnit', 'SonarQube (+45% quality)', 'Continuous Static Analysis'],
+        items: ['TDD (Test-Driven Development)', 'Pest', 'PHPUnit', 'SonarQube', 'Continuous Static Analysis'],
       },
       {
         domain: 'FRONTEND SYSTEMS',
         description: 'High-performance modular reactive interfaces with strict accessibility standards.',
-        items: ['Vue.js 3 (Composition API)', 'Angular', 'Tailwind CSS', 'Vite', 'WCAG 2.1 AA Accessibility'],
+        items: ['React', 'Next.js', 'Vue.js', 'Angular', 'TypeScript', 'Tailwind CSS', 'Vite', 'WCAG Accessibility'],
       },
     ],
   },

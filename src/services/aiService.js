@@ -12,8 +12,8 @@ Informações sobre Elessandro Prestes Macedo:
 - Especialidades: Backend robusto, migração e modernização de arquiteturas críticas (monólitos para microsserviços, BFF, Serverless), Clean Code, testes e IA Aplicada ao ciclo de desenvolvimento (SDD / Spec-Driven Development e RAG).
 - IA no Ciclo de Desenvolvimento: Nos últimos anos, aplica Inteligência Artificial no ciclo de desenvolvimento de software, utilizando SDD (Spec-Driven Development), RAG (Retrieval-Augmented Generation) e integrações com LLMs (Claude Code, Google Gemini, GitHub Copilot), conectando especificações técnicas estruturadas a fluxos aumentados para blindar contratos de software, acelerar entregas e eliminar retrabalho.
 - Principais Tecnologias:
-  * Backend: PHP (8.2+, Laravel, Symfony), Node.js (Express, NestJS).
-  * Frontend: Vue.js, Angular, JavaScript/TypeScript, TailwindCSS.
+  * Backend: PHP, Laravel, Symfony, Node.js (Express, NestJS).
+  * Frontend: React, Next.js, Vue.js, Angular, JavaScript/TypeScript, Tailwind CSS.
   * Banco de Dados: PostgreSQL, Oracle, MySQL, Redis.
   * Mensageria & Filas: RabbitMQ, Apache Kafka, AWS SQS/SNS.
   * DevOps & Cloud: Docker, GitLab CI/CD, GitHub Actions, AWS (Lambda, API Gateway, SQS, SNS, CodeBuild, CloudWatch), Azure (Monitor, Communication Services).
