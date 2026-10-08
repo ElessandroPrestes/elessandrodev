@@ -7,6 +7,28 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.4.0] - 2026-10-08
+
+### Adicionado
+- **Adoção Integral do Framework Universal SDD (Spec-Driven Development)**:
+  - Documentação canônica e governança: `UNIVERSAL_SDD_FRAMEWORK.md`, `PROJECT.md`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `COPILOT.md`, `ROADMAP.md`, `CONTRIBUTING.md` e `CODE_OF_CONDUCT.md`.
+  - Templates executáveis de artefatos em `templates/`: `SPEC-TEMPLATE.md`, `TASK-TEMPLATE.md`, `QA-TEMPLATE.md`, `REVIEW-TEMPLATE.md` e `ADR-TEMPLATE.md`.
+  - Padrões e quality gates em `standards/`: `ux-ui.md`, `design-system.md`, `accessibility.md`, `testing.md` e `quality-gates.md`.
+  - Base de conhecimento em `knowledge/`: `stack.md`, `conventions.md` e `architecture.md`.
+  - Workflows normativos em `workflows/`: `feature.md` e `bugfix.md`.
+  - Perfis operacionais em `profiles/`: `development.md` e `qa.md`.
+  - Missões e limites de agentes em `agents/`: `gemini.md`, `claude.md` e `po.md`.
+  - Módulos de documentação em `docs/`: `getting-started.md`, `architecture.md`, `agents.md`, `workflows.md`, `knowledge-base.md`, `bootstrapping.md`, `governance.md`, `best-practices.md` e `faq.md`.
+  - Registros de Decisões Arquiteturais em `adr/`: `ADR-001` a `ADR-005`.
+
+### Corrigido
+- **Resiliência e Eliminação de Erro 503 na IA (`aiService.js`)**:
+  - Implementado failover multi-modelo com `gemini-3.5-flash` (primário), `gemini-3.6-flash`, `gemini-flash-latest` e `gemini-3.8-flash`, prevenindo interrupção do chat por sobrecarga de modelos.
+- **Favicon Vetorial e Eliminação de Erro 404 (`public/favicon.svg`)**:
+  - Criado favicon SVG vetorial com suporte dinâmico a modo escuro/claro via `prefers-color-scheme`, resolvendo falha de recurso não encontrado.
+
+---
+
 ## [1.3.0] - 2026-09-04
 
 ### Adicionado

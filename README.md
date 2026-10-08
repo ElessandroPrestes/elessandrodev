@@ -51,7 +51,7 @@ flowchart TD
     end
 
     subgraph Generation["3. Inferencia e Resposta"]
-        GeminiLLM["Google Gemini LLM API (gemini-2.5-flash)"]
+        GeminiLLM["Google Gemini LLM API (gemini-3.5-flash)"]
         OutputParser["String Output Parser"]
         ChatUI["Interface Conversacional (Chatbot UI)"]
 
@@ -83,7 +83,7 @@ flowchart TD
 | **IA & Metodologia** | **SDD + RAG** | Aplicação de IA no ciclo de desenvolvimento com Spec-Driven Development e RAG |
 | **Build & Bundle Tool** | **Vite** | HMR ultrarrápido, otimização de assets e build modular com Rollup |
 | **Orquestração de IA** | **LangChain.js** | Cadeias de inferência (Chains), prompts estruturados e parsers |
-| **Modelo de Linguagem (LLM)** | **Google Gemini** | Modelo `gemini-2.5-flash` / `gemini-1.5-flash` de alta velocidade e precisão |
+| **Modelo de Linguagem (LLM)** | **Google Gemini** | Modelo `gemini-3.5-flash` / `gemini-3.6-flash` de alta velocidade e precisão (com fallback resiliente) |
 | **Padronização de Comandos** | **GNU Make** | Automação unificada de tarefas via `Makefile` |
 | **Containerização** | **Docker & Compose** | Ambientes de desenvolvimento e execução isolados e replicáveis |
 | **Hospedagem & CI/CD** | **GitHub Pages & Actions** | Deploy automatizado de artefatos estáticos |
@@ -108,6 +108,8 @@ Edite o arquivo `.env`:
 ```dotenv
 # Chave da API do Google Gemini para o assistente de IA conversacional
 VITE_GEMINI_API_KEY=sua_chave_gemini_aqui
+# Modelo do Gemini (padrão: gemini-3.5-flash com fallback automático)
+VITE_GEMINI_MODEL=gemini-3.5-flash
 ```
 
 ---
