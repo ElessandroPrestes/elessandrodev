@@ -1,8 +1,14 @@
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { StringOutputParser } from '@langchain/core/output_parsers'
+import {
+  AI_CONFIG,
+  isTransientError,
+  calculateBackoff,
+  recordTelemetry,
+} from '../config/aiConfig.js'
 
-const ELESSANDRO_CONTEXT = `
+export const ELESSANDRO_CONTEXT = `
 Você é o assistente de IA oficial do portfólio de Elessandro Prestes Macedo.
 Seu objetivo é responder perguntas de recrutadores, clientes e visitantes sobre a carreira, habilidades e projetos de Elessandro.
 
@@ -40,26 +46,12 @@ Diretrizes de resposta:
 - Se não souber responder com precisão sobre um detalhe específico não mencionado, indique cordialmente que o visitante pode entrar em contato via LinkedIn.
 `
 
-export async function askAssistant(question, locale = 'pt') {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-
-  if (!apiKey || apiKey.trim() === '') {
-    throw new Error('Chave VITE_GEMINI_API_KEY não configurada no arquivo .env')
-  }
-
-  const modelName = import.meta.env.VITE_GEMINI_MODEL || 'gemini-flash-latest'
-
-  const model = new ChatGoogleGenerativeAI({
-    apiKey,
-    model: modelName,
-    temperature: 0.4,
-  })
-
+function buildPrompt(locale, question) {
   const languageInstruction = locale === 'en'
     ? 'IMPORTANT INSTRUCTION: Respond strictly in professional, fluent English suitable for senior engineering recruiters and technical directors.'
     : 'INSTRUÇÃO DE IDIOMA: Responda estritamente em português brasileiro técnico e profissional.'
 
-  const prompt = PromptTemplate.fromTemplate(`
+  const template = PromptTemplate.fromTemplate(`
 {context}
 
 {languageInstruction}
@@ -70,11 +62,230 @@ Pergunta do visitante: {question}
 Resposta:
 `)
 
-  const chain = prompt.pipe(model).pipe(new StringOutputParser())
+  return { template, languageInstruction }
+}
 
-  return await chain.invoke({
-    context: ELESSANDRO_CONTEXT,
-    languageInstruction,
-    question,
+/**
+ * Função utilitária para aguardar com promessa
+ */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Executa uma chamada com timeout controlado via AbortController
+ */
+async function invokeWithTimeout(streamPromiseFn, timeoutMs, externalSignal) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => {
+    controller.abort(new Error(`Timeout de ${timeoutMs}ms excedido na requisição ao LLM`))
+  }, timeoutMs)
+
+  if (externalSignal) {
+    externalSignal.addEventListener('abort', () => controller.abort(externalSignal.reason))
+  }
+
+  try {
+    return await streamPromiseFn(controller.signal)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * Executa inferência com Streaming reativo, retries limitados, exponential backoff,
+ * timeout controlado e fallback entre modelos.
+ *
+ * @param {string} question - Pergunta do usuário
+ * @param {string} locale - 'pt' ou 'en'
+ * @param {Object} options - Configurações opcionais e callbacks
+ * @param {Function} options.onToken - Callback chamado a cada chunk de token gerado
+ * @param {Function} options.onStatus - Callback para atualizações de status UX (retry, fallback)
+ * @param {AbortSignal} options.signal - Sinal externo para cancelamento
+ * @param {string} options.primaryModel - Modelo principal a utilizar
+ * @param {string} options.fallbackModel - Modelo de contingência
+ * @param {number} options.maxRetries - Limite de retries em erros transitórios
+ * @param {number} options.timeoutMs - Timeout em ms
+ * @param {number} options.backoffBaseMs - Backoff base em ms
+ * @returns {Promise<string>} Resposta completa gerada
+ */
+export async function streamAssistant(question, locale = 'pt', options = {}) {
+  const apiKey = AI_CONFIG.apiKey
+
+  if (!apiKey || apiKey.trim() === '') {
+    throw new Error('Chave VITE_GEMINI_API_KEY não configurada no arquivo .env')
+  }
+
+  const {
+    onToken = () => {},
+    onStatus = () => {},
+    signal = null,
+    primaryModel = AI_CONFIG.primaryModel,
+    fallbackModel = AI_CONFIG.fallbackModel,
+    maxRetries = AI_CONFIG.maxRetries,
+    timeoutMs = AI_CONFIG.timeoutMs,
+    backoffBaseMs = AI_CONFIG.backoffBaseMs,
+  } = options
+
+  const { template, languageInstruction } = buildPrompt(locale, question)
+
+  // Ordem de execução: 1. Modelo Primário (com até maxRetries) -> 2. Modelo Fallback (com até 1 retry)
+  const tiers = [
+    { modelName: primaryModel, maxRetriesAllowed: maxRetries, isFallback: false },
+    { modelName: fallbackModel, maxRetriesAllowed: 1, isFallback: true },
+  ].filter((tier, index, self) => Boolean(tier.modelName) && self.findIndex(t => t.modelName === tier.modelName) === index)
+
+  const startTime = performance.now()
+  let accumulatedFullText = ''
+  let hasEmittedFirstToken = false
+  let firstTokenTime = null
+  let totalRetriesPerformed = 0
+  let fallbackUsed = false
+  let lastAttemptError = null
+  let successfulModel = null
+
+  for (const tier of tiers) {
+    if (tier.isFallback) {
+      fallbackUsed = true
+      onStatus(
+        locale === 'en'
+          ? 'Primary service temporarily unavailable. Trying an alternative model...'
+          : 'Nosso serviço principal está temporariamente indisponível. Tentando uma alternativa...',
+        'fallback'
+      )
+    }
+
+    let attempt = 0
+    while (attempt <= tier.maxRetriesAllowed) {
+      attempt++
+      const currentModelName = tier.modelName
+
+      try {
+        const modelInstance = new ChatGoogleGenerativeAI({
+          apiKey,
+          model: currentModelName,
+          temperature: AI_CONFIG.temperature,
+          maxRetries: 0, // Desativa retries automáticos internos do LangChain para governança controlada
+        })
+
+        const chain = template.pipe(modelInstance).pipe(new StringOutputParser())
+
+        // Executa streaming com timeout
+        await invokeWithTimeout(async (callSignal) => {
+          const stream = await chain.stream(
+            {
+              context: ELESSANDRO_CONTEXT,
+              languageInstruction,
+              question,
+            },
+            { signal: callSignal }
+          )
+
+          for await (const chunk of stream) {
+            if (!hasEmittedFirstToken) {
+              hasEmittedFirstToken = true
+              firstTokenTime = performance.now()
+            }
+            accumulatedFullText += chunk
+            onToken(chunk, accumulatedFullText)
+          }
+        }, timeoutMs, signal)
+
+        // Sucesso na geração
+        successfulModel = currentModelName
+        const totalDuration = performance.now() - startTime
+        const ttft = firstTokenTime ? firstTokenTime - startTime : null
+
+        recordTelemetry({
+          model: successfulModel,
+          status: 200,
+          retryCount: totalRetriesPerformed,
+          fallbackUsed,
+          ttftMs: ttft,
+          llmLatencyMs: totalDuration,
+          totalLatencyMs: totalDuration,
+        })
+
+        return accumulatedFullText
+      } catch (err) {
+        lastAttemptError = err
+        const errMessage = String(err?.message || err)
+        console.warn(`[aiService] Falha na tentativa ${attempt} do modelo ${currentModelName}:`, errMessage)
+
+        // REGRA CRÍTICA DE STREAMING:
+        // Se a falha ocorreu APÓS o primeiro token ser emitido, NÃO repetir a geração do zero!
+        if (hasEmittedFirstToken) {
+          const streamInterruptedError = new Error(
+            locale === 'en'
+              ? 'The response was interrupted. Please try again.'
+              : 'A resposta foi interrompida. Tente novamente.'
+          )
+          streamInterruptedError.hasPartialOutput = true
+          streamInterruptedError.partialText = accumulatedFullText
+          streamInterruptedError.originalError = err
+
+          recordTelemetry({
+            model: currentModelName,
+            status: 499, // Interrupted stream
+            retryCount: totalRetriesPerformed,
+            fallbackUsed,
+            ttftMs: firstTokenTime ? firstTokenTime - startTime : null,
+            totalLatencyMs: performance.now() - startTime,
+          })
+
+          throw streamInterruptedError
+        }
+
+        // Se falhou antes do primeiro token, verificar se o erro é transitório
+        const isTransient = isTransientError(err)
+
+        if (!isTransient) {
+          // Erro permanente (ex: 401, 404, modelo inexistente) -> não faz retries
+          recordTelemetry({
+            model: currentModelName,
+            status: err?.status || 400,
+            retryCount: totalRetriesPerformed,
+            fallbackUsed,
+            totalLatencyMs: performance.now() - startTime,
+          })
+          throw err
+        }
+
+        // Erro é transitório (503, 502, 504, 429, timeout, rede)
+        if (attempt <= tier.maxRetriesAllowed) {
+          totalRetriesPerformed++
+          onStatus(
+            locale === 'en'
+              ? 'Reconnecting to AI service...'
+              : 'Tentando restabelecer a conexão...',
+            'retry'
+          )
+          const waitTime = calculateBackoff(attempt, backoffBaseMs)
+          await sleep(waitTime)
+          // Continua o loop while para próxima tentativa do mesmo tier
+        } else {
+          // Esgotou retries deste modelo; o loop sairá para o próximo tier (fallback)
+          break
+        }
+      }
+    }
+  }
+
+  // Se todos os tiers e retries falharam sem emitir nenhum token
+  recordTelemetry({
+    model: tiers[0]?.modelName,
+    status: lastAttemptError?.status || 503,
+    retryCount: totalRetriesPerformed,
+    fallbackUsed,
+    totalLatencyMs: performance.now() - startTime,
   })
+
+  throw lastAttemptError
+}
+
+/**
+ * Função legado para chamadas síncronas/completas sem streaming (mantida para compatibilidade)
+ */
+export async function askAssistant(question, locale = 'pt') {
+  return await streamAssistant(question, locale, {})
 }

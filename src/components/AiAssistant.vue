@@ -1,7 +1,7 @@
 <script setup>
 import { ref, nextTick, watch } from 'vue'
 import { marked } from 'marked'
-import { askAssistant } from '../services/aiService'
+import { streamAssistant } from '../services/aiService'
 import { useI18n } from '../composables/useI18n.js'
 
 const { messages: i18n, locale } = useI18n()
@@ -32,6 +32,7 @@ function renderMarkdown(text) {
 const isOpen = ref(false)
 const inputMessage = ref('')
 const isLoading = ref(false)
+const transientStatus = ref('')
 const chatContainer = ref(null)
 
 const messages = ref([
@@ -107,32 +108,52 @@ async function sendMessage(textToSend) {
   }
 
   isLoading.value = true
+  transientStatus.value = ''
+
+  // Prepara nó para receber streaming progressivo
+  const assistantMsgIndex = messages.value.length
+  messages.value.push({
+    role: 'assistant',
+    text: '',
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  })
+  scrollToBottom()
 
   try {
-    const aiResponse = await askAssistant(content, locale.value)
-    messages.value.push({
-      role: 'assistant',
-      text: aiResponse,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    const aiResponse = await streamAssistant(content, locale.value, {
+      onToken: (_token, fullText) => {
+        messages.value[assistantMsgIndex].text = fullText
+        scrollToBottom(20)
+      },
+      onStatus: (statusText) => {
+        transientStatus.value = statusText
+      },
     })
+    messages.value[assistantMsgIndex].text = aiResponse
   } catch (err) {
     console.error('Erro na chamada do Gemini:', err)
     const isMissingKey = !import.meta.env.VITE_GEMINI_API_KEY
-    messages.value.push({
-      role: 'assistant',
-      text: isMissingKey
+
+    if (err?.hasPartialOutput) {
+      // Falha após o primeiro token: preserva saída parcial e adiciona nota de interrupção
+      messages.value[assistantMsgIndex].text += locale.value === 'pt'
+        ? '\n\n*(A resposta foi interrompida. Tente novamente.)*'
+        : '\n\n*(The response was interrupted. Please try again.)*'
+    } else {
+      // Falha antes do primeiro token
+      messages.value[assistantMsgIndex].text = isMissingKey
         ? (locale.value === 'pt'
             ? 'A variável de ambiente VITE_GEMINI_API_KEY não foi encontrada. Configure-a no arquivo .env.'
             : 'The VITE_GEMINI_API_KEY environment variable was not found. Please set it in your .env file.')
         : (locale.value === 'pt'
-            ? 'Desculpe, ocorreu uma instabilidade temporária na consulta à IA. Por favor, tente novamente em alguns instantes.'
-            : 'Sorry, a temporary error occurred while querying the AI. Please try again in a few moments.'),
-      isError: true,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    })
+            ? 'Não consegui processar sua mensagem agora. Tente novamente em alguns instantes.'
+            : 'Could not process your message right now. Please try again in a few moments.')
+      messages.value[assistantMsgIndex].isError = true
+    }
   } finally {
     isLoading.value = false
-    scrollToBottom(80)
+    transientStatus.value = ''
+    scrollToBottom(50)
   }
 }
 </script>
@@ -212,6 +233,7 @@ async function sendMessage(textToSend) {
           <div
             v-for="(msg, index) in messages"
             :key="index"
+            v-show="msg.text"
             :class="[
               'flex flex-col max-w-[88%] text-xs sm:text-sm rounded p-3 leading-relaxed break-words',
               msg.role === 'user'
@@ -238,10 +260,10 @@ async function sendMessage(textToSend) {
             </span>
           </div>
 
-          <!-- Loading Indicator -->
+          <!-- Loading / Transient Status Indicator -->
           <div v-if="isLoading" class="flex items-center gap-2 mr-auto bg-white border border-slate-200 dark:bg-[#12141a] dark:border-neutral-800 rounded px-3 py-2 text-slate-600 dark:text-neutral-400 text-xs font-mono">
             <span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span>{{ locale === 'pt' ? 'CONSULTANDO MODELO GEMINI...' : 'QUERYING GEMINI MODEL...' }}</span>
+            <span>{{ transientStatus || (locale === 'pt' ? 'DIGITANDO RESPOSTA...' : 'GENERATING RESPONSE...') }}</span>
           </div>
         </div>
 
