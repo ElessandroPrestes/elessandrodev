@@ -43,7 +43,7 @@
 - [x] Quality gates locais aprovados (`npm test` e `npm run build`)
 - [x] QA-007 e REVIEW-007 documentados
 - [x] `PROJECT.md` e `CHANGELOG.md` atualizados (v1.9.1)
-- [ ] Commits registrados em pt-BR
-- [ ] Push na branch `develop` e validação do CI remoto
-- [ ] Merge e Push na branch `main` e validação de deploy remoto
-- [ ] Verificação de status dos alertas no Dependabot
+- [x] Commits registrados em pt-BR
+- [x] Push na branch `develop` e validação do CI remoto
+- [x] Merge e Push na branch `main` e validação de deploy remoto
+- [x] Verificação de status dos alertas no Dependabot (alertas #113, #114 e #115 fechados com status fixed)
