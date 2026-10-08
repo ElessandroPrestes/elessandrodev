@@ -13,7 +13,7 @@
 | **Repositório**   | `ElessandroPrestes/elessandrodev`                                                                        |
 | **URL Produção**  | [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/) |
 | **Deploy**        | GitHub Pages via GitHub Actions                                                                          |
-| **Versão**        | 1.6.0                                                                                                    |
+| **Versão**        | 1.7.0                                                                                                    |
 | **Autor**         | Elessandro Prestes Macedo (Software Engineer & Tech Lead)                                                |
 | **Contato**       | [LinkedIn](https://www.linkedin.com/in/elessandro-prestes-macedo/) • WhatsApp: +55 (45) 99917-8290       |
 | **Governança**    | **Universal SDD (Spec-Driven Development)**                                                              |
@@ -157,10 +157,11 @@ src/
 - [x] **SPEC-001 [IA & Resiliência]:** Refatoração do chat com streaming reativo, eliminação do alias instável `gemini-flash-latest`, retries com jitter e modelo de contingência (Concluída em v1.4.0).
 - [x] **SPEC-002 [Conteúdo & i18n]:** Suporte a currículos bilíngues dinâmicos (PT-BR e EN) com integridade de assets e sincronização cadastral da trajetória na EPM DEVTECH (Concluída em v1.5.0).
 - [x] **SPEC-003 [Editorial & Copy]:** Revisão e humanização da prosa editorial sob protocolo `/humanizer`, eliminando 25 padrões/clichês de IA e adotando tom pragmático de Engenheiro Sênior (Concluída em v1.6.0).
+- [x] **SPEC-004 [Conteúdo & Domínio]:** Correção e atribuição factual de modernização de sistemas legados exclusivamente para CAPES (SIPREC) e Grupo Paraíso (ERP Indústria Têxtil) (Concluída em v1.7.0).
 
 > **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
 
-1. **SPEC-004 [Segurança]:** Criação de Backend-for-Frontend (BFF) Serverless (Cloudflare Workers ou Vercel Edge) para eliminar a exposição de `VITE_GEMINI_API_KEY` no bundle do navegador e aplicar rate limiting por IP.
-2. **SPEC-005 [Performance]:** Code splitting e otimização de chunks no Vite (`build.rollupOptions.output.manualChunks`) para segmentar `@langchain/*`, `marked` e `vue`, mantendo os chunks < 500 kB.
-3. **SPEC-006 [Experiência de Usuário]:** Histórico conversacional com janela deslizante (últimas 3 a 5 mensagens) com teto controlado de tokens para manter contexto sem inflar custos.
-4. **SPEC-007 [CI/CD]:** Pipeline de automação de Quality Gates no GitHub Actions para execução de `node src/services/aiService.test.mjs` e `npm run build` a cada Pull Request.
+1. **SPEC-005 [Segurança]:** Criação de Backend-for-Frontend (BFF) Serverless (Cloudflare Workers ou Vercel Edge) para eliminar a exposição de `VITE_GEMINI_API_KEY` no bundle do navegador e aplicar rate limiting por IP.
+2. **SPEC-006 [Performance]:** Code splitting e otimização de chunks no Vite (`build.rollupOptions.output.manualChunks`) para segmentar `@langchain/*`, `marked` e `vue`, mantendo os chunks < 500 kB.
+3. **SPEC-007 [Experiência de Usuário]:** Histórico conversacional com janela deslizante (últimas 3 a 5 mensagens) com teto controlado de tokens para manter contexto sem inflar custos.
+4. **SPEC-008 [CI/CD]:** Pipeline de automação de Quality Gates no GitHub Actions para execução de `node src/services/aiService.test.mjs` e `npm run build` a cada Pull Request.

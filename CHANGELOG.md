@@ -7,6 +7,19 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.7.0] - 2026-10-08
+
+### Modificado
+- **Correção Factual e Atribuição de Modernização de Sistemas Legados (SPEC-004 / TASK-004)**:
+  - Delimitação estrita de que a modernização de sistemas legados e o *Strangler Fig Pattern* em monólitos ocorreram exclusivamente na **CAPES** (Projeto SIPREC — modernização de sistema monolítico legado de avaliação da pós-graduação para microsserviços e BFF em Angular atendendo 448+ IES) e no **Grupo Paraíso** (ERP da Indústria Têxtil — migração gradual de ERP monolítico legado para microsserviços com Node.js via Strangler Fig Pattern, reduzindo custos em 40%, além de soluções de chão de fábrica e IoT).
+  - Remoção completa de referências a sistemas legados, monólitos legados e "linhas legadas eliminadas" na **EPM DEVTECH**, reposicionando sua atuação para arquitetura e engenharia de plataformas web de alta performance em PHP 8.2 / Laravel 12 e Node.js, arquitetura modular, 2.399 testes automatizados com Pest/PHPUnit, APIs REST e IA aplicada com governança via SDD.
+  - Correção do manifesto em `Statement.vue` (PT e EN) dissociando a modernização de legados do **Operador Nacional do Sistema Elétrico (ONS)** e da **Usina Termelétrica Energia Pecém**, consolidando suas atribuições corretas em sistemas distribuídos de alta concorrência e arquiteturas orientadas a eventos.
+  - Atualização do princípio arquitetural ARCH-01 (*Strangler Fig Pattern*) para referenciar exclusivamente `SIPREC / CAPES (448+ IES)` e `Grupo Paraíso (ERP Indústria Têxtil)`.
+  - Inclusão de `NOTA DE DOMÍNIO SOBRE MODERNIZAÇÃO DE SISTEMAS LEGADOS` no contexto do assistente de IA (`src/services/aiService.js`), assegurando fidelidade factual nas respostas interativas geradas pelo modelo.
+  - Zero regressão: validação com 100% de sucesso na suíte de testes automatizados (12/12) e compilação limpa do Vite (`npm run build`).
+
+---
+
 ## [1.6.0] - 2026-10-08
 
 ### Modificado
