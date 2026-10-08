@@ -7,6 +7,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.9.1] - 2026-10-08
+
+### Corrigido
+- **Remediação de Vulnerabilidades de Segurança do Dependabot (SPEC-007 / TASK-007)**:
+  - Atualizado `vue` e `@vue/server-renderer` para `3.5.43`, sanando vulnerabilidade de XSS via missing CR (Alerta Dependabot #113 / GHSA-g2v6-rqmx-r4w6).
+  - Atualizado `source-map-js` para `1.2.2` via `npm audit fix`, resolvendo vulnerabilidade de negação de serviço (DoS) no event-loop (Alerta Dependabot #115 / GHSA-68fv-2mgg-jv7q).
+  - Configurados `"overrides"` no `package.json` para ancorar `postcss-selector-parser` em `^7.1.6` (resolvendo Alerta Dependabot #114 / GHSA-rj75-hqrm-r3gf) e `braces` em `^3.0.3`, prevenindo quebras e mantendo compatibilidade com Tailwind CSS v3.
+  - Zero quebra na UI e aprovação total nos Quality Gates (`npm test` com 12/12 testes e `npm run build` com 0 erros).
+
+---
+
 ## [1.9.0] - 2026-10-08
 
 ### Adicionado
