@@ -23,7 +23,7 @@ Além de apresentar a trajetória de mais de **9 anos de experiência em engenha
 
 ## 🧠 Arquitetura de IA: Padrão RAG (Retrieval-Augmented Generation)
 
-A aplicação adota o padrão **RAG** para enriquecer o contexto do modelo de linguagem em tempo de execução, garantindo que o assistente responda de forma factual, reduzindo alucinações e fornecendo métricas exatas sobre projetos anteriores (como CAPES, ONS - Energia Pecém e automação industrial).
+A aplicação adota o padrão **RAG** para enriquecer o contexto do modelo de linguagem em tempo de execução, garantindo que o assistente responda de forma factual, reduzindo alucinações e fornecendo métricas exatas sobre projetos anteriores (como CAPES, ONS, Usina Termelétrica Energia Pecém e automação industrial).
 
 ```mermaid
 flowchart TD

@@ -19,7 +19,7 @@ export default {
     tag: '01 / STATEMENT',
     subtag: 'SYSTEMS ARCHITECTURE, SOFTWARE ENGINEERING & APPLIED AI',
     title: 'I build resilient architectures, modernize legacy systems, and integrate AI across the development lifecycle.',
-    bio1: 'I am {strongName}, Senior Software Engineer & Tech Lead with 9+ years designing distributed systems, high-concurrency microservices, and leading software modernizations for institutions like {strongCapes} and {strongOns}.',
+    bio1: 'I am {strongName}, Senior Software Engineer & Tech Lead with 9+ years designing distributed systems, high-concurrency microservices, and leading software modernizations for organizations such as {strongCapes}, the {strongOns}, and {strongEnergiaPecem}.',
     bio2: 'I apply Artificial Intelligence to software engineering workflows using {strongSdd}, {strongRag}, and {strongLlm} to formalize technical specifications, accelerate delivery, and prevent rework through continuous validation.',
     cvButton: 'DOWNLOAD RESUME (PDF)',
     whatsappButton: 'DIRECT WHATSAPP',
@@ -30,7 +30,7 @@ export default {
       { metric: '56,400+ Lines', label: 'Legacy Code Retired', context: 'Strangler Fig migration to Laravel 12 at EPM DEVTECH' },
       { metric: 'AI + SDD + RAG', label: 'Engineering Lifecycle', context: 'Workflows assisted by Claude Code, Gemini, Copilot, and MCP' },
       { metric: '2,399 Tests', label: 'Automated Tests', context: '241 test files via Pest and PHPUnit' },
-      { metric: '99.9% Uptime', label: 'Operational Availability', context: 'Continuous operation across ONS, Energia Pecém, and industry' },
+      { metric: '99.9% Uptime', label: 'Operational Availability', context: 'Continuous operation across ONS, Energia Pecém thermal plant, and industry' },
     ],
   },
   projects: {
@@ -155,7 +155,7 @@ export default {
         title: 'Event-Driven Architecture (EDA) & Resilience',
         headline: 'Decoupled asynchronous messaging to handle traffic spikes with fault tolerance.',
         description: 'I use message brokers such as RabbitMQ and Apache Kafka with Dead Letter Queues (DLQ), idempotent consumer handling, and fallback policies. Temporal decoupling ensures downstream instability never brings down the primary application.',
-        cases: 'SIGMA Project (Energia Pecém) · ONS Regulatory Pipeline (AMcom) · SISCAD.',
+        cases: 'SIGMA Project (Energia Pecém Thermal Plant) · ONS Regulatory Pipeline (AMcom) · SISCAD.',
       },
       {
         code: 'ARCH-03',
@@ -169,7 +169,7 @@ export default {
         title: 'Quality Engineering, TDD & Observability',
         headline: 'Automated testing suites, static analysis, and telemetry to reduce time to diagnosis.',
         description: 'I build comprehensive test coverage using TDD across unit and integration layers (2,399 tests at EPM DEVTECH via Pest and PHPUnit), enforce static analysis in SonarQube, and monitor metrics with ELK Stack and CloudWatch to detect anomalies proactively.',
-        cases: 'High-scale platforms at SEDUC-MT · Datainfo CAPES · ONS - Energia Pecém.',
+        cases: 'High-scale platforms at SEDUC-MT · Datainfo CAPES · ONS (AMcom) · Energia Pecém Thermal Plant.',
       },
     ],
   },
@@ -225,9 +225,9 @@ export default {
       {
         period: '2023 — 2024',
         role: 'Full Stack Developer',
-        company: 'Energia Pecém',
+        company: 'Energia Pecém Thermal Power Plant',
         project: 'SIGMA Project & Real-Time Telemetry',
-        summary: 'Engineered software systems for real-time asset telemetry and traceability in the power generation and distribution sector.',
+        summary: 'Software engineering and architecture for real-time asset telemetry and operational traceability at the Energia Pecém Thermal Power Plant in the energy generation sector.',
         highlights: [
           { metric: '+40% operational traceability', desc: 'built telemetry services using Node.js, Laravel, Vue.js, and PostgreSQL.' },
           { metric: '+50% processing capacity', desc: 'architected event-driven systems (EDA) with RabbitMQ and asynchronous Laravel Jobs.' },
@@ -241,7 +241,7 @@ export default {
         role: 'Systems Developer',
         company: 'AMcom',
         project: 'GENIN Project — National Grid Operator (ONS)',
-        summary: 'Nationwide regulatory data ingestion and processing for calculating Brazil’s electricity tariff flags (ONS).',
+        summary: 'Nationwide regulatory data ingestion and processing for calculating Brazil’s electricity tariff flags for the National Grid Operator (ONS), the entity coordinating the National Interconnected System (SIN) under Aneel regulation.',
         highlights: [
           { metric: 'Transactional integrity', desc: 'integrations connecting ONS, Itaipu Binational, and INMET via PHP/Laravel and SOAP/REST services.' },
           { metric: '-40% ingestion latency', desc: 'microservices using Redis and PostgreSQL for climate and energy data consolidation.' },
@@ -350,7 +350,7 @@ export default {
     disclaimer: 'Responses generated using RAG and Gemini grounded exclusively on Elessandro\'s professional history.',
     greeting: 'Interactive RAG assistant active. Ask about architecture decisions, production metrics, and Elessandro Prestes\' professional background:',
     suggestedTopics: [
-      { label: '🏛️ CAPES & ONS Projects', query: 'Describe your architectural and technical work on CAPES and ONS projects.' },
+      { label: '🏛️ ONS, Energia Pecém & CAPES', query: 'Describe your technical work for the National Grid Operator (ONS), Energia Pecém Thermal Plant, and CAPES.' },
       { label: '🤖 SDD & Applied AI', query: 'How do you apply Artificial Intelligence, SDD, and RAG in the development lifecycle?' },
       { label: '⚙️ Strangler Fig & Legacy', query: 'How did you lead system modernization using the Strangler Fig Pattern?' },
       { label: '📈 Tech Lead & Concurrency', query: 'Describe your experience handling high concurrency and throughput.' },

@@ -19,7 +19,7 @@ export default {
     tag: '01 / STATEMENT',
     subtag: 'ARQUITETURA DE SISTEMAS, ENGENHARIA DE SOFTWARE & IA APLICADA',
     title: 'Construo arquiteturas resilientes, modernizo sistemas legados e integro IA no ciclo de desenvolvimento.',
-    bio1: 'Sou {strongName}, Engenheiro de Software Sênior & Tech Lead com mais de 9 anos projetando sistemas distribuídos, microsserviços de alta concorrência e liderando modernizações de software para instituições como {strongCapes} e o {strongOns}.',
+    bio1: 'Sou {strongName}, Engenheiro de Software Sênior & Tech Lead com mais de 9 anos projetando sistemas distribuídos, microsserviços de alta concorrência e liderando modernizações de software para organizações como a {strongCapes}, o {strongOns} e a {strongEnergiaPecem}.',
     bio2: 'Aplico Inteligência Artificial no fluxo de engenharia utilizando {strongSdd}, {strongRag} e {strongLlm} para formalizar especificações técnicas, acelerar entregas e evitar retrabalho com validação contínua.',
     cvButton: 'DOWNLOAD CURRÍCULO (PDF)',
     whatsappButton: 'WHATSAPP DIRETO',
@@ -30,7 +30,7 @@ export default {
       { metric: '56.400+ Linhas', label: 'Código Legado Eliminado', context: 'Migração Strangler Fig para Laravel 12 na EPM DEVTECH' },
       { metric: 'IA + SDD + RAG', label: 'Ciclo de Engenharia', context: 'Fluxos assistidos por Claude Code, Gemini, Copilot e MCP' },
       { metric: '2.399 Testes', label: 'Testes Automatizados', context: '241 arquivos de teste com Pest e PHPUnit' },
-      { metric: '99.9% Uptime', label: 'Disponibilidade Operacional', context: 'Operação contínua em plataformas do ONS, Energia Pecém e indústria' },
+      { metric: '99.9% Uptime', label: 'Disponibilidade Operacional', context: 'Operação contínua em plataformas do ONS, da Usina Termelétrica Energia Pecém e indústria' },
     ],
   },
   projects: {
@@ -155,7 +155,7 @@ export default {
         title: 'Arquitetura Orientada a Eventos (EDA) & Resiliência',
         headline: 'Comunicação assíncrona desacoplada para suportar picos de tráfego com tolerância a falhas.',
         description: 'Utilizo mensageria com RabbitMQ e Apache Kafka com Dead Letter Queues (DLQ), consumo idempotente e políticas de fallback. Desacoplar serviços no tempo impede que instabilidades em dependências downstream derrubem a aplicação principal.',
-        cases: 'Projeto SIGMA (Energia Pecém) · Processamento Regulatório ONS (AMcom) · SISCAD.',
+        cases: 'Projeto SIGMA (Usina Termelétrica Energia Pecém) · Processamento Regulatório ONS (AMcom) · SISCAD.',
       },
       {
         code: 'ARCH-03',
@@ -169,7 +169,7 @@ export default {
         title: 'Engenharia de Qualidade, TDD & Observabilidade',
         headline: 'Testes automatizados contínuos, análise estática e telemetria para reduzir o tempo de diagnóstico.',
         description: 'Construo cobertura de testes com TDD em níveis unitário e de integração (2.399 testes na EPM DEVTECH com Pest e PHPUnit), análise estática no SonarQube e métricas com ELK Stack e CloudWatch para identificar anomalias antes que afetem usuários.',
-        cases: 'Sistemas de larga escala na SEDUC-MT · Datainfo CAPES · ONS - Energia Pecém.',
+        cases: 'Sistemas na SEDUC-MT · Datainfo CAPES · ONS (AMcom) · Usina Termelétrica Energia Pecém.',
       },
     ],
   },
@@ -225,9 +225,9 @@ export default {
       {
         period: '2023 — 2024',
         role: 'Desenvolvedor Full Stack',
-        company: 'Energia Pecém',
+        company: 'Usina Termelétrica Energia Pecém',
         project: 'Projeto SIGMA & Telemetria em Tempo Real',
-        summary: 'Desenvolvimento e arquitetura de sistemas para telemetria e rastreabilidade de ativos operacionais no setor de geração e distribuição de energia.',
+        summary: 'Desenvolvimento e arquitetura de sistemas para telemetria e rastreabilidade de ativos operacionais em tempo real para a Usina Termelétrica Energia Pecém, no setor de geração de energia elétrica.',
         highlights: [
           { metric: '+40% na rastreabilidade operacional', desc: 'construção de serviços de telemetria com Node.js, Laravel, Vue.js e PostgreSQL.' },
           { metric: '+50% em capacidade de processamento', desc: 'arquitetura orientada a eventos (EDA) utilizando RabbitMQ e filas com Laravel Jobs.' },
@@ -241,7 +241,7 @@ export default {
         role: 'Desenvolvedor de Sistemas',
         company: 'AMcom',
         project: 'Projeto GENIN — Operador Nacional do Sistema Elétrico (ONS)',
-        summary: 'Ingestão e processamento de dados regulatórios em escala nacional para o cálculo das bandeiras tarifárias de energia elétrica no Brasil (ONS).',
+        summary: 'Ingestão e processamento de dados regulatórios em escala nacional para o cálculo das bandeiras tarifárias de energia elétrica no Brasil junto ao Operador Nacional do Sistema Elétrico (ONS), órgão responsável pela coordenação e controle do SIN sob fiscalização da Aneel.',
         highlights: [
           { metric: 'Integridade transacional', desc: 'integrações entre ONS, Itaipu Binacional e INMET via PHP/Laravel e serviços SOAP/REST.' },
           { metric: '-40% de latência na ingestão', desc: 'microsserviços com Redis e PostgreSQL para consolidação de dados climáticos e elétricos.' },
@@ -350,7 +350,7 @@ export default {
     disclaimer: 'Respostas geradas com RAG e Gemini baseadas exclusivamente no histórico profissional de Elessandro.',
     greeting: 'Assistente interativo com RAG ativo. Pergunte sobre decisões de arquitetura, métricas de produção e histórico profissional de Elessandro Prestes:',
     suggestedTopics: [
-      { label: '🏛️ Projetos CAPES & ONS', query: 'Conte sobre sua atuação técnica e arquitetural nos projetos da CAPES e ONS.' },
+      { label: '🏛️ ONS, Energia Pecém & CAPES', query: 'Conte sobre sua atuação no ONS (cálculo de bandeiras tarifárias), na Usina Termelétrica Energia Pecém e na CAPES.' },
       { label: '🤖 SDD & IA Aplicada', query: 'Como você utiliza Inteligência Artificial, SDD e RAG no ciclo de desenvolvimento?' },
       { label: '⚙️ Strangler Fig & Legados', query: 'Como você conduziu a modernização de sistemas com Strangler Fig Pattern?' },
       { label: '📈 Tech Lead & Concorrência', query: 'Conte sobre sua experiência técnica lidando com alta concorrência e throughput elevado.' },

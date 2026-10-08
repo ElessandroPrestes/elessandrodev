@@ -16,7 +16,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Alinhamento bilíngue completo em `src/i18n/locales/pt.js` e `src/i18n/locales/en.js`:
     - Eliminação de anglicismos descontextualizados na versão em português (ex.: "MÉTRICAS DE PRODUÇÃO", "PRÁTICAS TÉCNICAS", "IMPACTO EM PRODUÇÃO").
     - Redação em inglês técnico idiomático, conciso e natural para recrutadores e diretores de engenharia globais.
-  - Refinamento das diretrizes do assistente de IA em `src/services/aiService.js` (`ELESSANDRO_CONTEXT`), orientando respostas pragmáticas e objetivas sem prolixidade corporativa.
+  - **Refinamento Factual do Setor de Energia (ONS vs. Usina Termelétrica Energia Pecém)**:
+    - Correção e separação definitiva entre o **Operador Nacional do Sistema Elétrico (ONS)** (órgão coordenador e regulador do Sistema Interligado Nacional - SIN, fiscalizado pela Aneel, atuação via AMcom no projeto GENIN) e a **Usina Termelétrica Energia Pecém** (usina de geração térmica de energia no Ceará, atuação no projeto SIGMA), eliminando qualquer ambiguidade de vinculação ou alocação nos textos e no contexto RAG da IA.
   - Zero regressão visual: 100% de integridade preservada em templates Vue 3, classes Tailwind CSS, reatividade e suíte de testes automatizados (12/12).
 
 ---
