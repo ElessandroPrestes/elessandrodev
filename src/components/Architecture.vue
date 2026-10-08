@@ -36,7 +36,7 @@ const { messages, locale } = useI18n()
           <!-- Identificador de Código -->
           <div class="flex items-center justify-between font-mono text-xs text-indigo-600 dark:text-indigo-400">
             <span class="font-semibold tracking-wider">{{ principle.code }}</span>
-            <span class="text-slate-400 dark:text-neutral-500">// ARCHITECTURE PILLAR</span>
+            <span class="text-slate-400 dark:text-neutral-500">// {{ locale === 'pt' ? 'PRÁTICA TÉCNICA' : 'ENGINEERING PILLAR' }}</span>
           </div>
 
           <!-- Título e Subtítulo -->
@@ -55,7 +55,7 @@ const { messages, locale } = useI18n()
           <!-- Aplicação Real -->
           <div class="pt-2 font-mono text-xs text-slate-600 dark:text-neutral-400 border-t border-slate-100 dark:border-neutral-850">
             <span class="text-[10px] uppercase tracking-wider text-slate-400 dark:text-neutral-500 block mb-1">
-              {{ locale === 'pt' ? 'APLICAÇÃO REAL COMPROVADA:' : 'PROVEN PRODUCTION USE CASE:' }}
+              {{ locale === 'pt' ? 'CASOS EM PRODUÇÃO:' : 'PRODUCTION CASES:' }}
             </span>
             <span class="font-medium text-slate-800 dark:text-neutral-200">
               {{ principle.cases }}

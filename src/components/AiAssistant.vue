@@ -99,8 +99,8 @@ async function sendMessage(textToSend) {
     messages.value.push({
       role: 'assistant',
       text: locale.value === 'pt'
-        ? 'Selecione um dos tópicos de consulta acima ou formule uma pergunta direta sobre arquitetura, métricas ou histórico técnico:'
-        : 'Select one of the query topics above or type a direct question regarding architecture, metrics, or technical history:',
+        ? 'Escolha um tópico acima ou envie uma pergunta sobre projetos, arquitetura e trajetória profissional:'
+        : 'Select a topic above or send a question about projects, architecture, and professional experience:',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     })
     scrollToBottom(50)
@@ -166,13 +166,13 @@ async function sendMessage(textToSend) {
       @click="toggleChat"
       type="button"
       class="group inline-flex items-center gap-2.5 px-4 py-2.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#12141a] dark:text-neutral-100 dark:hover:bg-[#191c24] border border-slate-700 dark:border-neutral-700 hover:border-indigo-500 shadow-xl transition-all font-mono text-xs tracking-wider cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-      :aria-label="locale === 'pt' ? 'Abrir terminal de consulta RAG com Inteligência Artificial' : 'Open RAG query terminal with Artificial Intelligence'"
+      :aria-label="locale === 'pt' ? 'Abrir assistente virtual' : 'Open AI assistant'"
     >
       <span class="relative flex h-2 w-2">
         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
         <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
       </span>
-      <span class="font-semibold text-[11px]">// AI TERMINAL (RAG)</span>
+      <span class="font-semibold text-[11px]">// {{ locale === 'pt' ? 'ASSISTENTE IA' : 'AI ASSISTANT' }}</span>
       <span class="text-indigo-400 group-hover:translate-x-0.5 transition-transform" aria-hidden="true">&rarr;</span>
     </button>
 
@@ -201,7 +201,7 @@ async function sendMessage(textToSend) {
                 {{ i18n.aiAssistant.badgeTitle }}
               </h2>
               <p class="font-mono text-[10px] text-slate-500 dark:text-neutral-400">
-                {{ locale === 'pt' ? 'CONTEXTO VETORIAL DETERMINÍSTICO' : 'DETERMINISTIC VECTOR CONTEXT' }}
+                {{ locale === 'pt' ? 'CONSULTA AO HISTÓRICO PROFISSIONAL' : 'CAREER KNOWLEDGE BASE' }}
               </p>
             </div>
           </div>
