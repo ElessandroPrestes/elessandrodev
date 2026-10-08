@@ -2,9 +2,16 @@ import assert from 'node:assert';
 import { isTransientError, calculateBackoff } from '../config/aiConfig.js';
 import fs from 'node:fs';
 
-const env = fs.readFileSync('.env', 'utf8');
-const key = env.match(/VITE_GEMINI_API_KEY=(.*)/)?.[1]?.trim();
-process.env.VITE_GEMINI_API_KEY = key;
+let key = process.env.VITE_GEMINI_API_KEY;
+if (!key && fs.existsSync('.env')) {
+  try {
+    const env = fs.readFileSync('.env', 'utf8');
+    key = env.match(/VITE_GEMINI_API_KEY=(.*)/)?.[1]?.trim();
+  } catch {
+    // Silently fall back if .env is unreadable
+  }
+}
+process.env.VITE_GEMINI_API_KEY = key || 'ci-test-key';
 
 console.log('=== SUÍTE DE TESTES: RESILIÊNCIA E STREAMING DO CHAT (Universal SDD) ===\n');
 

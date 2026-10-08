@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node src/services/aiService.test.mjs"
   },
   "dependencies": {
     "@langchain/core": "^1.2.8",
