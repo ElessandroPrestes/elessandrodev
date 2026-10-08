@@ -7,6 +7,24 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.8.0] - 2026-10-08
+
+### Modificado
+- **Atualização dos Estudos de Caso de Engenharia & Laboratórios Arquiteturais (SPEC-005 / TASK-005)**:
+  - Redefinição do título e subtítulo da seção `02 / SELECTED WORK`: "Projetos em Destaque & Laboratórios Arquiteturais" (*Featured Case Studies & Architecture Labs*).
+  - Inclusão do manifesto contextual conectando os repositórios públicos no GitHub aos desafios técnicos de alta concorrência, resiliência e escala vivenciados na carreira em produção.
+  - Adição do campo **ORIGEM & CONTEXTO REAL** (*REAL-WORLD ORIGIN & CONTEXT*) em cada um dos 5 estudos de caso em `Projects.vue`, `pt.js` e `en.js`:
+    - `universal-sdd`: Engenharia de Software Moderna & Liderança Técnica (EPM DevTech / Consultoria).
+    - `elessandrodev`: Arquitetura de Dados & Interfaces Reativas (EPM DevTech).
+    - `event-driven-processing-system`: Integrações críticas de missão em tempo real (Projeto GENIN / ONS via AMcom e Migrações CAPES).
+    - `iot-mqtt-simulator`: Automação fabril e projetos industriais (Grupo Paraíso / Projetos IoT & Chão de Fábrica).
+    - `fintech-wallet-solution`: Sistemas Críticos de Cobrança e Conciliação Financeira (SISCAD / CAPES via Datainfo e ERPs Corporativos).
+  - Alinhamento analítico completo dos 5 projetos com problema e contexto aprofundados, soluções de engenharia, métricas de produção e stack técnica.
+  - Sincronização do contexto RAG do assistente de IA conversacional (`aiService.js`).
+  - Zero regressão: 100% de integridade em templates Vue 3, classes Tailwind CSS e aprovação com 12/12 testes automatizados e build de produção sem erros.
+
+---
+
 ## [1.7.0] - 2026-10-08
 
 ### Modificado
