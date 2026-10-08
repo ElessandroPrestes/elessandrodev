@@ -6,7 +6,7 @@
 | **SPEC**           | SPEC-006                                               |
 | **Data de início** | 2026-10-08                                             |
 | **Agente**         | Gemini / Antigravity                                   |
-| **Status**         | Em Progresso                                           |
+| **Status**         | Concluída                                              |
 
 ---
 
@@ -42,8 +42,8 @@
 - [x] Testes locais e build validados
 - [x] QA-006 e REVIEW-006 documentados
 - [x] Documentação de release e governança atualizada (v1.9.0)
-- [ ] Commit e Push na branch `develop`
-- [ ] Acompanhamento do CI em `develop` até ficar verde
-- [ ] Merge e Push na branch `main`
-- [ ] Acompanhamento do CI/CD em `main` até ficar verde
-- [ ] Retorno à branch de trabalho `develop`
+- [x] Commit e Push na branch `develop`
+- [x] Acompanhamento do CI em `develop` até ficar verde
+- [x] Merge e Push na branch `main`
+- [x] Acompanhamento do CI/CD em `main` até ficar verde
+- [x] Retorno à branch de trabalho `develop`
