@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <style>
+    .bg { fill: #0f172a; }
+    .border { stroke: #6366f1; stroke-opacity: 0.6; }
+    .txt { fill: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "JetBrains Mono", monospace; font-weight: 800; font-size: 13px; }
+    .dot { fill: #10b981; }
+    @media (prefers-color-scheme: light) {
+      .bg { fill: #4f46e5; }
+      .border { stroke: #4338ca; }
+      .txt { fill: #ffffff; }
+      .dot { fill: #34d399; }
+    }
+  </style>
+  <rect class="bg" width="32" height="32" rx="7"/>
+  <rect class="border" x="1" y="1" width="30" height="30" rx="6" stroke-width="1.5"/>
+  <text class="txt" x="16" y="21" text-anchor="middle" letter-spacing="-0.5">EP</text>
+  <circle class="dot" cx="24.5" cy="7.5" r="2.5"/>
+</svg>
