@@ -7,6 +7,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.9.0] - 2026-10-08
+
+### Adicionado
+- **Automação de Testes e Quality Gates no GitHub Actions (SPEC-006 / TASK-006)**:
+  - Adicionado script `"test": "node src/services/aiService.test.mjs"` em `package.json`.
+  - Configurada etapa bloqueante `Run automated tests` em `.github/workflows/deploy.yml` antes do `Build project`, garantindo validação dos 12 testes canônicos de resiliência e streaming de IA a cada push ou PR.
+  - Implementada resolução resiliente de variáveis de ambiente em `src/services/aiService.test.mjs` para execução desacoplada em runners de CI e suporte a secrets.
+
+---
+
 ## [1.8.0] - 2026-10-08
 
 ### Modificado
