@@ -9,9 +9,9 @@ const { messages, locale } = useI18n()
     <div class="max-w-6xl mx-auto px-4 sm:px-8 py-16 sm:py-24 space-y-16 sm:space-y-20">
       
       <!-- Cabeçalho da Seção -->
-      <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 border-b border-slate-200 dark:border-neutral-800 pb-6">
-        <div>
-          <div class="flex items-center gap-3 font-mono text-xs text-indigo-600 dark:text-indigo-400 tracking-widest uppercase mb-3">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-slate-200 dark:border-neutral-800 pb-6">
+        <div class="space-y-3">
+          <div class="flex items-center gap-3 font-mono text-xs text-indigo-600 dark:text-indigo-400 tracking-widest uppercase">
             <span>{{ messages.projects.tag }}</span>
             <span class="h-px w-8 bg-indigo-600/40 dark:bg-indigo-400/40" aria-hidden="true" />
             <span class="text-slate-500 dark:text-neutral-400">{{ messages.projects.subtag }}</span>
@@ -21,7 +21,7 @@ const { messages, locale } = useI18n()
           </h2>
         </div>
 
-        <p class="font-mono text-xs text-slate-500 dark:text-neutral-400 max-w-sm sm:text-right">
+        <p class="font-sans sm:font-mono text-xs text-slate-600 dark:text-neutral-400 max-w-xl lg:text-right leading-relaxed">
           {{ messages.projects.description }}
         </p>
       </div>
@@ -52,6 +52,14 @@ const { messages, locale } = useI18n()
               <p class="font-sans text-sm text-slate-500 dark:text-neutral-400 leading-relaxed pt-1">
                 {{ cs.tagline }}
               </p>
+              <div v-if="cs.origin" class="pt-2 flex flex-wrap items-baseline gap-2 font-mono text-xs">
+                <span class="text-[10px] uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-semibold">
+                  {{ messages.projects.labels.origin }}:
+                </span>
+                <span class="font-sans text-xs text-slate-700 dark:text-neutral-300 font-medium">
+                  {{ cs.origin }}
+                </span>
+              </div>
             </div>
 
             <!-- Links de Ação -->
