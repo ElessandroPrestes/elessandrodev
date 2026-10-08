@@ -27,10 +27,10 @@ export default {
     ledgerBadge: '// PRODUCTION',
     highlights: [
       { metric: '2,500+ RPS', label: 'Concurrent Throughput', context: 'SIPREC / CAPES (<300ms latency)' },
-      { metric: '56,400+ Lines', label: 'Legacy Code Retired', context: 'Strangler Fig migration to Laravel 12 (Amura Sistemas)' },
-      { metric: 'AI + SDD + RAG', label: 'Engineering Lifecycle', context: 'Applied AI with Claude Code, Gemini, and RAG' },
+      { metric: '56,400+ Lines', label: 'Legacy Code Retired', context: 'Strangler Fig migration to Laravel 12 (EPM DEVTECH)' },
+      { metric: 'AI + SDD + RAG', label: 'Engineering Lifecycle', context: 'Applied AI with Claude Code, Gemini, Copilot, and MCP' },
       { metric: '2,399 Tests', label: 'Automated Test Suite', context: 'Across 241 test files via Pest/PHPUnit' },
-      { metric: '99.9% Uptime', label: 'Operational Availability', context: 'Distributed platforms (ONS - Energia Pecém)' },
+      { metric: '99.9% Uptime', label: 'Operational Availability', context: 'Distributed platforms (ONS, Energia Pecém, and Industry)' },
     ],
   },
   projects: {
@@ -148,7 +148,7 @@ export default {
         title: 'Gradual Modernization via Strangler Fig Pattern',
         headline: 'Evolution of enterprise monoliths with zero operational downtime or "Big Bang releases".',
         description: 'I approach legacy modernization through incremental request interception and domain slice decomposition using BFFs and microservices. This pattern ensures business continuity, instantaneous deploy reversibility, and verified production safety for every migrated capability.',
-        cases: 'SIPREC / CAPES (448+ HEIs) · Amura Sistemas (56,400+ lines modernized).',
+        cases: 'SIPREC / CAPES (448+ HEIs) · EPM DEVTECH (56,400+ lines modernized).',
       },
       {
         code: 'ARCH-02',
@@ -168,7 +168,7 @@ export default {
         code: 'ARCH-04',
         title: 'Deterministic Quality, TDD & Observability',
         headline: 'Clean Architecture, comprehensive test suites, and proactive telemetry for low MTTR.',
-        description: 'Software quality is deliberate: I apply TDD with extensive unit and integration test suites (2,399 tests at Amura Sistemas via Pest/PHPUnit), continuous static code analysis via SonarQube (+45% compliance), and end-to-end telemetry via ELK Stack and CloudWatch for predictive anomaly detection.',
+        description: 'Software quality is deliberate: I apply TDD with extensive unit and integration test suites (2,399 tests at EPM DEVTECH via Pest/PHPUnit), continuous static code analysis via SonarQube (+45% compliance), and end-to-end telemetry via ELK Stack and CloudWatch for predictive anomaly detection.',
         cases: 'High-scale platforms at SEDUC-MT · Datainfo CAPES · ONS - Energia Pecém.',
       },
     ],
@@ -181,18 +181,32 @@ export default {
     techLabel: 'TECHNOLOGIES:',
     trajectory: [
       {
+        period: '2026 — Present',
+        role: 'Technical Lead in Software Engineering – Full Stack & Systems Architecture',
+        company: 'EPM DEVTECH',
+        project: 'Web Platform Architecture & Technical Consulting',
+        summary: 'Planning and development of complete web platforms, scalable systems, and APIs with PHP/Laravel and Node.js (Express, NestJS), full stack solutions with Vue.js, Angular, and React, legacy modernization via Strangler Fig Pattern, and technical architecture consulting.',
+        highlights: [
+          { metric: 'End-to-End Full Stack Solutions', desc: 'designing reactive interfaces (Vue/Angular/React), robust backend, database modeling, and CI/CD.' },
+          { metric: 'Scalable APIs & Integrations', desc: 'developing REST APIs and mission-critical integrations with ERPs, CRMs, and payment platforms.' },
+          { metric: 'Modernization & Refactoring', desc: 'corporate website redesign, legacy system overhauls, and critical performance gains via Strangler Fig.' },
+          { metric: 'Architectural Consulting', desc: 'supporting companies with engineering best practices, technical feasibility, and software architecture.' },
+        ],
+        stack: 'PHP · Laravel · Node.js (Express, NestJS) · Vue.js · Angular · React · REST APIs · Docker · CI/CD · Strangler Fig Pattern',
+      },
+      {
         period: '2025 — 2026',
         role: 'Software Engineer with Applied AI',
-        company: 'Amura Sistemas',
+        company: 'EPM DEVTECH',
         project: 'Platform Modernization & SDD',
-        summary: 'Technical leadership in the full migration of a legacy monolith to PHP 8.2 and Laravel 12 using the Strangler Fig Pattern, establishing CI/CD pipelines with Docker and governance with Spec-Driven Development (SDD).',
+        summary: 'Single-handedly drove the entire architecture and modernization of the legacy monolithic platform to PHP 8.2 and Laravel 12 via the Strangler Fig Pattern incrementally and with zero downtime, eliminating 56,400+ lines of legacy code with Spec-Driven Development (SDD) and AI-assisted engineering.',
         highlights: [
           { metric: '56,400+ legacy lines retired', desc: 'replaced by a clean, modular architecture in Laravel 12 with zero downtime.' },
-          { metric: '2,399 automated tests', desc: 'structured across 241 test files via Pest/PHPUnit, guaranteeing zero regressions.' },
-          { metric: '384 REST endpoints & 181 migrations', desc: 'automating WhatsApp Business integrations and cutting manual steps by 35%.' },
-          { metric: '-40% technical rework', desc: 'achieved through Spec-Driven Development (SDD) paired with Claude Code, Copilot, and Codex.' },
+          { metric: '2,399 automated tests', desc: 'structured across 241 test files via Pest/PHPUnit, applying SOLID and Clean Code.' },
+          { metric: '384 REST endpoints & 181 migrations', desc: 'developing automations with WhatsApp Business that reduced manual work by 35%.' },
+          { metric: '-40% technical rework', desc: 'achieved through Spec-Driven Development (SDD), Claude Code, GitHub Copilot, Codex, RAG, and MCP.' },
         ],
-        stack: 'PHP 8.2+ · Laravel 12 · Strangler Fig Pattern · Claude Code (SDD) · Pest/PHPUnit · Docker · GitLab CI/CD · REST APIs',
+        stack: 'PHP 8.2+ · Laravel 12 · Strangler Fig Pattern · Claude Code · GitHub Copilot · Codex · SDD · Pest/PHPUnit · Docker · GitLab CI/CD · REST APIs',
       },
       {
         period: '2024 — 2025',
@@ -273,7 +287,7 @@ export default {
       {
         domain: 'BACKEND CORE & RUNTIMES',
         description: 'Scalable high-density services, RESTful APIs, and asynchronous concurrency.',
-        items: ['PHP', 'Laravel', 'Symfony', 'Node.js', 'TypeScript', 'Express', 'REST APIs', 'Clean Code'],
+        items: ['PHP', 'Laravel', 'Symfony', 'Node.js', 'NestJS', 'Express', 'TypeScript', 'JavaScript', 'REST APIs', 'Clean Code'],
       },
       {
         domain: 'ARCHITECTURE & DISTRIBUTED SYSTEMS',
@@ -283,32 +297,32 @@ export default {
       {
         domain: 'MESSAGING, STREAMING & CACHE',
         description: 'Fault-tolerant asynchronous messaging and distributed in-memory caching.',
-        items: ['RabbitMQ', 'Apache Kafka', 'Redis (Cache & State Management)', 'WebSockets', 'MQTT', 'Dead Letter Queues (DLQ)'],
+        items: ['RabbitMQ', 'Apache Kafka', 'Amazon MQ', 'Redis (Cache & State Management)', 'WebSockets', 'MQTT', 'Dead Letter Queues (DLQ)'],
       },
       {
         domain: 'DATA PLATFORMS & PERSISTENCE',
         description: 'Strict concurrency, ACID transactional integrity, and query performance tuning.',
-        items: ['PostgreSQL', 'Oracle DB', 'MySQL', 'ACID Transactions', 'Row-Level Locking', 'Versioned Migrations'],
+        items: ['MySQL / MariaDB', 'PostgreSQL', 'Oracle (PL/SQL)', 'Redis', 'MongoDB', 'SQL Server', 'ACID Transactions', 'Versioned Migrations'],
       },
       {
         domain: 'CLOUD & DEVOPS INFRASTRUCTURE',
         description: 'Automated CI/CD delivery pipelines, elastic cloud computing, and full observability.',
-        items: ['AWS (Lambda, SQS, SNS, API Gateway, CloudWatch, CodeBuild)', 'Azure Cloud (Monitor, IoT)', 'Cloudflare', 'Docker & Docker Compose', 'GitLab CI/CD', 'GitHub Actions', 'GNU Make'],
+        items: ['AWS (Lambda, ECS, SQS, CloudWatch)', 'Azure Cloud (Monitor, IoT, Functions)', 'Docker & Docker Compose', 'Kubernetes', 'GitLab CI/CD', 'GitHub Actions', 'GNU Make'],
       },
       {
         domain: 'AI IN THE DEV LIFECYCLE, SDD & LLMs',
         description: 'AI-assisted engineering with executable contracts, RAG, and LLM integrations.',
-        items: ['Spec-Driven Development (SDD)', 'RAG (Retrieval-Augmented Generation)', 'LLM Integrations (Gemini, Claude, OpenAI)', 'Claude Code', 'GitHub Copilot', 'LangChain.js', 'MCP (Model Context Protocol)'],
+        items: ['Spec-Driven Development (SDD)', 'Claude Code', 'GitHub Copilot', 'Codex', 'RAG (Retrieval-Augmented Generation)', 'MCP (Model Context Protocol)', 'LangChain.js', 'Google Gemini'],
       },
       {
         domain: 'QUALITY ASSURANCE & TESTING',
         description: 'Automated test suite engineering and continuous static code inspection.',
-        items: ['TDD (Test-Driven Development)', 'Pest', 'PHPUnit', 'SonarQube', 'Continuous Static Analysis'],
+        items: ['Pest', 'PHPUnit', 'Vitest', 'TDD (Test-Driven Development)', 'SonarQube', 'Continuous Static Analysis'],
       },
       {
         domain: 'FRONTEND SYSTEMS',
         description: 'High-performance modular reactive interfaces with strict accessibility standards.',
-        items: ['React', 'Next.js', 'Vue.js', 'Angular', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Vite', 'WCAG Accessibility'],
+        items: ['Vue.js', 'Angular', 'React', 'JavaScript', 'TypeScript', 'Tailwind CSS', 'Vite', 'WCAG Accessibility'],
       },
     ],
   },
