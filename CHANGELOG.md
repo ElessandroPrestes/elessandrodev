@@ -7,6 +7,21 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.5.0] - 2026-10-08
+
+### Adicionado
+- **Suporte a Currículos Bilíngues Nativos (SPEC-002 / TASK-002)**:
+  - Disponibilização dos currículos oficiais em `public/`: `Elessandro_Prestes_Macedo_Engenheiro_de_Software.pdf` (Português) e `Elessandro_Prestes_Macedo_Software_Engineer.pdf` (Inglês).
+  - Reatividade dinâmica de idioma no componente `Statement.vue` via `computed()` (`cvFilename` e `cvPath`), reagindo instantaneamente ao estado do `useI18n`.
+  - Configuração segura de atributos `:download="cvFilename"`, `target="_blank"` e `rel="noopener noreferrer"`.
+- **Atualização Cadastral e Cronológica da Trajetória**:
+  - Inclusão da posição atual como **Líder Técnico em Engenharia de Software – Full Stack & Arquitetura de Sistemas** na **EPM DEVTECH** (Jun/2026 – Atual) em `pt.js` e `en.js`.
+  - Consolidação da posição de **Engenheiro de Software com IA Aplicada** (Out/2025 – Mai/2026) sob a **EPM DEVTECH** (migração Laravel 12, 56.400+ linhas legadas eliminadas, 2.399 testes).
+  - Sincronização rigorosa do contexto do assistente de IA (`src/services/aiService.js`) com os novos dados factuais.
+  - Atualização do Toolbox com tecnologias complementares dos currículos oficiais (NestJS, MariaDB, MongoDB, Amazon MQ, Kubernetes, Vitest).
+
+---
+
 ## [1.4.0] - 2026-10-08
 
 ### Adicionado

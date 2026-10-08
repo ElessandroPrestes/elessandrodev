@@ -13,7 +13,7 @@
 | **Repositório**   | `ElessandroPrestes/elessandrodev`                                                                        |
 | **URL Produção**  | [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/) |
 | **Deploy**        | GitHub Pages via GitHub Actions                                                                          |
-| **Versão**        | 1.4.0                                                                                                    |
+| **Versão**        | 1.5.0                                                                                                    |
 | **Autor**         | Elessandro Prestes Macedo (Software Engineer & Tech Lead)                                                |
 | **Contato**       | [LinkedIn](https://www.linkedin.com/in/elessandro-prestes-macedo/) • WhatsApp: +55 (45) 99917-8290       |
 | **Governança**    | **Universal SDD (Spec-Driven Development)**                                                              |
@@ -154,9 +154,12 @@ src/
 
 ## 7. Próximos Passos & Backlog Estratégico (Universal SDD)
 
-> **Status:** Mapeados e documentados detalhadamente em `ROADMAP.md` para execução futura mediante aprovação formal de SPEC pelo Product Owner (em espera no momento, não em execução):
+- [x] **SPEC-001 [IA & Resiliência]:** Refatoração do chat com streaming reativo, eliminação do alias instável `gemini-flash-latest`, retries com jitter e modelo de contingência (Concluída em v1.4.0).
+- [x] **SPEC-002 [Conteúdo & i18n]:** Suporte a currículos bilíngues dinâmicos (PT-BR e EN) com integridade de assets e sincronização cadastral da trajetória na EPM DEVTECH (Concluída em v1.5.0).
 
-1. **SPEC-002 [Segurança]:** Criação de Backend-for-Frontend (BFF) Serverless (Cloudflare Workers ou Vercel Edge) para eliminar a exposição de `VITE_GEMINI_API_KEY` no bundle do navegador e aplicar rate limiting por IP.
-2. **SPEC-003 [Performance]:** Code splitting e otimização de chunks no Vite (`build.rollupOptions.output.manualChunks`) para segmentar `@langchain/*`, `marked` e `vue`, mantendo os chunks < 500 kB.
-3. **SPEC-004 [Experiência de Usuário]:** Histórico conversacional com janela deslizante (últimas 3 a 5 mensagens) com teto controlado de tokens para manter contexto sem inflar custos.
-4. **SPEC-005 [CI/CD]:** Pipeline de automação de Quality Gates no GitHub Actions para execução de `node src/services/aiService.test.mjs` e `npm run build` a cada Pull Request.
+> **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
+
+1. **SPEC-003 [Segurança]:** Criação de Backend-for-Frontend (BFF) Serverless (Cloudflare Workers ou Vercel Edge) para eliminar a exposição de `VITE_GEMINI_API_KEY` no bundle do navegador e aplicar rate limiting por IP.
+2. **SPEC-004 [Performance]:** Code splitting e otimização de chunks no Vite (`build.rollupOptions.output.manualChunks`) para segmentar `@langchain/*`, `marked` e `vue`, mantendo os chunks < 500 kB.
+3. **SPEC-005 [Experiência de Usuário]:** Histórico conversacional com janela deslizante (últimas 3 a 5 mensagens) com teto controlado de tokens para manter contexto sem inflar custos.
+4. **SPEC-006 [CI/CD]:** Pipeline de automação de Quality Gates no GitHub Actions para execução de `node src/services/aiService.test.mjs` e `npm run build` a cada Pull Request.
