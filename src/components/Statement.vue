@@ -1,8 +1,16 @@
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from '../composables/useI18n.js'
 
 const { messages, locale } = useI18n()
-const cvPath = `${import.meta.env.BASE_URL}Elessandro_Prestes_Macedo_Software_Engineer.pdf`
+
+const cvFilename = computed(() =>
+  locale.value === 'pt'
+    ? 'Elessandro_Prestes_Macedo_Engenheiro_de_Software.pdf'
+    : 'Elessandro_Prestes_Macedo_Software_Engineer.pdf'
+)
+
+const cvPath = computed(() => `${import.meta.env.BASE_URL}${cvFilename.value}`)
 </script>
 
 <template>
@@ -48,7 +56,9 @@ const cvPath = `${import.meta.env.BASE_URL}Elessandro_Prestes_Macedo_Software_En
           <div class="pt-4 flex flex-wrap items-center gap-6 font-mono text-xs">
             <a
               :href="cvPath"
-              download
+              :download="cvFilename"
+              target="_blank"
+              rel="noopener noreferrer"
               class="inline-flex items-center gap-2 text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors border-b border-slate-900 dark:border-white hover:border-indigo-600 dark:hover:border-indigo-400 pb-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
               <span>{{ messages.statement.cvButton }}</span>
