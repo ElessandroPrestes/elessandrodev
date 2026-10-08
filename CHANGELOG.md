@@ -7,6 +7,20 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.6.0] - 2026-10-08
+
+### Modificado
+- **Revisão e Humanização da Prosa Editorial (SPEC-003 / TASK-003 / `/humanizer`)**:
+  - Eliminação sistemática de 25 padrões e clichês de IA ("ecossistemas robustos", "blindar contratos", "pioneiro", "delve", "testament", "não é apenas X, é Y", tríades artificiais e excesso de travessões).
+  - Adoção de tom de Engenheiro de Software Sênior & Tech Lead: técnico, direto, sóbrio e fundamentado em decisões arquiteturais, problemas reais e métricas mensuráveis de produção.
+  - Alinhamento bilíngue completo em `src/i18n/locales/pt.js` e `src/i18n/locales/en.js`:
+    - Eliminação de anglicismos descontextualizados na versão em português (ex.: "MÉTRICAS DE PRODUÇÃO", "PRÁTICAS TÉCNICAS", "IMPACTO EM PRODUÇÃO").
+    - Redação em inglês técnico idiomático, conciso e natural para recrutadores e diretores de engenharia globais.
+  - Refinamento das diretrizes do assistente de IA em `src/services/aiService.js` (`ELESSANDRO_CONTEXT`), orientando respostas pragmáticas e objetivas sem prolixidade corporativa.
+  - Zero regressão visual: 100% de integridade preservada em templates Vue 3, classes Tailwind CSS, reatividade e suíte de testes automatizados (12/12).
+
+---
+
 ## [1.5.0] - 2026-10-08
 
 ### Adicionado
