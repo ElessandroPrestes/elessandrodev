@@ -1,6 +1,3 @@
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
-import { PromptTemplate } from '@langchain/core/prompts'
-import { StringOutputParser } from '@langchain/core/output_parsers'
 import {
   AI_CONFIG,
   isTransientError,
@@ -8,289 +5,205 @@ import {
   recordTelemetry,
 } from '../config/aiConfig.js'
 
-export const ELESSANDRO_CONTEXT = `
-Você é o assistente de IA oficial do portfólio de Elessandro Prestes Macedo.
-Seu objetivo é responder perguntas de recrutadores, clientes e visitantes sobre a carreira, habilidades e projetos de Elessandro.
-
-Informações sobre Elessandro Prestes Macedo:
-- Título: Engenheiro de Software | PHP & Laravel | Backend & Full Stack | Arquitetura & IA Aplicada (Tech Lead).
-- Experiência: Mais de 9 anos de experiência em desenvolvimento de software e liderança técnica.
-- Especialidades: Arquitetura e desenvolvimento backend, modernização de sistemas legados (monólitos para microsserviços, BFF, Serverless, Strangler Fig Pattern comprovados na CAPES e no Grupo Paraíso), Clean Code, testes automatizados e IA aplicada ao ciclo de desenvolvimento (SDD, RAG e MCP).
-- IA no Ciclo de Desenvolvimento: Aplica Inteligência Artificial no fluxo de engenharia utilizando SDD (Spec-Driven Development), RAG (Retrieval-Augmented Generation), MCP (Model Context Protocol) e assistentes de código (Claude Code, Google Gemini, GitHub Copilot, Codex), conectando especificações técnicas estruturadas ao ciclo de desenvolvimento para validar requisitos, manter a rastreabilidade e evitar retrabalho.
-- Principais Tecnologias:
-  * Backend: PHP (Laravel, Symfony), Node.js (Express, NestJS), TypeScript, JavaScript.
-  * Frontend: Vue.js, Angular, React, Tailwind CSS, Vite.
-  * Banco de Dados: MySQL/MariaDB, PostgreSQL, Oracle (PL/SQL), Redis, MongoDB, SQL Server.
-  * Mensageria & Filas: RabbitMQ, Apache Kafka, Amazon MQ, AWS SQS/SNS.
-  * DevOps & Cloud: Docker, Kubernetes, GitLab CI/CD, GitHub Actions, AWS (Lambda, ECS, SQS, CloudWatch), Azure (Monitor, Functions, IoT).
-  * IA & Metodologia: Spec-Driven Development (SDD), Claude Code, GitHub Copilot, Codex, RAG, MCP (Model Context Protocol), LangChain.js, Google Gemini.
-  * Testes: Pest, PHPUnit, Vitest, TDD, SonarQube.
-- Histórico Profissional Relevante:
-  * EPM DEVTECH (Jun/2026 - Atual): Líder Técnico em Engenharia de Software – Full Stack & Arquitetura de Sistemas. Planejamento e arquitetura de plataformas web completas, APIs escaláveis com PHP/Laravel, Node.js (Express, NestJS), soluções full stack com Vue.js/Angular/React, engenharia de software modular e consultoria em arquitetura de software.
-  * EPM DEVTECH (Out/2025 - Mai/2026): Engenheiro de Software com IA Aplicada. Arquitetura e desenvolvimento de plataforma web em PHP 8.2 e Laravel 12 estruturada em arquitetura modular; 2.399 testes automatizados (Pest/PHPUnit) distribuídos em 241 arquivos; 384 endpoints REST e 181 migrations com integrações ao WhatsApp Business (-35% trabalho manual); uso de Claude Code, GitHub Copilot, Codex, RAG, MCP e SDD reduzindo retrabalho em 40% com Docker e GitLab CI/CD.
-  * Datainfo / Projeto CAPES (Out/2024 - Set/2025): Analista Programador / Tech Lead. Modernização do sistema monolítico legado SIPREC para microsserviços e BFF (Angular) atendendo 448+ IES, 10.000 usuários simultâneos e 2.500 RPS (<300ms de latência média); atuação como Tech Lead no SISCAD com PHP/Laravel, Oracle DB, Redis e RabbitMQ; SonarQube (+45% qualidade e redução de vulnerabilidades); engenharia com IA aplicando SDD, RAG e GitHub Copilot aumentando entregas da sprint em 25% com mentoria técnica.
-  * Energia Pecém (Mai/2023 - Jul/2024): Desenvolvedor Full Stack na Usina Termelétrica Energia Pecém (setor de geração de energia elétrica no Ceará). Desenvolvimento e arquitetura do Projeto SIGMA para telemetria, rastreabilidade e validação de ativos operacionais em tempo real com Node.js, Laravel, Vue.js e PostgreSQL; arquitetura orientada a eventos (EDA) com RabbitMQ, Redis e Laravel Jobs (+50% capacidade de processamento); 99,9% uptime e redução de 45% em incidentes com observabilidade no Azure Monitor.
-  * AMcom / Projeto GENIN - Operador Nacional do Sistema Elétrico - ONS (Jul/2022 - Abr/2023): Desenvolvedor de Sistemas via consultoria AMcom para o ONS (órgão responsável pela coordenação e controle da operação das instalações de geração e transmissão no Sistema Interligado Nacional - SIN e pelo planejamento dos sistemas isolados do país, sob fiscalização e regulação da Aneel). Ingestão e processamento de dados regulatórios em escala nacional para o cálculo oficial das bandeiras tarifárias de energia elétrica no Brasil; integrações com Itaipu Binacional e INMET via PHP/Laravel e serviços REST/SOAP (100% integridade transacional); microsserviços com PostgreSQL e Redis (-40% latência na ingestão nacional); AWS CodeBuild, API Gateway e CloudWatch (-60% deploy time, 99,9% uptime).
-  * NOTA DE DOMÍNIO SOBRE O SETOR DE ENERGIA: ONS (Operador Nacional do Sistema Elétrico) e Energia Pecém (Usina Termelétrica Energia Pecém) são entidades distintas e foram experiências profissionais separadas, ambas no setor elétrico brasileiro. O ONS é o órgão responsável pela coordenação e controle do SIN sob regulação da Aneel (atuação via AMcom no projeto GENIN); a Energia Pecém é uma usina termelétrica de geração de energia (atuação no projeto SIGMA). Nunca confunda as duas organizações nem as trate como o mesmo local de trabalho.
-  * NOTA DE DOMÍNIO SOBRE MODERNIZAÇÃO DE SISTEMAS LEGADOS: A modernização de sistemas legados ocorreu estritamente e exclusivamente na CAPES (Projeto SIPREC — modernização do sistema monolítico legado de avaliação para microsserviços e BFF em Angular) e no Grupo Paraíso (ERP da Indústria Têxtil e outros projetos industriais — migração gradual de ERP monolítico legado para microsserviços com Node.js via Strangler Fig Pattern). A EPM DEVTECH, o ONS e a Energia Pecém NÃO envolveram modernização de sistemas legados.
-  * Grupo Intellectus (Out/2021 - Jul/2022): Desenvolvedor Full Stack. Plataforma Serverless na AWS (Lambda, SQS, SNS) com redução de 35% de custos; plataforma educacional para 650+ escolas estaduais em 141 municípios (SEDUC-MT) com Angular e PHP/Laravel (99,9% uptime); ELK Stack (-50% MTTR) e GitHub Actions (+60% velocidade de entrega).
-  * Grupo Paraíso (Ago/2016 - Set/2021): Desenvolvedor Full Stack. Desenvolvimento e modernização de sistemas para a indústria têxtil, incluindo migração gradual de ERP monolítico legado para microsserviços em Node.js via Strangler Fig Pattern (-40% custo de manutenção); telemetria e chão de fábrica fabril (IoT com Azure Cloud e WebSockets); canais de venda (e-commerce, CRM corporativo); módulos corporativos com PHP (Laravel, Symfony) e Oracle DB (+30% eficiência operacional); mensageria na AWS com Kafka, RabbitMQ, Redis e PostgreSQL (99,9% uptime).
-- Principais Projetos em Destaque & Laboratórios Arquiteturais (GitHub):
-  * universal-sdd (SDD, Agentes de IA, Claude Code, GitOps, Quality Gates): Framework Spec-Driven Development para Agentes de IA. Origem: Engenharia de Software Moderna & Liderança Técnica (EPM DevTech / Consultoria). Redução de 40% em retrabalho técnico e 100% de rastreabilidade requisito ↔ código.
-  * elessandrodev (Vue.js 3, LangChain.js, Google Gemini, RAG, Docker, Vite): Portfólio com assistente conversacional RAG e streaming reativo. Origem: Arquitetura de Dados & Interfaces Reativas (Trajetória Profissional EPM DevTech). Latência média < 1.2s e zero alucinações factuais. Demo: https://elessandroprestes.github.io/elessandrodev/
-  * event-driven-processing-system (EDA, RabbitMQ, Redis, Node.js/TypeScript, PostgreSQL): Pipeline assíncrono de eventos com DLQ e deduplicação em memória. Origem: Inspirado em integrações críticas de missão em tempo real (Projeto GENIN / ONS via AMcom e Migrações CAPES). Zero perda de eventos e +50% capacidade elástica.
-  * iot-mqtt-simulator (IoT, MQTT, WebSockets, Node.js, Vue.js 3, Docker): Plataforma de telemetria e IoT industrial em tempo real. Origem: Inspirado em projetos industriais e automação fabril (Grupo Paraíso / Projetos IoT & Automação de Chão de Fábrica). Latência < 50ms via WebSocket e 100% consistência.
-  * fintech-wallet-solution (PHP 8.2+, Laravel, Node.js, PostgreSQL, Redis, JWT, ACID): Motor de carteira digital e partidas dobradas (double-entry bookkeeping) com locks transacionais estritos. Origem: Sistemas Críticos de Cobrança e Conciliação Financeira (SISCAD / CAPES via Datainfo e ERPs Corporativos). Zero divergência de saldos e 100% conformidade ACID.
-
-Diretrizes de resposta:
-- Seja sempre profissional, educado, objetivo e conciso (máximo de 2 a 3 parágrafos curtos ou tópicos objetivos).
-- Adote tom direto e pragmático de engenharia sênior. Evite clichês corporativos, fórmulas vazias ("não é apenas X, é Y") e adjetivos inflados.
-- Use Markdown bem estruturado: tópicos com '-', negrito com moderação apenas em pontos-chave, e links no formato [LinkedIn](https://www.linkedin.com/in/elessandro-prestes-macedo/).
-- Evite excesso de asteriscos, caracteres desnecessários ou separadores redundantes.
-- Destaque a senioridade, capacidade arquitetural e realizações técnicas com métricas de Elessandro.
-- Se não souber responder com precisão sobre um detalhe específico não mencionado, indique cordialmente que o visitante pode entrar em contato via LinkedIn.
-`
-
-function buildPrompt(locale, question) {
-  const languageInstruction = locale === 'en'
-    ? 'IMPORTANT INSTRUCTION: Respond strictly in professional, fluent English suitable for senior engineering recruiters and technical directors.'
-    : 'INSTRUÇÃO DE IDIOMA: Responda estritamente em português brasileiro técnico e profissional.'
-
-  const template = PromptTemplate.fromTemplate(`
-{context}
-
-{languageInstruction}
-
-Histórico/Contexto da conversa atual:
-Pergunta do visitante: {question}
-
-Resposta:
-`)
-
-  return { template, languageInstruction }
-}
-
-/**
- * Função utilitária para aguardar com promessa
- */
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/**
- * Executa uma chamada com timeout controlado via AbortController
- */
-async function invokeWithTimeout(streamPromiseFn, timeoutMs, externalSignal) {
+function createUserError(code, message, status = 0) {
+  const error = new Error(message)
+  error.code = code
+  if (status) error.status = status
+  error.userMessage = message
+  return error
+}
+
+async function requestOnce({ url, question, locale, timeoutMs, signal }) {
   const controller = new AbortController()
+  let timedOut = false
+
   const timer = setTimeout(() => {
-    controller.abort(new Error(`Timeout de ${timeoutMs}ms excedido na requisição ao LLM`))
+    timedOut = true
+    controller.abort(new Error('timeout'))
   }, timeoutMs)
 
-  if (externalSignal) {
-    externalSignal.addEventListener('abort', () => controller.abort(externalSignal.reason))
-  }
+  const handleExternalAbort = () => controller.abort(signal?.reason)
+  if (signal) signal.addEventListener('abort', handleExternalAbort, { once: true })
 
   try {
-    return await streamPromiseFn(controller.signal)
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, locale }),
+      signal: controller.signal,
+    })
+
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      const error = new Error(data?.error || `HTTP ${response.status}`)
+      error.status = response.status
+      throw error
+    }
+
+    if (typeof data?.response !== 'string' || data.response.trim() === '') {
+      const error = new Error(
+        locale === 'en'
+          ? 'The assistant returned an empty response.'
+          : 'O assistente retornou uma resposta vazia.'
+      )
+      error.status = 502
+      throw error
+    }
+
+    return {
+      response: data.response,
+      sources: Array.isArray(data.sources) ? data.sources : [],
+      status: response.status,
+    }
+  } catch (error) {
+    if (timedOut) {
+      throw createUserError(
+        'TIMEOUT',
+        locale === 'en'
+          ? 'The request timed out. Please try again.'
+          : 'A requisição excedeu o tempo limite. Tente novamente.',
+        504
+      )
+    }
+
+    if (signal?.aborted) {
+      throw createUserError(
+        'ABORTED',
+        locale === 'en' ? 'Request cancelled.' : 'Requisição cancelada.'
+      )
+    }
+
+    throw error
   } finally {
     clearTimeout(timer)
+    if (signal) signal.removeEventListener('abort', handleExternalAbort)
   }
 }
 
 /**
- * Executa inferência com Streaming reativo, retries limitados, exponential backoff,
- * timeout controlado e fallback entre modelos.
+ * Envia a pergunta ao Cloudflare Worker e retorna a resposta grounded com fontes.
  *
- * @param {string} question - Pergunta do usuário
- * @param {string} locale - 'pt' ou 'en'
- * @param {Object} options - Configurações opcionais e callbacks
- * @param {Function} options.onToken - Callback chamado a cada chunk de token gerado
- * @param {Function} options.onStatus - Callback para atualizações de status UX (retry, fallback)
- * @param {AbortSignal} options.signal - Sinal externo para cancelamento
- * @param {string} options.primaryModel - Modelo principal a utilizar
- * @param {string} options.fallbackModel - Modelo de contingência
- * @param {number} options.maxRetries - Limite de retries em erros transitórios
- * @param {number} options.timeoutMs - Timeout em ms
- * @param {number} options.backoffBaseMs - Backoff base em ms
- * @returns {Promise<string>} Resposta completa gerada
+ * @param {string} question
+ * @param {'pt'|'en'} locale
+ * @param {Object} options
+ * @param {Function} options.onStatus
+ * @param {AbortSignal} options.signal
+ * @param {number} options.maxRetries
+ * @param {number} options.timeoutMs
+ * @param {number} options.backoffBaseMs
+ * @returns {Promise<{ response: string, sources: Array }>}
  */
-export async function streamAssistant(question, locale = 'pt', options = {}) {
-  const apiKey = AI_CONFIG.apiKey
-
-  if (!apiKey || apiKey.trim() === '') {
-    throw new Error('Chave VITE_GEMINI_API_KEY não configurada no arquivo .env')
-  }
-
+export async function askAssistant(question, locale = 'pt', options = {}) {
   const {
-    onToken = () => {},
     onStatus = () => {},
     signal = null,
-    primaryModel = AI_CONFIG.primaryModel,
-    fallbackModel = AI_CONFIG.fallbackModel,
     maxRetries = AI_CONFIG.maxRetries,
     timeoutMs = AI_CONFIG.timeoutMs,
     backoffBaseMs = AI_CONFIG.backoffBaseMs,
   } = options
 
-  const { template, languageInstruction } = buildPrompt(locale, question)
+  if (!AI_CONFIG.chatApiUrl) {
+    throw createUserError(
+      'MISSING_CHAT_API_URL',
+      locale === 'en'
+        ? 'The assistant endpoint is not configured. Set VITE_CHAT_API_URL in your .env file.'
+        : 'O endpoint do assistente não está configurado. Defina VITE_CHAT_API_URL no arquivo .env.'
+    )
+  }
 
-  // Ordem de execução: 1. Modelo Primário (com até maxRetries) -> 2. Modelo Fallback (com até 1 retry)
-  const tiers = [
-    { modelName: primaryModel, maxRetriesAllowed: maxRetries, isFallback: false },
-    { modelName: fallbackModel, maxRetriesAllowed: 1, isFallback: true },
-  ].filter((tier, index, self) => Boolean(tier.modelName) && self.findIndex(t => t.modelName === tier.modelName) === index)
+  const retries = Number.isFinite(maxRetries) ? Math.max(0, Math.floor(maxRetries)) : 0
+  const effectiveTimeout = Number.isFinite(timeoutMs) ? Math.max(1, timeoutMs) : 30000
+  const startedAt = performance.now()
+  let lastError = null
 
-  const startTime = performance.now()
-  let accumulatedFullText = ''
-  let hasEmittedFirstToken = false
-  let firstTokenTime = null
-  let totalRetriesPerformed = 0
-  let fallbackUsed = false
-  let lastAttemptError = null
-  let successfulModel = null
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const result = await requestOnce({
+        url: AI_CONFIG.chatApiUrl,
+        question,
+        locale,
+        timeoutMs: effectiveTimeout,
+        signal,
+      })
 
-  for (const tier of tiers) {
-    if (tier.isFallback) {
-      fallbackUsed = true
+      recordTelemetry({
+        status: result.status,
+        retryCount: attempt,
+        fallbackUsed: false,
+        totalLatencyMs: performance.now() - startedAt,
+        retrievalTopScore: result.sources[0]?.score ?? null,
+        retrievalHits: result.sources.length,
+      })
+
+      return { response: result.response, sources: result.sources }
+    } catch (error) {
+      lastError = error
+
+      if (error?.code === 'ABORTED') break
+      if (!isTransientError(error) || attempt >= retries) break
+
       onStatus(
         locale === 'en'
-          ? 'Primary service temporarily unavailable. Trying an alternative model...'
-          : 'Nosso serviço principal está temporariamente indisponível. Tentando uma alternativa...',
-        'fallback'
+          ? 'Reconnecting to the assistant...'
+          : 'Tentando restabelecer a conexão...',
+        'retry'
       )
-    }
 
-    let attempt = 0
-    while (attempt <= tier.maxRetriesAllowed) {
-      attempt++
-      const currentModelName = tier.modelName
-
-      try {
-        const modelInstance = new ChatGoogleGenerativeAI({
-          apiKey,
-          model: currentModelName,
-          temperature: AI_CONFIG.temperature,
-          maxRetries: 0, // Desativa retries automáticos internos do LangChain para governança controlada
-        })
-
-        const chain = template.pipe(modelInstance).pipe(new StringOutputParser())
-
-        // Executa streaming com timeout
-        await invokeWithTimeout(async (callSignal) => {
-          const stream = await chain.stream(
-            {
-              context: ELESSANDRO_CONTEXT,
-              languageInstruction,
-              question,
-            },
-            { signal: callSignal }
-          )
-
-          for await (const chunk of stream) {
-            if (!hasEmittedFirstToken) {
-              hasEmittedFirstToken = true
-              firstTokenTime = performance.now()
-            }
-            accumulatedFullText += chunk
-            onToken(chunk, accumulatedFullText)
-          }
-        }, timeoutMs, signal)
-
-        // Sucesso na geração
-        successfulModel = currentModelName
-        const totalDuration = performance.now() - startTime
-        const ttft = firstTokenTime ? firstTokenTime - startTime : null
-
-        recordTelemetry({
-          model: successfulModel,
-          status: 200,
-          retryCount: totalRetriesPerformed,
-          fallbackUsed,
-          ttftMs: ttft,
-          llmLatencyMs: totalDuration,
-          totalLatencyMs: totalDuration,
-        })
-
-        return accumulatedFullText
-      } catch (err) {
-        lastAttemptError = err
-        const errMessage = String(err?.message || err)
-        console.warn(`[aiService] Falha na tentativa ${attempt} do modelo ${currentModelName}:`, errMessage)
-
-        // REGRA CRÍTICA DE STREAMING:
-        // Se a falha ocorreu APÓS o primeiro token ser emitido, NÃO repetir a geração do zero!
-        if (hasEmittedFirstToken) {
-          const streamInterruptedError = new Error(
-            locale === 'en'
-              ? 'The response was interrupted. Please try again.'
-              : 'A resposta foi interrompida. Tente novamente.'
-          )
-          streamInterruptedError.hasPartialOutput = true
-          streamInterruptedError.partialText = accumulatedFullText
-          streamInterruptedError.originalError = err
-
-          recordTelemetry({
-            model: currentModelName,
-            status: 499, // Interrupted stream
-            retryCount: totalRetriesPerformed,
-            fallbackUsed,
-            ttftMs: firstTokenTime ? firstTokenTime - startTime : null,
-            totalLatencyMs: performance.now() - startTime,
-          })
-
-          throw streamInterruptedError
-        }
-
-        // Se falhou antes do primeiro token, verificar se o erro é transitório
-        const isTransient = isTransientError(err)
-
-        if (!isTransient) {
-          // Erro permanente (ex: 401, 404, modelo inexistente) -> não faz retries
-          recordTelemetry({
-            model: currentModelName,
-            status: err?.status || 400,
-            retryCount: totalRetriesPerformed,
-            fallbackUsed,
-            totalLatencyMs: performance.now() - startTime,
-          })
-          throw err
-        }
-
-        // Erro é transitório (503, 502, 504, 429, timeout, rede)
-        if (attempt <= tier.maxRetriesAllowed) {
-          totalRetriesPerformed++
-          onStatus(
-            locale === 'en'
-              ? 'Reconnecting to AI service...'
-              : 'Tentando restabelecer a conexão...',
-            'retry'
-          )
-          const waitTime = calculateBackoff(attempt, backoffBaseMs)
-          await sleep(waitTime)
-          // Continua o loop while para próxima tentativa do mesmo tier
-        } else {
-          // Esgotou retries deste modelo; o loop sairá para o próximo tier (fallback)
-          break
-        }
-      }
+      await sleep(calculateBackoff(attempt + 1, backoffBaseMs))
     }
   }
 
-  // Se todos os tiers e retries falharam sem emitir nenhum token
+  if (!lastError) {
+    lastError = new Error(
+      locale === 'en'
+        ? 'Could not process your message.'
+        : 'Não foi possível processar sua mensagem.'
+    )
+    lastError.status = 503
+  }
+
   recordTelemetry({
-    model: tiers[0]?.modelName,
-    status: lastAttemptError?.status || 503,
-    retryCount: totalRetriesPerformed,
-    fallbackUsed,
-    totalLatencyMs: performance.now() - startTime,
+    status: lastError.status || 503,
+    retryCount: retries,
+    fallbackUsed: false,
+    totalLatencyMs: performance.now() - startedAt,
   })
 
-  throw lastAttemptError
+  if (!lastError.userMessage) {
+    const hasFriendlyWorkerMessage =
+      Boolean(lastError.status) &&
+      Boolean(lastError.message) &&
+      !lastError.message.startsWith('HTTP ')
+
+    if (lastError.status === 413) {
+      lastError.userMessage = locale === 'en'
+        ? 'The message is too long.'
+        : 'A pergunta é muito longa.'
+    } else if (hasFriendlyWorkerMessage) {
+      lastError.userMessage = lastError.message
+    } else {
+      lastError.userMessage = locale === 'en'
+        ? 'Could not process your message right now. Please try again in a few moments.'
+        : 'Não consegui processar sua mensagem agora. Tente novamente em alguns instantes.'
+    }
+  }
+
+  throw lastError
 }
 
 /**
- * Função legado para chamadas síncronas/completas sem streaming (mantida para compatibilidade)
+ * Compatibilidade com a interface anterior de streaming.
+ * O Worker retorna a resposta completa; o texto é emitido uma única vez.
  */
-export async function askAssistant(question, locale = 'pt') {
-  return await streamAssistant(question, locale, {})
+export async function streamAssistant(question, locale = 'pt', options = {}) {
+  const result = await askAssistant(question, locale, options)
+  if (typeof options.onToken === 'function') {
+    options.onToken(result.response, result.response)
+  }
+  return result.response
 }
