@@ -189,7 +189,7 @@
 - [ ] Build publicado no GitHub Pages
 - [ ] Chat testado em produção com fontes
 - [x] QA-008 e REVIEW-008 registrados
-- [ ] Commits em pt-BR
+- [x] Commits em pt-BR
 
 ---
 

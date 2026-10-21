@@ -46,7 +46,7 @@ Autorizado para release na versão **1.10.0** e acionamento do fluxo Git / GitHu
 
 ## 4. Confirmação de CI e Deploy
 
-- CI em `develop`: _pendente de execução_.
+- CI em `develop`: ✅ run `39644879309` (21s), com `rag:check`, `npm test` e `npm run build` aprovados.
 - CI em `main` e GitHub Pages: _pendente de execução_.
 
-Este campo será atualizado com os IDs dos runs assim que o pipeline concluir.
+Este campo será atualizado com o ID do run de `main` assim que o pipeline concluir.
