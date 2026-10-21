@@ -128,6 +128,26 @@ npm run rag:check
 npx wrangler deploy
 ```
 
+### 3. Worker Local (opcional)
+
+Para testar o assistente sem publicar o Worker:
+
+```bash
+# .dev.vars (ignorado pelo Git): chave da OpenRouter
+OPENROUTER_API_KEY=sua-chave-local
+
+# .env.local (ignorado pelo Git): aponta o frontend para o Worker local
+VITE_CHAT_API_URL=http://127.0.0.1:8788
+```
+
+```bash
+npx wrangler dev --port 8788 --ip 127.0.0.1
+npm run dev
+```
+
+O frontend usa o Worker local em `http://127.0.0.1:8788` e a aplicação continua em `http://localhost:5212/elessandrodev/`.
+
+
 ---
 
 ## 🚀 Como Executar o Projeto

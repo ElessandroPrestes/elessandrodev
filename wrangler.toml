@@ -8,7 +8,7 @@ binding = "AI"
 
 [vars]
 EMBEDDING_MODEL = "@cf/baai/bge-m3"
-MODELS = "google/gemma-4-31b-it:free,minimax/minimax-m3.1-flash:free,nvidia/nemotron-3-super-120b-a12b:free"
+MODELS = "minimax/minimax-m3.1-flash:free,google/gemma-4-31b-it:free"
 TOP_K = "4"
 HYBRID_ALPHA = "0.6"
 MIN_SCORE = "0.45"

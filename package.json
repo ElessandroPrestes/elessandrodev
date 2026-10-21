@@ -7,7 +7,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/services/aiService.test.mjs",
+    "test": "node src/services/aiService.test.mjs && node worker/prompt.test.mjs && node worker/index.test.mjs",
     "rag:index": "node scripts/build-index.mjs",
     "rag:dry-run": "node scripts/build-index.mjs --dry-run",
     "rag:eval": "node scripts/eval-retrieval.mjs",

@@ -18,6 +18,7 @@ Arquitetura e desenvolvimento de uma plataforma web em PHP 8.2 e Laravel 12, est
 
 Resultados e escopo técnico:
 
+- Liderou a modernização do monólito legado para PHP 8.2 e Laravel 12 com Strangler Fig, eliminando mais de 56.400 linhas de código legado.
 - 2.399 testes automatizados (Pest/PHPUnit) distribuídos em 241 arquivos.
 - 384 endpoints REST e 181 migrations.
 - Integrações com o WhatsApp Business, com redução de 35% no trabalho manual.
@@ -31,7 +32,7 @@ Modernização do sistema monolítico legado SIPREC para microsserviços e BFF e
 Escala e resultados:
 
 - Atendimento a 448+ instituições de ensino superior (IES).
-- 10.000 usuários simultâneos e 2.500 RPS, com latência média inferior a 300 ms.
+- Capacidade da arquitetura para picos de até 10.000 usuários simultâneos, throughput de 2.500 RPS e latência média inferior a 300 ms; o material não detalha a metodologia de medição.
 - Atuação como Tech Lead no SISCAD, com PHP/Laravel, Oracle DB, Redis e RabbitMQ.
 - SonarQube com ganho de 45% em qualidade e redução de vulnerabilidades.
 - Engenharia com IA aplicando SDD, RAG e GitHub Copilot, com aumento de 25% nas entregas da sprint.
@@ -77,8 +78,8 @@ Desenvolvimento e modernização de sistemas para a indústria têxtil.
 
 Entregas:
 
-- Migração gradual de ERP monolítico legado para microsserviços em Node.js via Strangler Fig Pattern, com redução de 40% no custo de manutenção.
-- Telemetria e chão de fábrica com IoT em Azure Cloud e WebSockets.
-- Canais de venda, incluindo e-commerce e CRM corporativo.
-- Módulos corporativos com PHP (Laravel, Symfony) e Oracle DB, com aumento de 30% na eficiência operacional.
-- Mensageria na AWS com Kafka, RabbitMQ, Redis e PostgreSQL, e 99,9% de uptime.
+- Colaborou em iniciativas de migração gradual do ERP monolítico legado para microsserviços em Node.js via Strangler Fig Pattern, com redução de 40% no custo de manutenção.
+- Participou de projetos de telemetria e chão de fábrica com IoT em Azure Cloud e WebSockets.
+- Atuou em canais de venda, incluindo e-commerce e CRM corporativo.
+- Desenvolveu módulos corporativos com PHP (Laravel, Symfony) e Oracle DB, com aumento de 30% na eficiência operacional.
+- Colaborou em mensageria na AWS com Kafka, RabbitMQ, Redis e PostgreSQL, e 99,9% de uptime.

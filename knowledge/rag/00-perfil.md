@@ -12,7 +12,7 @@
 
 ## Resumo profissional
 
-Engenheiro de Software Sênior e Tech Lead com trajetória em arquitetura de sistemas distribuídos, microsserviços de alta concorrência, modernização de sistemas legados e liderança técnica. Atuou em organizações dos setores de educação, energia, indústria têxtil e serviços, com foco em backend, integrações, mensageria, observabilidade e entrega contínua.
+Engenheiro de Software Sênior e Tech Lead com 9+ anos de trajetória em arquitetura de sistemas distribuídos, microsserviços de alta concorrência, modernização de sistemas legados e liderança técnica. Atuou em organizações dos setores de educação, energia, indústria têxtil e serviços, com foco em backend, integrações, mensageria, observabilidade e entrega contínua.
 
 Combina prática de engenharia com aplicação de Inteligência Artificial no ciclo de desenvolvimento: especificações técnicas estruturadas, recuperação de conhecimento, validação de requisitos e assistentes de código com rastreabilidade.
 
@@ -58,6 +58,10 @@ IA e metodologia: Spec-Driven Development (SDD), Claude Code, GitHub Copilot, Co
 ## Stack — Testes e qualidade
 
 Testes e qualidade: Pest, PHPUnit, Vitest, TDD, SonarQube.
+
+## Idiomas
+
+Português nativo. Inglês avançado em leitura e escrita técnica; conversação em nível básico.
 
 ## Princípios de engenharia
 

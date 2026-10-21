@@ -4,7 +4,7 @@
 
 ---
 
-## Versão Atual: v1.10.0 (2026-10-21)
+## Versão Atual: v1.11.0 (2026-10-21)
 
 - [x] Arquitetura Vue 3 + Vite + Tailwind CSS.
 - [x] Design editorial com tema Dark/Light persistido.
@@ -18,6 +18,7 @@
 - [x] **SPEC-006:** testes automatizados no GitHub Actions.
 - [x] **SPEC-007:** remediação de vulnerabilidades do Dependabot.
 - [x] **SPEC-008:** RAG real com Cloudflare Worker, corpus Markdown, embeddings, retrieval híbrido, fontes e remoção de LangChain/Gemini do cliente.
+- [x] **SPEC-009:** prompt do assistente com fidelidade factual, contato determinístico e fallback seguro.
 
 ---
 
@@ -25,12 +26,12 @@
 
 > Execução futura somente mediante SPEC aprovada pelo Product Owner.
 
-### 1. [Performance] SPEC-009: Code splitting e cache de embeddings
+### 1. [Performance] SPEC-010: Code splitting e cache de embeddings
 - **Contexto:** o bundle principal está em ~211 KB; o índice e as chamadas de embedding podem ser otimizados.
 - **Objetivo:** avaliar `manualChunks`, lazy loading do chat e cache de embeddings para perguntas repetidas.
 - **Impacto:** menor First Load JS e menor latência em consultas recorrentes.
 
-### 2. [Experiência] SPEC-010: Histórico conversacional
+### 2. [Experiência] SPEC-011: Histórico conversacional
 - **Contexto:** cada pergunta é respondida de forma isolada.
 - **Objetivo:** janela deslizante de 3 a 5 mensagens com teto de tokens e persistência opcional em `sessionStorage`.
 - **Impacto:** diálogos mais naturais sem inflar custos.

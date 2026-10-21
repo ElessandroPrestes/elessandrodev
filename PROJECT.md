@@ -13,7 +13,7 @@
 | **Repositório**   | `ElessandroPrestes/elessandrodev`                                                                        |
 | **URL Produção**  | [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/) |
 | **Deploy**        | GitHub Pages via GitHub Actions                                                                          |
-| **Versão**        | 1.10.0                                                                                                   |
+| **Versão**        | 1.11.0                                                                                                   |
 | **Autor**         | Elessandro Prestes Macedo (Software Engineer & Tech Lead)                                                |
 | **Contato**       | [LinkedIn](https://www.linkedin.com/in/elessandro-prestes-macedo/) • WhatsApp: +55 (45) 99917-8290       |
 | **Governança**    | **Universal SDD (Spec-Driven Development)**                                                              |
@@ -91,7 +91,8 @@ scripts/
 shared/retrieval.js      # Tokenização, cosseno, BM25 e score híbrido
 
 worker/
-├── index.js             # HTTP, CORS, prompt e OpenRouter
+├── index.js             # HTTP, CORS, contato, RAG e OpenRouter
+├── prompt.js            # Ficha, regras e contato determinístico
 └── rag/
     ├── index.json       # Índice versionado
     └── retrieve.js      # Embedding, retrieval e fontes
@@ -117,10 +118,11 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
          ▼
 [Cloudflare Worker]
   ├─ Valida Origin, payload e limites
+  ├─ Intenção de contato ──► resposta determinística sem LLM
   ├─ Workers AI: embedding da pergunta
   ├─ Recuperação híbrida + threshold
   ├─ Sem chunks relevantes ──► fallback sem LLM
-  └─ OpenRouter: geração com fallback de modelos
+  └─ OpenRouter: geração com prompt canônico e fallback de modelos
          │
          ▼
 [Resposta { response, sources }]
@@ -140,6 +142,7 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
    - 320px, 640px, 768px, 1024px, 1280px e 1536px testados sem overflow horizontal.
 4. **Resiliência do assistente:**
    - Suíte `src/services/aiService.test.mjs` com 16 testes: sucesso, 429, 5xx, 400, timeout, rede e configuração ausente.
+   - Suítes do Worker com 10 testes de prompt e 7 de integração; `npm test` executa 33 testes.
    - `rag:eval` com hit@4 de 100% e MRR 0.975.
 
 ---
@@ -151,7 +154,7 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 - `CLOUDFLARE_API_TOKEN` de ingestão fica em `.env.ingest`, ignorado pelo Git.
 - CORS restrito às origens de produção e desenvolvimento local.
 - Limites de payload (2000 bytes) e pergunta (500 caracteres).
-- O prompt exige uso exclusivo do contexto recuperado e recusa quando a informação não existe.
+- O prompt usa a ficha canônica como fonte da verdade e os trechos recuperados como complemento; recusa quando não há base.
 - O Worker sanitiza artefatos de idioma indevidos na resposta.
 
 ---
@@ -161,13 +164,14 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 - [x] **SPEC-001 [IA & Resiliência]:** Refatoração do chat com streaming reativo, eliminação do alias instável `gemini-flash-latest`, retries com jitter e modelo de contingência (Concluída em v1.4.0).
 - [x] **SPEC-002 [Conteúdo & i18n]:** Suporte a currículos bilíngues dinâmicos (PT-BR e EN) com integridade de assets e sincronização cadastral da trajetória na EPM DEVTECH (Concluída em v1.5.0).
 - [x] **SPEC-003 [Editorial & Copy]:** Revisão e humanização da prosa editorial sob protocolo `/humanizer`, eliminando 25 padrões/clichês de IA e adotando tom pragmático de Engenheiro Sênior (Concluída em v1.6.0).
-- [x] **SPEC-004 [Conteúdo & Domínio]:** Correção e atribuição factual de modernização de sistemas legados exclusivamente para CAPES (SIPREC) e Grupo Paraíso (ERP Indústria Têxtil) (Concluída em v1.7.0).
+- [x] **SPEC-004 [Conteúdo & Domínio]:** Correção e atribuição factual inicial de modernização de legados para CAPES (SIPREC) e Grupo Paraíso (ERP Indústria Têxtil) (Concluída em v1.7.0; diretriz sobre EPM revista pela ADR-007).
 - [x] **SPEC-005 [Editorial & Projetos]:** Atualização dos estudos de caso de engenharia (Selected Work) com novo título, manifesto de laboratórios arquiteturais e fundamentação de produção em "Origem & Contexto Real" (Concluída em v1.8.0).
 - [x] **SPEC-006 [CI/CD & Quality Gates]:** Pipeline de automação de testes unitários e de resiliência no GitHub Actions antes do build e deploy (Concluída em v1.9.0).
 - [x] **SPEC-007 [Segurança & Dependências]:** Remediação de vulnerabilidades do Dependabot (#113, #114 e #115) atualizando Vue, source-map-js e definindo overrides seguros para PostCSS/Tailwind v3 (Concluída em v1.9.1).
 - [x] **SPEC-008 [Segurança & RAG]:** Migração para Cloudflare Worker, corpus Markdown, índice de embeddings, retrieval híbrido, citação de fontes e remoção de LangChain/Gemini do cliente (Concluída em v1.10.0).
+- [x] **SPEC-009 [IA & Prompt]:** Prompt canônico com ficha, fidelidade factual, contato determinístico, fallback seguro e corpus alinhado ao currículo (Concluída em v1.11.0).
 
 > **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
 
-1. **SPEC-009 [Performance]:** Code splitting adicional no Vite (`build.rollupOptions.output.manualChunks`) e avaliação de cache de embeddings.
-2. **SPEC-010 [Experiência de Usuário]:** Histórico conversacional com janela deslizante (últimas 3 a 5 mensagens) com teto controlado de tokens para manter contexto sem inflar custos.
+1. **SPEC-010 [Performance]:** Code splitting adicional no Vite (`build.rollupOptions.output.manualChunks`) e avaliação de cache de embeddings.
+2. **SPEC-011 [Experiência de Usuário]:** Histórico conversacional com janela deslizante (últimas 3 a 5 mensagens) com teto controlado de tokens para manter contexto sem inflar custos.
