@@ -1,243 +1,268 @@
-import assert from 'node:assert';
-import { isTransientError, calculateBackoff } from '../config/aiConfig.js';
-import fs from 'node:fs';
+import assert from 'node:assert'
 
-let key = process.env.VITE_GEMINI_API_KEY;
-if (!key && fs.existsSync('.env')) {
+process.env.VITE_CHAT_API_URL = 'https://worker.test'
+
+const { AI_CONFIG, isTransientError, calculateBackoff } = await import('../config/aiConfig.js')
+const { askAssistant, streamAssistant } = await import('./aiService.js')
+
+console.log('=== SUÍTE DE TESTES: CLIENTE DO CLOUDFLARE WORKER (Universal SDD) ===\n')
+
+let passedTests = 0
+let totalTests = 0
+
+async function test(description, fn) {
+  totalTests++
   try {
-    const env = fs.readFileSync('.env', 'utf8');
-    key = env.match(/VITE_GEMINI_API_KEY=(.*)/)?.[1]?.trim();
-  } catch {
-    // Silently fall back if .env is unreadable
-  }
-}
-process.env.VITE_GEMINI_API_KEY = key || 'ci-test-key';
-
-console.log('=== SUÍTE DE TESTES: RESILIÊNCIA E STREAMING DO CHAT (Universal SDD) ===\n');
-
-let passedTests = 0;
-let totalTests = 0;
-
-function it(description, fn) {
-  totalTests++;
-  try {
-    fn();
-    console.log(`✅ [PASSOU] ${description}`);
-    passedTests++;
+    await fn()
+    console.log(`✅ [PASSOU] ${description}`)
+    passedTests++
   } catch (err) {
-    console.error(`❌ [FALHOU] ${description}:`, err.message);
+    console.error(`❌ [FALHOU] ${description}:`, err.message)
+    process.exitCode = 1
   }
 }
 
-async function itAsync(description, asyncFn) {
-  totalTests++;
-  try {
-    await asyncFn();
-    console.log(`✅ [PASSOU] ${description}`);
-    passedTests++;
-  } catch (err) {
-    console.error(`❌ [FALHOU] ${description}:`, err.message);
+function jsonResponse(body, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
   }
 }
 
-// 1. Testes de Classificação de Erros Transitórios vs Permanentes
-it('Cenário E.1: Identifica 401 como erro permanente (não transitório)', () => {
-  const err = new Error('[401 Unauthorized] API key not valid');
-  err.status = 401;
-  assert.strictEqual(isTransientError(err), false);
-});
+await test('E.1: 401 é erro permanente', () => {
+  const err = new Error('[401 Unauthorized] API key not valid')
+  err.status = 401
+  assert.strictEqual(isTransientError(err), false)
+})
 
-it('Cenário E.2: Identifica 404 como erro permanente (não transitório)', () => {
-  const err = new Error('models/invalid-model is not found [404]');
-  err.status = 404;
-  assert.strictEqual(isTransientError(err), false);
-});
+await test('E.2: 404 é erro permanente', () => {
+  const err = new Error('not found [404]')
+  err.status = 404
+  assert.strictEqual(isTransientError(err), false)
+})
 
-it('Cenário B.1: Identifica 503 como transitório (passível de retry)', () => {
-  const err = new Error('This model is currently experiencing high demand [503]');
-  err.status = 503;
-  assert.strictEqual(isTransientError(err), true);
-});
+await test('E.3: 413 é erro permanente', () => {
+  const err = new Error('Payload muito grande.')
+  err.status = 413
+  assert.strictEqual(isTransientError(err), false)
+})
 
-it('Cenário B.2: Identifica 429 como transitório (rate limit)', () => {
-  const err = new Error('Resource exhausted [429]');
-  err.status = 429;
-  assert.strictEqual(isTransientError(err), true);
-});
+await test('B.1: 503 é transitório', () => {
+  const err = new Error('high demand [503]')
+  err.status = 503
+  assert.strictEqual(isTransientError(err), true)
+})
 
-it('Cenário B.3: Identifica Timeout e Network Error como transitórios', () => {
-  const timeoutErr = new Error('Timeout exceeded');
-  timeoutErr.name = 'TimeoutError';
-  const networkErr = new Error('Failed to fetch');
-  assert.strictEqual(isTransientError(timeoutErr), true);
-  assert.strictEqual(isTransientError(networkErr), true);
-});
+await test('B.2: 429 é transitório', () => {
+  const err = new Error('rate limit [429]')
+  err.status = 429
+  assert.strictEqual(isTransientError(err), true)
+})
 
-// 2. Testes de Backoff com Jitter
-it('Calcula backoff exponencial com jitter bounded', () => {
-  const b1 = calculateBackoff(1, 100);
-  const b2 = calculateBackoff(2, 100);
-  const b3 = calculateBackoff(3, 100);
+await test('B.3: timeout e rede são transitórios', () => {
+  const timeoutErr = new Error('Timeout exceeded')
+  timeoutErr.name = 'TimeoutError'
+  const networkErr = new Error('Failed to fetch')
+  assert.strictEqual(isTransientError(timeoutErr), true)
+  assert.strictEqual(isTransientError(networkErr), true)
+})
 
-  assert.ok(b1 >= 100 && b1 <= 300, `b1=${b1}`);
-  assert.ok(b2 >= 200 && b2 <= 400, `b2=${b2}`);
-  assert.ok(b3 >= 400 && b3 <= 600, `b3=${b3}`);
-});
+await test('Calcula backoff exponencial com jitter bounded', () => {
+  const b1 = calculateBackoff(1, 100)
+  const b2 = calculateBackoff(2, 100)
+  const b3 = calculateBackoff(3, 100)
+  assert.ok(b1 >= 100 && b1 <= 300, `b1=${b1}`)
+  assert.ok(b2 >= 200 && b2 <= 400, `b2=${b2}`)
+  assert.ok(b3 >= 400 && b3 <= 600, `b3=${b3}`)
+})
 
-// 3. Testes Funcionais da Orquestração de Streaming e Fallback
-// Mock da lógica interna para simular cenários A a F de forma determinística
-async function simulateStreamOrchestration({
-  primaryFailsCount = 0,
-  primaryErrorCode = 503,
-  fallbackFailsCount = 0,
-  failAfterToken = false,
-  maxRetries = 2,
-}) {
-  let primaryAttempts = 0;
-  let fallbackAttempts = 0;
-  let fallbackUsed = false;
-  const statuses = [];
-  const tokens = [];
-  let hasEmittedFirstToken = false;
-  let fullText = '';
+await test('Sucesso: envia apenas { question, locale } e retorna fontes', async () => {
+  let captured = null
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
 
-  const tiers = [
-    { name: 'primary', maxRetries: maxRetries, isFallback: false },
-    { name: 'fallback', maxRetries: 1, isFallback: true },
-  ];
+  globalThis.fetch = async (url, init) => {
+    captured = { url, init }
+    return jsonResponse({
+      response: 'Resposta fundamentada [1]',
+      sources: [{ section: 'Stack — Cloud', source: 'knowledge/rag/00-perfil.md', score: 0.91 }],
+    })
+  }
 
-  for (const tier of tiers) {
-    if (tier.isFallback) {
-      fallbackUsed = true;
-      statuses.push('fallback_activated');
+  const result = await askAssistant('Quais clouds?', 'en')
+
+  assert.strictEqual(captured.url, 'https://worker.test')
+  assert.strictEqual(captured.init.method, 'POST')
+  assert.strictEqual(captured.init.headers['Content-Type'], 'application/json')
+  assert.deepStrictEqual(JSON.parse(captured.init.body), { question: 'Quais clouds?', locale: 'en' })
+  assert.strictEqual(result.response, 'Resposta fundamentada [1]')
+  assert.strictEqual(result.sources.length, 1)
+  assert.strictEqual(result.sources[0].score, 0.91)
+})
+
+await test('Retry: 503 seguido de 200 preserva a resposta', async () => {
+  let calls = 0
+  const statuses = []
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
+
+  globalThis.fetch = async () => {
+    calls++
+    if (calls === 1) return jsonResponse({ error: 'Serviço indisponível.' }, 503)
+    return jsonResponse({ response: 'ok', sources: [] })
+  }
+
+  const result = await askAssistant('q', 'pt', {
+    maxRetries: 1,
+    backoffBaseMs: 1,
+    onStatus: (status) => statuses.push(status),
+  })
+
+  assert.strictEqual(calls, 2)
+  assert.strictEqual(result.response, 'ok')
+  assert.ok(statuses.length >= 1)
+})
+
+await test('429: esgota retries e expõe mensagem amigável do Worker', async () => {
+  let calls = 0
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
+
+  globalThis.fetch = async () => {
+    calls++
+    return jsonResponse({ error: 'Muitas requisições. Tente novamente em instantes.' }, 429)
+  }
+
+  await assert.rejects(
+    () => askAssistant('q', 'pt', { maxRetries: 1, backoffBaseMs: 1 }),
+    (err) => {
+      assert.strictEqual(err.status, 429)
+      assert.match(err.userMessage, /Muitas requisições/)
+      return true
     }
+  )
 
-    let attempt = 0;
-    while (attempt <= tier.maxRetries) {
-      attempt++;
-      if (tier.name === 'primary') primaryAttempts++;
-      if (tier.name === 'fallback') fallbackAttempts++;
+  assert.strictEqual(calls, 2)
+})
 
-      try {
-        if (tier.name === 'primary' && primaryAttempts <= primaryFailsCount) {
-          const err = new Error(`Simulated error ${primaryErrorCode}`);
-          err.status = primaryErrorCode;
-          throw err;
-        }
+await test('400: não faz retry e mantém a mensagem do Worker', async () => {
+  let calls = 0
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
 
-        if (tier.name === 'fallback' && fallbackAttempts <= fallbackFailsCount) {
-          const err = new Error('Simulated fallback 503');
-          err.status = 503;
-          throw err;
-        }
+  globalThis.fetch = async () => {
+    calls++
+    return jsonResponse({ error: 'Pergunta obrigatória.' }, 400)
+  }
 
-        // Simula streaming de tokens
-        const mockChunks = ['Olá, ', 'mundo!'];
-        for (const chunk of mockChunks) {
-          if (!hasEmittedFirstToken) {
-            hasEmittedFirstToken = true;
-          }
-          if (failAfterToken && hasEmittedFirstToken && chunk === 'mundo!') {
-            const interruptErr = new Error('Network dropped during stream');
-            throw interruptErr;
-          }
-          tokens.push(chunk);
-          fullText += chunk;
-        }
-
-        return { fullText, primaryAttempts, fallbackAttempts, fallbackUsed, statuses };
-      } catch (err) {
-        if (hasEmittedFirstToken) {
-          const errInterrupted = new Error('A resposta foi interrompida.');
-          errInterrupted.hasPartialOutput = true;
-          errInterrupted.partialText = fullText;
-          throw errInterrupted;
-        }
-
-        const isTransient = isTransientError(err);
-        if (!isTransient) {
-          throw err; // Erro permanente, não faz retry
-        }
-
-        if (attempt <= tier.maxRetries) {
-          statuses.push('retry_scheduled');
-        } else {
-          break; // Esgotou retries do modelo atual
-        }
-      }
+  await assert.rejects(
+    () => askAssistant('q', 'pt', { maxRetries: 2, backoffBaseMs: 1 }),
+    (err) => {
+      assert.strictEqual(err.status, 400)
+      assert.strictEqual(err.userMessage, 'Pergunta obrigatória.')
+      return true
     }
+  )
+
+  assert.strictEqual(calls, 1)
+})
+
+await test('Resposta vazia vira 502 transitório', async () => {
+  let calls = 0
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
+
+  globalThis.fetch = async () => {
+    calls++
+    return jsonResponse({ response: '   ', sources: [] })
   }
 
-  throw new Error('Todos os modelos falharam');
-}
+  await assert.rejects(
+    () => askAssistant('q', 'pt', { maxRetries: 1, backoffBaseMs: 1 }),
+    (err) => {
+      assert.strictEqual(err.status, 502)
+      return true
+    }
+  )
 
-// Cenário A: Sucesso direto (Gemini -> 200)
-await itAsync('Cenário A: Sucesso direto sem retries ou fallback', async () => {
-  const res = await simulateStreamOrchestration({ primaryFailsCount: 0 });
-  assert.strictEqual(res.fullText, 'Olá, mundo!');
-  assert.strictEqual(res.primaryAttempts, 1);
-  assert.strictEqual(res.fallbackUsed, false);
-});
+  assert.strictEqual(calls, 2)
+})
 
-// Cenário B: 503 -> Sucesso no retry
-await itAsync('Cenário B: 503 transitório recuperado no retry', async () => {
-  const res = await simulateStreamOrchestration({ primaryFailsCount: 1 });
-  assert.strictEqual(res.fullText, 'Olá, mundo!');
-  assert.strictEqual(res.primaryAttempts, 2);
-  assert.strictEqual(res.fallbackUsed, false);
-  assert.ok(res.statuses.includes('retry_scheduled'));
-});
+await test('Rede: erro transitório é repetido', async () => {
+  let calls = 0
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
 
-// Cenário C: 503 -> 503 -> Fallback -> 200
-await itAsync('Cenário C: 503 persistente no primário ativa modelo fallback com sucesso', async () => {
-  const res = await simulateStreamOrchestration({ primaryFailsCount: 3 }); // esgota 1 inicial + 2 retries
-  assert.strictEqual(res.fullText, 'Olá, mundo!');
-  assert.strictEqual(res.primaryAttempts, 3);
-  assert.strictEqual(res.fallbackUsed, true);
-  assert.ok(res.statuses.includes('fallback_activated'));
-});
-
-// Cenário D: Todos falham -> erro amigável
-await itAsync('Cenário D: Todos os modelos falham após retries', async () => {
-  let threw = false;
-  try {
-    await simulateStreamOrchestration({ primaryFailsCount: 3, fallbackFailsCount: 2 });
-  } catch (err) {
-    threw = true;
-    assert.strictEqual(err.message, 'Todos os modelos falharam');
+  globalThis.fetch = async () => {
+    calls++
+    if (calls === 1) throw new TypeError('Failed to fetch')
+    return jsonResponse({ response: 'ok', sources: [] })
   }
-  assert.strictEqual(threw, true);
-});
 
-// Cenário E: Erro permanente 401 não faz retry inútil
-await itAsync('Cenário E: Erro permanente 401 falha imediatamente sem retries', async () => {
-  let threw = false;
-  try {
-    await simulateStreamOrchestration({ primaryFailsCount: 1, primaryErrorCode: 401 });
-  } catch (err) {
-    threw = true;
-    assert.strictEqual(err.status, 401);
+  const result = await askAssistant('q', 'pt', { maxRetries: 1, backoffBaseMs: 1 })
+  assert.strictEqual(calls, 2)
+  assert.strictEqual(result.response, 'ok')
+})
+
+await test('Timeout: retorna código TIMEOUT e status 504', async () => {
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
+
+  globalThis.fetch = async (_url, init) => new Promise((_resolve, reject) => {
+    init.signal.addEventListener('abort', () => {
+      const err = new Error('aborted')
+      err.name = 'AbortError'
+      reject(err)
+    })
+  })
+
+  await assert.rejects(
+    () => askAssistant('q', 'pt', { timeoutMs: 10, maxRetries: 0 }),
+    (err) => {
+      assert.strictEqual(err.code, 'TIMEOUT')
+      assert.strictEqual(err.status, 504)
+      return true
+    }
+  )
+})
+
+await test('URL ausente: erro de configuração sem chamada de rede', async () => {
+  const previousUrl = AI_CONFIG.chatApiUrl
+  AI_CONFIG.chatApiUrl = ''
+
+  let called = false
+  globalThis.fetch = async () => {
+    called = true
+    return jsonResponse({ response: 'ok', sources: [] })
   }
-  assert.strictEqual(threw, true);
-});
 
-// Cenário F: Streaming com falha após o primeiro token
-await itAsync('Cenário F: Falha após primeiro token não duplica geração e preserva texto parcial', async () => {
-  let threw = false;
-  try {
-    await simulateStreamOrchestration({ failAfterToken: true });
-  } catch (err) {
-    threw = true;
-    assert.strictEqual(err.hasPartialOutput, true);
-    assert.strictEqual(err.partialText, 'Olá, ');
-  }
-  assert.strictEqual(threw, true);
-});
+  await assert.rejects(
+    () => askAssistant('q', 'pt'),
+    (err) => {
+      assert.strictEqual(err.code, 'MISSING_CHAT_API_URL')
+      assert.match(err.userMessage, /VITE_CHAT_API_URL/)
+      return true
+    }
+  )
 
-console.log(`\n========================================`);
-console.log(`RESULTADO FINAL: ${passedTests}/${totalTests} TESTES PASSARAM COM SUCESSO!`);
-console.log(`========================================\n`);
+  assert.strictEqual(called, false)
+  AI_CONFIG.chatApiUrl = previousUrl
+})
+
+await test('Compatibilidade: streamAssistant emite o texto completo uma vez', async () => {
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
+
+  globalThis.fetch = async () => jsonResponse({ response: 'texto completo', sources: [] })
+
+  let tokens = 0
+  const text = await streamAssistant('q', 'pt', {
+    onToken: (token, fullText) => {
+      tokens++
+      assert.strictEqual(token, 'texto completo')
+      assert.strictEqual(fullText, 'texto completo')
+    },
+  })
+
+  assert.strictEqual(tokens, 1)
+  assert.strictEqual(text, 'texto completo')
+})
+
+console.log(`\nResultado: ${passedTests}/${totalTests} testes passaram.`)
 
 if (passedTests !== totalTests) {
-  process.exit(1);
+  process.exitCode = 1
 }
