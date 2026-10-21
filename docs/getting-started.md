@@ -6,7 +6,8 @@
 
 ## 1. Pré-requisitos
 - Node.js (versão 18+) e npm **OU** Docker e Docker Compose.
-- Chave de API do Google Gemini ([Google AI Studio](https://aistudio.google.com/)).
+- Conta Cloudflare com Workers AI para trabalhar no Worker.
+- Chave da OpenRouter apenas para configurar o secret do Worker.
 
 ---
 
@@ -18,15 +19,23 @@
 git clone https://github.com/ElessandroPrestes/elessandrodev.git
 cd elessandrodev
 
-# Configure as variáveis de ambiente
+# Configure as variáveis de ambiente do frontend
 cp .env.example .env
-# Edite .env inserindo sua chave VITE_GEMINI_API_KEY
+# VITE_CHAT_API_URL aponta para o Worker publicado
 
 # Instale dependências
 npm install
 
 # Inicie o servidor Vite
 npm run dev
+```
+
+Acesse `http://localhost:5212/elessandrodev/`. Para alterar o Worker:
+
+```bash
+npx wrangler login
+npx wrangler secret put OPENROUTER_API_KEY
+npx wrangler deploy
 ```
 
 ### Opção B: Docker e Makefile

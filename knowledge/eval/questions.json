@@ -1,0 +1,180 @@
+[
+  {
+    "id": "q01",
+    "locale": "pt",
+    "question": "Onde Elessandro atuou com modernização de sistemas legados?",
+    "expectedSections": [
+      "Onde houve modernização de sistemas legados?",
+      "Datainfo / Projeto CAPES — Analista Programador / Tech Lead (Out/2024 – Set/2025)",
+      "Grupo Paraíso — Desenvolvedor Full Stack (Ago/2016 – Set/2021)"
+    ]
+  },
+  {
+    "id": "q02",
+    "locale": "pt",
+    "question": "ONS e Energia Pecém são a mesma empresa?",
+    "expectedSections": [
+      "ONS e Energia Pecém são a mesma organização?"
+    ]
+  },
+  {
+    "id": "q03",
+    "locale": "pt",
+    "question": "Qual foi a atuação de Elessandro no ONS e no Projeto GENIN?",
+    "expectedSections": [
+      "AMcom / Projeto GENIN / ONS — Desenvolvedor de Sistemas (Jul/2022 – Abr/2023)",
+      "ONS e Energia Pecém são a mesma organização?"
+    ]
+  },
+  {
+    "id": "q04",
+    "locale": "pt",
+    "question": "Quais métricas e resultados Elessandro teve no SIPREC da CAPES?",
+    "expectedSections": [
+      "Datainfo / Projeto CAPES — Analista Programador / Tech Lead (Out/2024 – Set/2025)"
+    ]
+  },
+  {
+    "id": "q05",
+    "locale": "pt",
+    "question": "O que foi o Projeto SIGMA na Energia Pecém?",
+    "expectedSections": [
+      "Energia Pecém — Desenvolvedor Full Stack (Mai/2023 – Jul/2024)"
+    ]
+  },
+  {
+    "id": "q06",
+    "locale": "pt",
+    "question": "Como Elessandro usa IA no ciclo de desenvolvimento?",
+    "expectedSections": [
+      "IA no ciclo de desenvolvimento",
+      "Como a IA é usada no ciclo de desenvolvimento?"
+    ]
+  },
+  {
+    "id": "q07",
+    "locale": "pt",
+    "question": "Quais tecnologias de backend Elessandro domina?",
+    "expectedSections": [
+      "Stack — Backend e linguagens"
+    ]
+  },
+  {
+    "id": "q08",
+    "locale": "pt",
+    "question": "Qual experiência Elessandro tem com mensageria e filas?",
+    "expectedSections": [
+      "Stack — Mensageria e filas",
+      "Especialidades",
+      "Grupo Paraíso — Desenvolvedor Full Stack (Ago/2016 – Set/2021)",
+      "Energia Pecém — Desenvolvedor Full Stack (Mai/2023 – Jul/2024)"
+    ]
+  },
+  {
+    "id": "q09",
+    "locale": "pt",
+    "question": "O que é o projeto universal-sdd?",
+    "expectedSections": [
+      "universal-sdd"
+    ]
+  },
+  {
+    "id": "q10",
+    "locale": "pt",
+    "question": "Quais projetos de IoT e telemetria Elessandro desenvolveu?",
+    "expectedSections": [
+      "iot-mqtt-simulator",
+      "Grupo Paraíso — Desenvolvedor Full Stack (Ago/2016 – Set/2021)"
+    ]
+  },
+  {
+    "id": "q11",
+    "locale": "pt",
+    "question": "Qual a experiência de Elessandro com carteira digital e pagamentos?",
+    "expectedSections": [
+      "fintech-wallet-solution"
+    ]
+  },
+  {
+    "id": "q12",
+    "locale": "pt",
+    "question": "Elessandro tem experiência como líder técnico?",
+    "expectedSections": [
+      "EPM DEVTECH — Líder Técnico (Jun/2026 – Atual)",
+      "Experiência com liderança técnica"
+    ]
+  },
+  {
+    "id": "q13",
+    "locale": "pt",
+    "question": "Quantos testes automatizados havia na plataforma da EPM DEVTECH?",
+    "expectedSections": [
+      "EPM DEVTECH — Engenheiro de Software com IA Aplicada (Out/2025 – Mai/2026)"
+    ]
+  },
+  {
+    "id": "q14",
+    "locale": "pt",
+    "question": "Como posso entrar em contato com Elessandro?",
+    "expectedSections": [
+      "Identificação e contato",
+      "Como entrar em contato?"
+    ]
+  },
+  {
+    "id": "q15",
+    "locale": "pt",
+    "question": "Qual a experiência de Elessandro com AWS?",
+    "expectedSections": [
+      "Stack — DevOps e cloud",
+      "Grupo Intellectus — Desenvolvedor Full Stack (Out/2021 – Jul/2022)",
+      "AMcom / Projeto GENIN / ONS — Desenvolvedor de Sistemas (Jul/2022 – Abr/2023)"
+    ]
+  },
+  {
+    "id": "q16",
+    "locale": "pt",
+    "question": "Elessandro tem experiência com Docker e Kubernetes?",
+    "expectedSections": [
+      "Stack — DevOps e cloud",
+      "EPM DEVTECH — Engenheiro de Software com IA Aplicada (Out/2025 – Mai/2026)"
+    ]
+  },
+  {
+    "id": "q17",
+    "locale": "pt",
+    "question": "O currículo de Elessandro está disponível em PDF?",
+    "expectedSections": [
+      "O currículo está disponível em PDF?"
+    ]
+  },
+  {
+    "id": "q18",
+    "locale": "en",
+    "question": "What is Elessandro's experience with legacy system modernization?",
+    "expectedSections": [
+      "Onde houve modernização de sistemas legados?",
+      "Datainfo / Projeto CAPES — Analista Programador / Tech Lead (Out/2024 – Set/2025)",
+      "Grupo Paraíso — Desenvolvedor Full Stack (Ago/2016 – Set/2021)"
+    ]
+  },
+  {
+    "id": "q19",
+    "locale": "en",
+    "question": "Which energy sector companies has Elessandro worked for?",
+    "expectedSections": [
+      "ONS e Energia Pecém são a mesma organização?",
+      "AMcom / Projeto GENIN / ONS — Desenvolvedor de Sistemas (Jul/2022 – Abr/2023)",
+      "Energia Pecém — Desenvolvedor Full Stack (Mai/2023 – Jul/2024)"
+    ]
+  },
+  {
+    "id": "q20",
+    "locale": "en",
+    "question": "How does the portfolio assistant avoid hallucinations?",
+    "expectedSections": [
+      "Como o assistente deste portfólio usa RAG?",
+      "elessandrodev"
+    ]
+  }
+]

@@ -7,6 +7,44 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.10.0] - 2026-10-21
+
+### Adicionado
+- **RAG real com Cloudflare Worker (SPEC-008 / TASK-008)**:
+  - Corpus versionado em `knowledge/rag/` (perfil, experiências, projetos e FAQ), incluindo a seção "Projetos de IA e RAG".
+  - Pipeline de indexação (`rag:index`), avaliação (`rag:eval`) e validação (`rag:check`) com 20 perguntas PT/EN.
+  - Índice com 34 chunks e embeddings `@cf/baai/bge-m3`; retrieval híbrido (cosseno + BM25), `MIN_SCORE=0.45`, `TOP_K=4` e `HYBRID_ALPHA=0.6`.
+  - Cloudflare Worker com CORS, validação de payload, fallback de modelos da OpenRouter e sanitização de respostas.
+  - Resposta `{ response, sources }` com seção e score das fontes exibidos no chat.
+  - 16 testes do cliente HTTP (`aiService.test.mjs`) cobrindo sucesso, 429, 5xx, 400, timeout, rede e configuração ausente.
+
+### Modificado
+- **Frontend desacoplado do provedor de LLM**:
+  - `aiService.js` passou a chamar o Worker; removidos LangChain e Google Gemini do bundle.
+  - `aiConfig.js` centraliza `VITE_CHAT_API_URL`, retries, timeout e telemetria.
+  - `AiAssistant.vue` renderiza fontes consultadas e mensagens de erro em PT/EN.
+  - Porta local alterada para `5212` com `strictPort` e Caddy local documentado.
+  - CI executa `rag:check` e injeta `VITE_CHAT_API_URL` no build.
+
+### Segurança
+- `OPENROUTER_API_KEY` movida para secret do Worker; nenhuma chave de LLM no bundle estático.
+- CORS restrito às origens de produção, localhost e domínio local.
+- Limites de payload (2000 bytes) e pergunta (500 caracteres).
+- Remoção de artefatos CJK indevidos nas respostas.
+
+### Corrigido
+- Cobertura de perguntas sobre projetos de IA no retrieval.
+- Falso negativo de CORS para `127.0.0.1:5212` e `elessandrodev.localhost`.
+- Divergência entre corpus e índice detectada por `rag:check`.
+
+### Qualidade
+- `rag:eval`: hit@4 **100%**, MRR **0.975**, cobertura do threshold **100%**.
+- `npm test`: **16/16**.
+- `npm run build`: concluído, bundle principal ~211 KB.
+- Worker: ~385 KB (gzip ~127 KB).
+
+---
+
 ## [1.9.1] - 2026-10-08
 
 ### Corrigido

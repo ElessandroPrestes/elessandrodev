@@ -1,7 +1,7 @@
 <script setup>
 import { ref, nextTick, watch } from 'vue'
 import { marked } from 'marked'
-import { streamAssistant } from '../services/aiService'
+import { askAssistant } from '../services/aiService'
 import { useI18n } from '../composables/useI18n.js'
 
 const { messages: i18n, locale } = useI18n()
@@ -12,11 +12,22 @@ marked.setOptions({
   gfm: true,
 })
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
 const renderer = new marked.Renderer()
 renderer.link = ({ href, title, text }) => {
-  const titleAttr = title ? ` title="${title}"` : ''
-  return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 underline font-medium underline-offset-2 break-all"${titleAttr}>${text}</a>`
+  const safeHref = /^(https?:|mailto:)/i.test(href || '') ? href : '#'
+  const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
+  return `<a href="${escapeHtml(safeHref)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 underline font-medium underline-offset-2 break-all"${titleAttr}>${text}</a>`
 }
+renderer.html = ({ text }) => escapeHtml(text)
 marked.use({ renderer })
 
 function renderMarkdown(text) {
@@ -120,36 +131,20 @@ async function sendMessage(textToSend) {
   scrollToBottom()
 
   try {
-    const aiResponse = await streamAssistant(content, locale.value, {
-      onToken: (_token, fullText) => {
-        messages.value[assistantMsgIndex].text = fullText
-        scrollToBottom(20)
-      },
+    const result = await askAssistant(content, locale.value, {
       onStatus: (statusText) => {
         transientStatus.value = statusText
       },
     })
-    messages.value[assistantMsgIndex].text = aiResponse
-  } catch (err) {
-    console.error('Erro na chamada do Gemini:', err)
-    const isMissingKey = !import.meta.env.VITE_GEMINI_API_KEY
 
-    if (err?.hasPartialOutput) {
-      // Falha após o primeiro token: preserva saída parcial e adiciona nota de interrupção
-      messages.value[assistantMsgIndex].text += locale.value === 'pt'
-        ? '\n\n*(A resposta foi interrompida. Tente novamente.)*'
-        : '\n\n*(The response was interrupted. Please try again.)*'
-    } else {
-      // Falha antes do primeiro token
-      messages.value[assistantMsgIndex].text = isMissingKey
-        ? (locale.value === 'pt'
-            ? 'A variável de ambiente VITE_GEMINI_API_KEY não foi encontrada. Configure-a no arquivo .env.'
-            : 'The VITE_GEMINI_API_KEY environment variable was not found. Please set it in your .env file.')
-        : (locale.value === 'pt'
-            ? 'Não consegui processar sua mensagem agora. Tente novamente em alguns instantes.'
-            : 'Could not process your message right now. Please try again in a few moments.')
-      messages.value[assistantMsgIndex].isError = true
-    }
+    messages.value[assistantMsgIndex].text = result.response
+    messages.value[assistantMsgIndex].sources = result.sources
+  } catch (err) {
+    console.error('Erro na chamada do assistente:', err)
+    messages.value[assistantMsgIndex].text = err?.userMessage || (locale.value === 'pt'
+      ? 'Não consegui processar sua mensagem agora. Tente novamente em alguns instantes.'
+      : 'Could not process your message right now. Please try again in a few moments.')
+    messages.value[assistantMsgIndex].isError = true
   } finally {
     isLoading.value = false
     transientStatus.value = ''
@@ -249,6 +244,27 @@ async function sendMessage(textToSend) {
               v-html="renderMarkdown(msg.text)"
             />
             <p v-else class="whitespace-pre-wrap break-words text-xs sm:text-sm font-sans">{{ msg.text }}</p>
+
+            <div
+              v-if="msg.role === 'assistant' && msg.sources?.length"
+              class="mt-3 pt-2 border-t border-slate-200 dark:border-neutral-800"
+            >
+              <p class="font-mono text-[10px] uppercase tracking-wider text-slate-400 dark:text-neutral-500 mb-1">
+                {{ i18n.aiAssistant.sourcesTitle }}
+              </p>
+              <ul class="space-y-0.5">
+                <li
+                  v-for="(source, sourceIndex) in msg.sources"
+                  :key="source.source + source.section + sourceIndex"
+                  class="flex items-center gap-1.5 font-mono text-[10px] text-slate-500 dark:text-neutral-400"
+                  :title="source.source"
+                >
+                  <span class="text-indigo-600 dark:text-indigo-400">[{{ sourceIndex + 1 }}]</span>
+                  <span class="truncate flex-1">{{ source.section }}</span>
+                  <span class="shrink-0 opacity-60">{{ Math.round((source.score || 0) * 100) }}%</span>
+                </li>
+              </ul>
+            </div>
 
             <span
               :class="[

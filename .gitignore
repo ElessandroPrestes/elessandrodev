@@ -65,6 +65,11 @@ typings/
 # dotenv environment variables file
 .env
 .env.test
+.env.ingest
+
+# Cloudflare Worker local secrets and state
+.dev.vars
+.wrangler/
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
