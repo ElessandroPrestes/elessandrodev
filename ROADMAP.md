@@ -21,16 +21,22 @@
 
 ---
 
+## Pronto para Release (develop)
+
+- [x] **SPEC-009:** prompt do assistente com fidelidade factual, contato determinístico e fallback seguro. QA/REVIEW aprovados; commit e release 1.11.0 pendentes.
+
+---
+
 ## Backlog Estratégico
 
 > Execução futura somente mediante SPEC aprovada pelo Product Owner.
 
-### 1. [Performance] SPEC-009: Code splitting e cache de embeddings
+### 1. [Performance] SPEC-010: Code splitting e cache de embeddings
 - **Contexto:** o bundle principal está em ~211 KB; o índice e as chamadas de embedding podem ser otimizados.
 - **Objetivo:** avaliar `manualChunks`, lazy loading do chat e cache de embeddings para perguntas repetidas.
 - **Impacto:** menor First Load JS e menor latência em consultas recorrentes.
 
-### 2. [Experiência] SPEC-010: Histórico conversacional
+### 2. [Experiência] SPEC-011: Histórico conversacional
 - **Contexto:** cada pergunta é respondida de forma isolada.
 - **Objetivo:** janela deslizante de 3 a 5 mensagens com teto de tokens e persistência opcional em `sessionStorage`.
 - **Impacto:** diálogos mais naturais sem inflar custos.

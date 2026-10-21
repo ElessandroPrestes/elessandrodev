@@ -13,12 +13,13 @@ Termos relacionados: energy sector, electricity sector, power generation, energy
 
 ## Onde houve modernização de sistemas legados?
 
-A modernização de sistemas legados ocorreu estritamente na CAPES e no Grupo Paraíso.
+A modernização de sistemas legados ocorreu na EPM DEVTECH, na CAPES e no Grupo Paraíso.
 
-- **CAPES (Projeto SIPREC):** modernização do sistema monolítico legado de avaliação para microsserviços e BFF em Angular.
-- **Grupo Paraíso:** migração gradual de ERP monolítico legado da indústria têxtil para microsserviços em Node.js, usando Strangler Fig Pattern.
+- **EPM DEVTECH:** liderou a modernização da plataforma monolítica legada para PHP 8.2 e Laravel 12 com Strangler Fig, eliminando mais de 56.400 linhas de código legado.
+- **CAPES (Projeto SIPREC):** coarquitetou e executou a modernização do sistema monolítico legado de avaliação para microsserviços e BFF em Angular.
+- **Grupo Paraíso:** colaborou em iniciativas de migração gradual do ERP monolítico legado da indústria têxtil para microsserviços em Node.js, usando Strangler Fig Pattern.
 
-A EPM DEVTECH, o ONS e a Energia Pecém não envolveram modernização de sistemas legados.
+O ONS e a Energia Pecém não envolveram modernização de sistemas legados.
 
 Termos relacionados: legacy system modernization, legacy systems, monolith modernization, Strangler Fig Pattern.
 
@@ -82,3 +83,7 @@ Termos relacionados: industries, sectors, energy, education, textile, utilities,
 Com SDD (Spec-Driven Development), RAG, MCP e assistentes de código como Claude Code, GitHub Copilot e Codex. O objetivo é formalizar especificações, validar requisitos, manter rastreabilidade e reduzir retrabalho, sempre com revisão humana e escopo delimitado.
 
 Termos relacionados: AI-assisted development, SDD, RAG, MCP, code assistants.
+
+## Tecnologias não listadas no currículo
+
+O currículo lista PHP (Laravel, Symfony), Node.js (Express, NestJS), TypeScript, JavaScript, Angular, Vue.js, React, bancos SQL e NoSQL, Docker, Kubernetes, AWS e Azure. Tecnologias como Python, Java, C#, Go, Rust, .NET e Terraform não constam no currículo. Isso não significa que Elessandro as desconheça; significa apenas que não há registro profissional documentado nessas stacks.

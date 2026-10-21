@@ -5,9 +5,11 @@
 | **ID**        | SPEC-004                                                                 |
 | **Data**      | 2026-10-08                                                               |
 | **Autor**     | Gemini / Antigravity                                                     |
-| **Status**    | Aprovada                                                                 |
+| **Status**    | Aprovada (diretriz sobre EPM revista pela ADR-007)                       |
 | **Versão**    | 1.0                                                                      |
 | **Aprovador** | Elessandro Prestes Macedo (Product Owner & Tech Lead)                    |
+
+> **Revisão:** a diretriz de que a EPM DEVTECH não teve modernização de legado foi revista pela `ADR-007`. Permanecem válidas as atribuições da CAPES, do Grupo Paraíso e a ausência de legados no ONS e na Energia Pecém.
 
 ---
 

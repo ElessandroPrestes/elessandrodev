@@ -7,6 +7,34 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [Não lançado]
+
+### Adicionado
+- **Prompt canônico do assistente (SPEC-009 / TASK-009)**:
+  - `worker/prompt.js` com ficha profissional, projetos, regras de fidelidade, escopo, segurança e idioma.
+  - Resposta determinística de contato em PT/EN, sem chamada ao LLM.
+  - Fallback seguro para perguntas fora do corpus.
+  - Testes do prompt (10) e de integração do Worker (7).
+
+### Modificado
+- Worker passou a usar o prompt canônico e a resolver contato antes de embeddings/OpenRouter.
+- `max_tokens` elevado para 3000 para comportar o raciocínio dos modelos free.
+- Cadeia de modelos simplificada para MiniMax e Gemma; falhas 404 passam a tentar o próximo modelo.
+- Corpus alinhado ao currículo: EPM DEVTECH, SIPREC, Grupo Paraíso e tecnologias não listadas.
+- Índice reindexado com 36 chunks e 365.0 KB.
+
+### Corrigido
+- FAQ de modernização passou a incluir a EPM DEVTECH, evitando resposta meta sobre conflito de fontes.
+
+### Governança
+- ADR-007 formaliza o currículo como fonte da verdade e revê a diretriz da SPEC-004 sobre a EPM DEVTECH.
+- Backlog renumerado: performance para SPEC-010 e histórico conversacional para SPEC-011.
+
+### Segurança
+- Nenhuma chave ou prompt sensível no bundle estático; validação de origem, payload e fallback mantidos.
+
+---
+
 ## [1.10.0] - 2026-10-21
 
 ### Adicionado
