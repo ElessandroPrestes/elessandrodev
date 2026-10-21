@@ -43,3 +43,12 @@
 A implementação cumpre os requisitos da **SPEC-009**, alinha o assistente ao currículo vigente e elimina a dependência de LLM para contato.
 
 Autorizado para commit em `develop` e posterior release **1.11.0**, condicionado à execução do CI e à confirmação do deploy do Worker e do GitHub Pages.
+
+---
+
+## 4. Confirmação de CI
+
+- Commit em `develop`: `2a47ed0` (`feat(ia): adapta prompt do assistente à ficha profissional`).
+- CI `39654133190`: ✅ `success` em 14s, job **Build & Validate** aprovado.
+- Deploy do GitHub Pages: `skipped` em `develop`, como esperado.
+- Worker de produção e release 1.11.0 ainda não publicados.
