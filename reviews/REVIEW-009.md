@@ -46,9 +46,13 @@ Autorizado para commit em `develop` e posterior release **1.11.0**, condicionado
 
 ---
 
-## 4. Confirmação de CI
+## 4. Confirmação de CI e Deploy
 
-- Commit em `develop`: `2a47ed0` (`feat(ia): adapta prompt do assistente à ficha profissional`).
-- CI `39654133190`: ✅ `success` em 14s, job **Build & Validate** aprovado.
-- Deploy do GitHub Pages: `skipped` em `develop`, como esperado.
-- Worker de produção e release 1.11.0 ainda não publicados.
+- Commits em `develop`: `2a47ed0`, `f6ef6d5` e `5686b04`.
+- CI `39654704961`: ✅ `success` em `develop`, **Build & Validate** aprovado.
+- Merge em `main`: `bfb6bf5` (`merge: publica prompt do assistente na main`).
+- CI `39654804170`: ✅ `success`, **Build & Validate** e **Deploy to GitHub Pages** aprovados.
+- Worker publicado: versão `bfed1c79-9a73-4330-b47c-7b41bc1e6d37`.
+- GitHub Pages: `200`, bundle principal `index-L8Dz2nt2.js`, limpo e apontando para o Worker.
+- Produção validada: contato `200`, fallback `200` e legados EN `200`.
+- Observação: uma geração inicial retornou `429` do provedor free; a repetição retornou `200`.

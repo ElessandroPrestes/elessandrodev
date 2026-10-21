@@ -6,7 +6,7 @@
 | **SPEC**           | SPEC-009                                      |
 | **Data de início** | 2026-10-21                                    |
 | **Agente**         | opencode / deepseek-v4.1-flash-free           |
-| **Status**         | Concluída (aprovada em QA-009/REVIEW-009)      |
+| **Status**         | Concluída (v1.11.0 em produção)                |
 
 ---
 
@@ -55,7 +55,7 @@
 - [x] Citações `[id]` coerentes com o contexto
 - [x] Corpus alinhado (Paraíso, SIPREC, empregador/cliente)
 - [x] Testes automatizados
-- [ ] Commits em pt-BR (somente se solicitado)
+- [x] Commits em pt-BR (somente se solicitado)
 
 ---
 
@@ -114,7 +114,7 @@ Build:       200, bundle aponta para 127.0.0.1:8788
 - QA: `reviews/QA-009.md`
 - Review: `reviews/REVIEW-009.md`
 - Validação manual do PO: aprovada em 2026-10-21.
-- Commit e release 1.11.0 pendentes de execução.
+- Commit, release 1.11.0, CI e deploy de produção concluídos.
 
 ---
 
