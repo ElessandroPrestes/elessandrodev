@@ -1,0 +1,16 @@
+name = "elessandrodev-chat"
+main = "worker/index.js"
+compatibility_date = "2026-10-21"
+workers_dev = true
+
+[ai]
+binding = "AI"
+
+[vars]
+EMBEDDING_MODEL = "@cf/baai/bge-m3"
+MODELS = "google/gemma-4-31b-it:free,minimax/minimax-m3.1-flash:free,nvidia/nemotron-3-super-120b-a12b:free"
+TOP_K = "4"
+HYBRID_ALPHA = "0.6"
+MIN_SCORE = "0.45"
+ALLOWED_ORIGIN = "https://elessandroprestes.github.io,http://localhost:5212,http://127.0.0.1:5212,http://elessandrodev.localhost"
+SITE_URL = "https://elessandroprestes.github.io/elessandrodev/"

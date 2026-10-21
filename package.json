@@ -7,13 +7,13 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/services/aiService.test.mjs"
+    "test": "node src/services/aiService.test.mjs",
+    "rag:index": "node scripts/build-index.mjs",
+    "rag:dry-run": "node scripts/build-index.mjs --dry-run",
+    "rag:eval": "node scripts/eval-retrieval.mjs",
+    "rag:check": "node scripts/check-index.mjs"
   },
   "dependencies": {
-    "@langchain/core": "^1.2.8",
-    "@langchain/google-genai": "^2.2.0",
-    "@langchain/openai": "^1.5.8",
-    "langchain": "^1.5.9",
     "marked": "^18.0.10",
     "vue": "^3.4.0"
   },
