@@ -7,6 +7,15 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.11.1] - 2026-10-21
+
+### Segurança
+- **SPEC-012 / TASK-012**: Vite atualizado de `6.4.3` para `6.4.5`, corrigindo os alertas Dependabot #116–#120 (1 alto, 3 médios e 1 baixo).
+- `launch-editor` vulnerável não está mais na árvore de dependências.
+- Os 5 achados remanescentes do `npm audit` pertencem à cadeia Tailwind 3 e exigem upgrade major para Tailwind 4, fora do escopo desta correção.
+
+---
+
 ## [1.11.0] - 2026-10-21
 
 ### Adicionado
