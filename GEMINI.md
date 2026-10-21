@@ -27,7 +27,7 @@ Na ordem:
 | Camada              | Tecnologias                                                        |
 |---------------------|-------------------------------------------------------------------|
 | **Frontend**        | Vue.js 3 (`<script setup>`), Vite, Tailwind CSS, Marked           |
-| **IA / LLM**        | LangChain.js, `@langchain/google-genai`, Gemini 3.5 Flash         |
+| **IA / LLM**        | Cloudflare Workers, Workers AI, OpenRouter, RAG híbrido            |
 | **Internacionalização** | Composables nativos (`useI18n`), dicionários `pt.js` e `en.js`|
 | **Infra & Tooling** | Docker, Docker Compose, GNU Make (`Makefile`), GitHub Actions    |
 
