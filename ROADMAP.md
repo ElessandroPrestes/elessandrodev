@@ -4,7 +4,7 @@
 
 ---
 
-## Versão Atual: v1.10.0 (2026-10-21)
+## Versão Atual: v1.11.0 (2026-10-21)
 
 - [x] Arquitetura Vue 3 + Vite + Tailwind CSS.
 - [x] Design editorial com tema Dark/Light persistido.
@@ -18,12 +18,7 @@
 - [x] **SPEC-006:** testes automatizados no GitHub Actions.
 - [x] **SPEC-007:** remediação de vulnerabilidades do Dependabot.
 - [x] **SPEC-008:** RAG real com Cloudflare Worker, corpus Markdown, embeddings, retrieval híbrido, fontes e remoção de LangChain/Gemini do cliente.
-
----
-
-## Pronto para Release (develop)
-
-- [x] **SPEC-009:** prompt do assistente com fidelidade factual, contato determinístico e fallback seguro. QA/REVIEW aprovados; commit e release 1.11.0 pendentes.
+- [x] **SPEC-009:** prompt do assistente com fidelidade factual, contato determinístico e fallback seguro.
 
 ---
 

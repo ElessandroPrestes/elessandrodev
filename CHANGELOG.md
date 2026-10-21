@@ -7,7 +7,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
-## [Não lançado]
+## [1.11.0] - 2026-10-21
 
 ### Adicionado
 - **Prompt canônico do assistente (SPEC-009 / TASK-009)**:

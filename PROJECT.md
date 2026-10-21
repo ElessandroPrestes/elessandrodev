@@ -13,7 +13,7 @@
 | **Repositório**   | `ElessandroPrestes/elessandrodev`                                                                        |
 | **URL Produção**  | [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/) |
 | **Deploy**        | GitHub Pages via GitHub Actions                                                                          |
-| **Versão**        | 1.10.0                                                                                                   |
+| **Versão**        | 1.11.0                                                                                                   |
 | **Autor**         | Elessandro Prestes Macedo (Software Engineer & Tech Lead)                                                |
 | **Contato**       | [LinkedIn](https://www.linkedin.com/in/elessandro-prestes-macedo/) • WhatsApp: +55 (45) 99917-8290       |
 | **Governança**    | **Universal SDD (Spec-Driven Development)**                                                              |
@@ -169,7 +169,7 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 - [x] **SPEC-006 [CI/CD & Quality Gates]:** Pipeline de automação de testes unitários e de resiliência no GitHub Actions antes do build e deploy (Concluída em v1.9.0).
 - [x] **SPEC-007 [Segurança & Dependências]:** Remediação de vulnerabilidades do Dependabot (#113, #114 e #115) atualizando Vue, source-map-js e definindo overrides seguros para PostCSS/Tailwind v3 (Concluída em v1.9.1).
 - [x] **SPEC-008 [Segurança & RAG]:** Migração para Cloudflare Worker, corpus Markdown, índice de embeddings, retrieval híbrido, citação de fontes e remoção de LangChain/Gemini do cliente (Concluída em v1.10.0).
-- [x] **SPEC-009 [IA & Prompt]:** Prompt canônico com ficha, fidelidade factual, contato determinístico, fallback seguro e corpus alinhado ao currículo (Aprovada em `develop`; release 1.11.0 pendente).
+- [x] **SPEC-009 [IA & Prompt]:** Prompt canônico com ficha, fidelidade factual, contato determinístico, fallback seguro e corpus alinhado ao currículo (Concluída em v1.11.0).
 
 > **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
 
