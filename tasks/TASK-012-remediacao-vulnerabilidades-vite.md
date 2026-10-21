@@ -6,7 +6,7 @@
 | **SPEC**           | SPEC-012                                      |
 | **Data de início** | 2026-10-21                                    |
 | **Agente**         | opencode / deepseek-v4.1-flash-free           |
-| **Status**         | Concluída (v1.11.1 em release)                 |
+| **Status**         | Concluída (v1.11.1 em produção)                |
 
 ---
 
@@ -60,7 +60,7 @@
 - [x] `npm run rag:eval` com hit@4 >= 0.80
 - [x] `npm run build` sem erros
 - [x] Varredura do bundle sem segredos
-- [ ] Alertas Dependabot #116–#120 fechados
+- [x] Alertas Dependabot #116–#120 fechados
 
 ---
 
@@ -86,7 +86,8 @@ bundle: limpo
 
 ### Dependabot
 ```text
-Alertas #116–#120: correção instalada; fechamento pendente de push para main.
+Alertas #116–#120: fixed em 2026-10-21T18:54Z.
+Alertas abertos no Dependabot: 0.
 npm audit: 5 high remanescentes na cadeia Tailwind 3 (braces/chokidar/fast-glob/micromatch), fora do escopo.
 ```
 
@@ -96,7 +97,7 @@ npm audit: 5 high remanescentes na cadeia Tailwind 3 (braces/chokidar/fast-glob/
 
 - QA: `reviews/QA-012.md`
 - Review: `reviews/REVIEW-012.md`
-- Release 1.11.1 pendente de commit, push e confirmação dos alertas.
+- Release 1.11.1 publicada; CI verde e alertas Dependabot fechados.
 
 ---
 

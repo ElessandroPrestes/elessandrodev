@@ -40,4 +40,15 @@
 
 A correção cumpre a SPEC-012 e remove a exposição dos cinco alertas Dependabot do Vite.
 
-Autorizado para release **1.11.1**, condicionado a commit, push, CI verde e confirmação do fechamento dos alertas #116–#120.
+A release **1.11.1** foi publicada com CI verde e os cinco alertas Dependabot fechados.
+
+---
+
+## 4. Confirmação de CI, Deploy e Dependabot
+
+- Commit em `develop`: `8a4be81` (`fix(security): atualiza vite para 6.4.5`).
+- CI `39656829549`: ✅ `success` em `develop`.
+- Merge em `main`: `7d8bd5d`.
+- CI `39656903568`: ✅ **Build & Validate** e **Deploy to GitHub Pages**.
+- GitHub Pages: `200`.
+- Dependabot: **0 alertas abertos**; #116–#120 `fixed` em 2026-10-21T18:54Z.
