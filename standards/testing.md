@@ -10,7 +10,8 @@
    - Compilação estrita pelo Vite (`npm run build`).
    - Verificação de imports válidos, integridade de pacotes e ausência de dead code.
 2. **Testes de Integração e Serviços:**
-   - Teste das funções de orquestração de IA (`aiService.js`) garantindo que as cadeias LangChain inicializam corretamente e o fallback atua em caso de falha de modelo.
+   - Teste do cliente do Worker (`aiService.js`): payload `{ question, locale }`, retries, timeout, erros permanentes e resposta com fontes.
+   - Teste do índice com `npm run rag:check` e avaliação de retrieval com `npm run rag:eval`.
 3. **Validação Visual e Manual:**
    - Checklists manuais cobrindo Mobile (320px / 375px), Desktop (1024px+), Dark Mode, Light Mode, alternância de idioma (PT/EN) e fluxo completo do chat de IA.
 

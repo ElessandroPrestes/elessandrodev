@@ -30,9 +30,10 @@ Quando o usuário alterna o idioma via `LanguageToggle.vue`, a computada `messag
 
 ---
 
-## 3. Assistente de IA Conversacional (RAG Context Injection)
+## 3. Assistente de IA Conversacional (RAG real)
 
-O serviço `aiService.js` encapsula a lógica de conexão com o Google Gemini através do LangChain:
-- **Context Injection:** Injeta a biografia técnica canônica, métricas de carreira, cases e stack de Elessandro Prestes Macedo no prompt.
-- **Language Guiding:** Injeta diretiva estrita orientando a linguagem de resposta de acordo com a seleção atual do visitante (Inglês ou Português).
-- **Multi-Model Failover:** Em caso de sobrecarga (503 Service Unavailable) ou erro de API, realiza transição suave para modelos alternativos estáveis.
+O serviço `aiService.js` envia `{ question, locale }` para o Cloudflare Worker:
+- **Retrieval:** o Worker gera o embedding da pergunta com Workers AI, consulta o índice versionado e aplica cosseno + BM25 com threshold.
+- **Context Injection:** apenas os trechos recuperados entram no prompt, com instrução de idioma e proibição de inventar fatos.
+- **Sources:** a resposta inclui `sources` com seção e score; a UI exibe as fontes consultadas.
+- **Multi-Model Failover:** em caso de erro ou resposta inválida, o Worker tenta o próximo modelo da OpenRouter. Sem chunks relevantes, responde sem chamar o LLM.
