@@ -186,8 +186,8 @@
 - [x] `npm run rag:check`
 - [x] `npm test`
 - [x] `npm run build`
-- [ ] Build publicado no GitHub Pages
-- [ ] Chat testado em produção com fontes
+- [x] Build publicado no GitHub Pages
+- [x] Chat testado em produção com fontes
 - [x] QA-008 e REVIEW-008 registrados
 - [x] Commits em pt-BR
 
@@ -201,7 +201,8 @@
 - [x] `npm test` com exit code 0 no estado correto
 - [x] `grep` no `dist/` sem `VITE_GEMINI`, `OPENROUTER_API_KEY` ou chave em texto claro
 - [x] Chat funcional em `http://localhost:5212`
-- [ ] Chat funcional em `https://elessandroprestes.github.io/elessandrodev/`
+- [x] Deploy em `https://elessandroprestes.github.io/elessandrodev/` com bundle apontando para o Worker
+- [ ] Interação visual manual no chat publicado (checklist de UI)
 - [x] Fontes exibidas no chat
 - [ ] Dark/Light Mode preservados
 - [ ] Alternância PT/EN preservada

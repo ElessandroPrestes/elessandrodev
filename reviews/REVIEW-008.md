@@ -46,7 +46,7 @@ Autorizado para release na versão **1.10.0** e acionamento do fluxo Git / GitHu
 
 ## 4. Confirmação de CI e Deploy
 
-- CI em `develop`: ✅ run `39644879309` (21s), com `rag:check`, `npm test` e `npm run build` aprovados.
-- CI em `main` e GitHub Pages: _pendente de execução_.
-
-Este campo será atualizado com o ID do run de `main` assim que o pipeline concluir.
+- CI em `develop`: ✅ runs `39644879309` (21s) e `39645039783` (12s), com `rag:check`, `npm test` e `npm run build` aprovados.
+- CI em `main`: ✅ run `39645131584` (build 13s, deploy 18s).
+- GitHub Pages: ✅ `https://elessandroprestes.github.io/elessandrodev/` responde `200`.
+- Bundle publicado: contém a URL do Worker e nenhuma ocorrência de `OPENROUTER_API_KEY`, `sk-or-v1-` ou `VITE_GEMINI`.
