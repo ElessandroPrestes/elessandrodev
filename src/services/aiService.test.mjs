@@ -54,10 +54,10 @@ await test('B.1: 503 é transitório', () => {
   assert.strictEqual(isTransientError(err), true)
 })
 
-await test('B.2: 429 é transitório', () => {
+await test('B.2: 429 não é transitório e não deve disparar retry', () => {
   const err = new Error('rate limit [429]')
   err.status = 429
-  assert.strictEqual(isTransientError(err), true)
+  assert.strictEqual(isTransientError(err), false)
 })
 
 await test('B.3: timeout e rede são transitórios', () => {
@@ -122,25 +122,28 @@ await test('Retry: 503 seguido de 200 preserva a resposta', async () => {
   assert.ok(statuses.length >= 1)
 })
 
-await test('429: esgota retries e expõe mensagem amigável do Worker', async () => {
+await test('429: não faz retry e expõe mensagem amigável do Worker', async () => {
   let calls = 0
   AI_CONFIG.chatApiUrl = 'https://worker.test'
 
   globalThis.fetch = async () => {
     calls++
-    return jsonResponse({ error: 'Muitas requisições. Tente novamente em instantes.' }, 429)
+    return jsonResponse(
+      { error: 'O assistente atingiu o limite de uso gratuito. Tente novamente mais tarde.' },
+      429
+    )
   }
 
   await assert.rejects(
-    () => askAssistant('q', 'pt', { maxRetries: 1, backoffBaseMs: 1 }),
+    () => askAssistant('q', 'pt', { maxRetries: 2, backoffBaseMs: 1 }),
     (err) => {
       assert.strictEqual(err.status, 429)
-      assert.match(err.userMessage, /Muitas requisições/)
+      assert.match(err.userMessage, /limite de uso gratuito/)
       return true
     }
   )
 
-  assert.strictEqual(calls, 2)
+  assert.strictEqual(calls, 1)
 })
 
 await test('400: não faz retry e mantém a mensagem do Worker', async () => {

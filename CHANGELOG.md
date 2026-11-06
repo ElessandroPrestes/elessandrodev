@@ -7,6 +7,43 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.12.0] - 2026-11-05
+
+### Adicionado
+- **Resiliência contra 429 da OpenRouter (SPEC-013 / TASK-013)**:
+  - Fallback de geração para Cloudflare Workers AI (`WORKERS_AI_MODEL`) quando a cadeia OpenRouter falha.
+  - Cache RAG-aware na Cache API, com chave `SHA-256(locale + pergunta normalizada + sourceHash + embeddingModel)`.
+  - `CACHE_TTL_SECONDS` e `ENABLE_CACHE` configuráveis por variável de ambiente.
+  - `Retry-After` nas respostas `429`.
+  - Módulos `worker/cache.js` e `worker/providers.js`.
+  - Testes de cache hit/miss, invalidação por `sourceHash`, fallback de provedor e `429` final.
+
+### Modificado
+- Worker interrompe a cadeia OpenRouter ao detectar `X-RateLimit-Remaining: 0` e aciona o Workers AI.
+- Cliente HTTP deixa de retentar `429`; retries ficam restritos a rede, timeout e `5xx`.
+- Mensagem de `429` passa a informar limite de uso gratuito e sugerir tentar mais tarde.
+- `wrangler.toml`, `.dev.vars.example`, `.env.example`, README, `PROJECT.md`, `docs/architecture.md` e `ROADMAP.md` alinhados.
+
+### Corrigido
+- **Erro 429 em produção** por esgotamento da cota diária gratuita da OpenRouter: o assistente passa a responder via Workers AI.
+- Retries do navegador que amplificavam o consumo de cota em `429`.
+
+### Segurança
+- Cache armazena apenas resposta e fontes públicas; nenhuma chave ou prompt completo é persistido.
+- Nenhuma credencial nova; Workers AI já era usado para embeddings.
+
+### Qualidade
+- `npm test`: **38/38** (16 cliente + 10 prompt + 12 Worker).
+- `rag:check`: 36 chunks, 365.0 KB, `sourceHash` consistente.
+- `rag:eval`: hit@4 **100%**, MRR **0.975**, cobertura **100%**.
+- `npm run build`: sem erros.
+
+### Deploy
+- Worker `elessandrodev-chat` publicado em produção (versão `269dcbb7`, 2026-11-05T13:01:55Z).
+- Validado em produção: pergunta inédita retornou `200` via Workers AI (`X-Assistant-Cache: MISS`) e a repetição retornou `X-Assistant-Cache: HIT`.
+
+---
+
 ## [1.11.1] - 2026-10-21
 
 ### Segurança
