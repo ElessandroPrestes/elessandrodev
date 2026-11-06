@@ -12,32 +12,31 @@ import {
   isEnglish,
   safeFallback,
 } from './prompt.js'
+import {
+  readCachedAnswer,
+  writeCachedAnswer,
+  buildCacheKey,
+} from './cache.js'
+import {
+  DEFAULT_MODELS,
+  DEFAULT_WORKERS_AI_MODEL,
+  callOpenRouter,
+  callWorkersAi,
+  parseList,
+} from './providers.js'
 
 const DEFAULT_EMBEDDING_MODEL = '@cf/baai/bge-m3'
-const DEFAULT_MODELS = [
-  'minimax/minimax-m3.1-flash:free',
-  'google/gemma-4-31b-it:free',
-]
+const DEFAULT_CACHE_TTL_SECONDS = 86400
+const DEFAULT_RETRY_AFTER_SECONDS = 3600
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://elessandroprestes.github.io',
   'http://localhost:5212',
   'http://127.0.0.1:5212',
   'http://elessandrodev.localhost',
 ]
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const REQUEST_LIMIT = 2000
 const QUESTION_LIMIT = 500
-const MODEL_TIMEOUT_MS = 20000
 const CJK_PATTERN = /[\u3000-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uff00-\uffef]/g
-
-function parseList(value, fallback = []) {
-  const items = String(value ?? '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-
-  return items.length > 0 ? [...new Set(items)] : fallback
-}
 
 function readInt(value, fallback, min, max) {
   const parsed = Number.parseInt(value, 10)
@@ -61,13 +60,14 @@ function corsHeaders(origin) {
   }
 }
 
-function jsonResponse(body, status, origin) {
+function jsonResponse(body, status, origin, extraHeaders = {}) {
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
     'X-Content-Type-Options': 'nosniff',
   }
 
   if (origin) Object.assign(headers, corsHeaders(origin))
+  Object.assign(headers, extraHeaders)
 
   return new Response(JSON.stringify(body), { status, headers })
 }
@@ -88,8 +88,8 @@ function cjkRatio(text) {
 
 function rateLimitMessage(locale) {
   return locale === 'en'
-    ? 'The assistant reached a temporary request limit. Please try again in a few minutes.'
-    : 'O assistente atingiu o limite temporário de requisições. Tente novamente em alguns minutos.'
+    ? 'The assistant reached its free usage limit and is temporarily unavailable. Please try again later.'
+    : 'O assistente atingiu o limite de uso gratuito e está temporariamente indisponível. Tente novamente mais tarde.'
 }
 
 function unavailableMessage(locale) {
@@ -102,99 +102,90 @@ function buildUserPrompt(context, question) {
   return `<trechos_recuperados>\n${context}\n</trechos_recuperados>\n\n<pergunta>\n${question}\n</pergunta>`
 }
 
-async function callOpenRouter({ env, model, system, user }) {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS)
-
-  try {
-    const response = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer':
-          env.SITE_URL || 'https://elessandroprestes.github.io/elessandrodev/',
-        'X-Title': 'Elessandro Portfolio',
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
-        temperature: 0.2,
-        max_tokens: 3000,
-      }),
-      signal: controller.signal,
-    })
-
-    const raw = await response.text()
-    let payload = null
-    try {
-      payload = JSON.parse(raw)
-    } catch {
-      payload = null
-    }
-
-    if (!response.ok) {
-      const detail = payload?.error?.message || payload?.message || ''
-      return {
-        ok: false,
-        status: response.status,
-        retryable: response.status === 429 || response.status >= 500,
-        detail: String(detail).slice(0, 160),
-      }
-    }
-
-    const content = payload?.choices?.[0]?.message?.content
-    const text = Array.isArray(content)
-      ? content
-          .map((part) => (typeof part === 'string' ? part : part?.text || ''))
-          .join('')
-      : content
-
-    if (typeof text !== 'string' || !text.trim()) {
-      return { ok: false, status: 502, retryable: true }
-    }
-
-    return { ok: true, text: text.trim() }
-  } catch (error) {
-    const aborted = error?.name === 'AbortError'
-    return { ok: false, status: aborted ? 504 : 502, retryable: true }
-  } finally {
-    clearTimeout(timer)
-  }
+function isCacheEnabled(env) {
+  const value = String(env.ENABLE_CACHE ?? 'true').toLowerCase()
+  return value !== 'false' && value !== '0' && value !== 'off'
 }
 
 async function generateAnswer({ env, locale, retrieved, question }) {
-  const models = parseList(env.MODELS, DEFAULT_MODELS)
+  const models = env.OPENROUTER_API_KEY
+    ? parseList(env.MODELS, DEFAULT_MODELS)
+    : []
   const system = buildSystemPrompt(locale)
   const user = buildUserPrompt(buildContext(retrieved), question)
+  const workersAiModel = String(
+    env.WORKERS_AI_MODEL || DEFAULT_WORKERS_AI_MODEL,
+  ).trim()
   let lastStatus = 503
+  let rateLimited = false
+  let retryAfter = null
 
   for (const model of models) {
     const result = await callOpenRouter({ env, model, system, user })
 
     if (result.ok) {
       const text = sanitizeAnswer(result.text)
-      if (text && cjkRatio(result.text) <= 0.1) return { ok: true, text }
+      if (text && cjkRatio(result.text) <= 0.1) {
+        return { ok: true, text, provider: result.provider, model }
+      }
       lastStatus = 502
       continue
     }
 
     lastStatus = result.status
-    console.error('[chat] model failed:', result.status, result.detail || '')
+    if (result.status === 429) rateLimited = true
+    if (result.retryAfter) retryAfter = result.retryAfter
+    console.error('[chat] openrouter failed:', result.status, result.detail || '')
 
+    if (result.quotaExhausted) break
     if (!result.retryable && (result.status === 401 || result.status === 403)) {
       break
     }
   }
 
-  return { ok: false, status: lastStatus }
+  if (workersAiModel) {
+    const fallback = await callWorkersAi({
+      env,
+      model: workersAiModel,
+      system,
+      user,
+    })
+
+    if (fallback.ok) {
+      const text = sanitizeAnswer(fallback.text)
+      if (text && cjkRatio(fallback.text) <= 0.1) {
+        console.log('[chat] fallback provider used: workers-ai')
+        return {
+          ok: true,
+          text,
+          provider: fallback.provider,
+          model: workersAiModel,
+        }
+      }
+      lastStatus = 502
+    } else {
+      console.error(
+        '[chat] workers-ai failed:',
+        fallback.status,
+        fallback.detail || '',
+      )
+      lastStatus = fallback.status
+    }
+  }
+
+  if (rateLimited) {
+    return {
+      ok: false,
+      status: 429,
+      retryAfter: retryAfter || DEFAULT_RETRY_AFTER_SECONDS,
+    }
+  }
+
+  return { ok: false, status: lastStatus, retryAfter }
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin')
     const allowedOrigins = parseList(env.ALLOWED_ORIGIN, DEFAULT_ALLOWED_ORIGINS)
     const isAllowed = Boolean(origin) && allowedOrigins.includes(origin)
@@ -250,7 +241,33 @@ export default {
       )
     }
 
-    if (!env.OPENROUTER_API_KEY) {
+    const embeddingModel =
+      env.EMBEDDING_MODEL || index?.embeddingModel || DEFAULT_EMBEDDING_MODEL
+    const cacheEnabled = isCacheEnabled(env)
+    const sourceHash = index?.sourceHash || String(index?.version ?? '')
+    const cacheKey =
+      cacheEnabled && sourceHash
+        ? await buildCacheKey({
+            question,
+            locale: answerLocale,
+            sourceHash,
+            embeddingModel,
+          })
+        : null
+
+    if (cacheKey) {
+      const cached = await readCachedAnswer({ key: cacheKey })
+      if (cached) {
+        return jsonResponse(cached, 200, origin, {
+          'X-Assistant-Cache': 'HIT',
+        })
+      }
+    }
+
+    const hasGenerationProvider =
+      Boolean(env.OPENROUTER_API_KEY) || Boolean(env.AI?.run)
+
+    if (!hasGenerationProvider) {
       return jsonResponse({ error: unavailableMessage(locale) }, 503, origin)
     }
 
@@ -258,7 +275,6 @@ export default {
       return jsonResponse({ error: unavailableMessage(locale) }, 503, origin)
     }
 
-    const embeddingModel = env.EMBEDDING_MODEL || DEFAULT_EMBEDDING_MODEL
     const topK = readInt(env.TOP_K, 4, 1, 8)
     const alpha = readFloat(env.HYBRID_ALPHA, 0.6, 0, 1)
     const minScore = readFloat(env.MIN_SCORE, 0.45, 0, 1)
@@ -297,20 +313,50 @@ export default {
 
     if (!answer.ok) {
       if (answer.status === 429) {
-        return jsonResponse({ error: rateLimitMessage(locale) }, 429, origin)
+        return jsonResponse(
+          { error: rateLimitMessage(locale) },
+          429,
+          origin,
+          {
+            'Retry-After': String(
+              answer.retryAfter || DEFAULT_RETRY_AFTER_SECONDS,
+            ),
+          },
+        )
       }
 
       console.error('[chat] generation failed with status:', answer.status)
       return jsonResponse({ error: unavailableMessage(locale) }, 503, origin)
     }
 
-    return jsonResponse(
-      {
-        response: sanitizeAnswer(answer.text),
-        sources: formatSources(retrieved),
-      },
-      200,
-      origin,
-    )
+    const body = {
+      response: sanitizeAnswer(answer.text),
+      sources: formatSources(retrieved),
+    }
+
+    if (cacheEnabled && cacheKey && body.sources.length > 0) {
+      const ttlSeconds = readInt(
+        env.CACHE_TTL_SECONDS,
+        DEFAULT_CACHE_TTL_SECONDS,
+        60,
+        604800,
+      )
+      const writePromise = writeCachedAnswer({
+        key: cacheKey,
+        body,
+        ttlSeconds,
+      })
+
+      if (ctx?.waitUntil) {
+        ctx.waitUntil(writePromise)
+      } else {
+        await writePromise
+      }
+    }
+
+    return jsonResponse(body, 200, origin, {
+      'X-Assistant-Cache': cacheKey ? 'MISS' : 'OFF',
+      'X-Assistant-Provider': answer.provider || 'unknown',
+    })
   },
 }

@@ -14,11 +14,13 @@
          │                   │ POST { question, locale }
          │                   ▼
          └───► Cloudflare Worker (elessandrodev-chat)
+                   ├─── Cache RAG-aware (Cache API, chave com sourceHash)
                    ├─── Workers AI: embedding da pergunta (@cf/baai/bge-m3)
                    ├─── Índice RAG versionado (worker/rag/index.json)
                    ├─── Recuperação híbrida: cosseno + BM25
                    ├─── Threshold de relevância e fontes
-                   └─── OpenRouter: geração com fallback entre modelos
+                   ├─── OpenRouter: geração com cadeia de modelos free
+                   └─── Workers AI: fallback de geração em 429/5xx
 ```
 
 O frontend é estático. A chave da OpenRouter existe apenas como secret do Worker; nunca é embutida no bundle do GitHub Pages.
@@ -31,9 +33,10 @@ O frontend é estático. A chave da OpenRouter existe apenas como secret do Work
 2. **Backend no Cloudflare Worker:** concentra a chave do provedor de LLM, o índice RAG e as regras de segurança.
 3. **RAG real com corpus Markdown:** o conteúdo profissional fica em `knowledge/rag/`, é dividido em chunks por seção e indexado com embeddings multilíngues.
 4. **Recuperação híbrida:** combina similaridade de cosseno com BM25 lexical (`HYBRID_ALPHA=0.6`), reduzindo falhas em perguntas com termos exatos.
-5. **Threshold e fallback:** se nenhum chunk atinge `MIN_SCORE=0.45`, o Worker responde sem chamar o LLM. Se o modelo principal falha, tenta o próximo modelo configurado.
-6. **Citação de fontes:** a resposta retorna `{ response, sources }`; a UI mostra seção e score de cada fonte.
-7. **Composables nativos:** tema e idioma sem stores globais.
+5. **Threshold e fallback:** se nenhum chunk atinge `MIN_SCORE=0.45`, o Worker responde sem chamar o LLM. Se a cadeia OpenRouter falha, o Worker tenta o Workers AI com o mesmo prompt.
+6. **Cache RAG-aware:** respostas fundamentadas são cacheadas por `SHA-256(locale + pergunta normalizada + sourceHash + embeddingModel)`. Cache hit não gera embedding nem chamada de LLM; reindexar o corpus invalida a chave.
+7. **Citação de fontes:** a resposta retorna `{ response, sources }`; a UI mostra seção e score de cada fonte.
+8. **Composables nativos:** tema e idioma sem stores globais.
 
 ---
 
@@ -47,12 +50,29 @@ npm run rag:check   # valida sourceHash e consistência sem chamar APIs
 
 O `rag:check` roda no CI e falha se o índice divergir do corpus.
 
+Uma mudança de `sourceHash` também invalida automaticamente as entradas de cache, porque o hash do índice entra na chave.
+
 ---
 
-## 4. Segurança
+## 4. Resiliência e Limites de Provedor
+
+A OpenRouter aplica o limite gratuito por conta (~20 req/min e ~50 req/dia), compartilhado entre todos os modelos `:free`. O fluxo de resiliência é:
+
+1. O Worker consulta o cache antes do embedding.
+2. Em miss, tenta os modelos de `MODELS` em ordem.
+3. Se receber `429` com `X-RateLimit-Remaining: 0`, interrompe a cadeia e aciona o Workers AI.
+4. Se o Workers AI também falhar, responde `429` com `Retry-After` e mensagem amigável.
+5. O cliente não retenta `429`; retries ficam restritos a rede, timeout e `5xx`.
+
+O cache é opt-out (`ENABLE_CACHE=false`) e tem TTL configurável (`CACHE_TTL_SECONDS`).
+
+---
+
+## 5. Segurança
 
 - `OPENROUTER_API_KEY` é configurada via `wrangler secret put`, nunca em `.env` de produção.
 - `CLOUDFLARE_API_TOKEN` de ingestão fica em `.env.ingest` (ignorado pelo Git).
 - CORS restrito a `https://elessandroprestes.github.io`, `http://localhost:5212`, `http://127.0.0.1:5212` e `http://elessandrodev.localhost`.
 - Limites de payload (2000 bytes) e pergunta (500 caracteres).
 - Prompt instrui o modelo a usar apenas o contexto recuperado e a recusar informações ausentes.
+- O cache armazena apenas resposta e fontes públicas; a chave usa hash da pergunta e nunca guarda prompt, chave ou dados sensíveis.

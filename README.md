@@ -38,21 +38,28 @@ flowchart TD
 
     subgraph Runtime["2. Execução no Cloudflare Worker"]
         UserQuery["Pergunta do visitante"]
+        Cache{"Cache RAG-aware\n(sourceHash + pergunta)"}
         QueryEmbedding["Embedding da pergunta"]
         Retrieval["Cosseno + BM25 + threshold"]
         Prompt["Prompt grounded + fontes"]
-        OpenRouter["OpenRouter: fallback de modelos"]
+        OpenRouter["OpenRouter: modelos free"]
+        WorkersAI["Workers AI: fallback de geração"]
 
-        UserQuery --> QueryEmbedding --> Retrieval
+        UserQuery --> Cache
+        Cache -- hit --> Sources
+        Cache -- miss --> QueryEmbedding --> Retrieval
         Index -.-> Retrieval
         Retrieval --> Prompt --> OpenRouter
+        OpenRouter -- 429/5xx --> WorkersAI
+        OpenRouter --> Sources
+        WorkersAI --> Sources
     end
 
     subgraph UI["3. Interface"]
         ChatUI["AiAssistant.vue"]
         Sources["Resposta + fontes e scores"]
 
-        OpenRouter --> Sources --> ChatUI
+        Sources --> ChatUI
     end
 ```
 
@@ -62,12 +69,24 @@ flowchart TD
 2. **Retrieval híbrido:** cosseno + BM25 (`HYBRID_ALPHA=0.6`, `TOP_K=4`, `MIN_SCORE=0.45`).
 3. **Grounded answer:** o Worker envia apenas os chunks recuperados e instrui o modelo a não inventar fatos.
 4. **Fallback sem LLM:** se nada atinge o threshold, a resposta é gerada sem chamada ao provedor.
-5. **Segurança:** a chave da OpenRouter fica como secret do Worker; o frontend envia apenas `{ question, locale }`.
+5. **Cache RAG-aware:** perguntas repetidas são respondidas do cache por até 24 h, sem consumir embedding nem LLM. A chave inclui o `sourceHash` do índice, então reindexar invalida respostas antigas.
+6. **Fallback de provedor:** se a OpenRouter esgotar a cota gratuita ou falhar, o Worker usa Cloudflare Workers AI para gerar a resposta com o mesmo prompt e as mesmas fontes.
+7. **Segurança:** a chave da OpenRouter fica como secret do Worker; o frontend envia apenas `{ question, locale }`.
 
 ### Qualidade do retrieval
 
 - `npm run rag:eval`: **100% hit@4**, MRR **0.975**, cobertura do threshold **100%**.
 - `npm run rag:check`: valida `sourceHash`, dimensões e consistência do índice no CI.
+
+### Resiliência contra 429 e custos
+
+O limite gratuito da OpenRouter (~20 req/min e ~50 req/dia por conta) é compartilhado entre todos os modelos `:free`. Quando ele zera, o Worker:
+
+1. interrompe a cadeia OpenRouter ao detectar `X-RateLimit-Remaining: 0`;
+2. tenta a geração no Cloudflare Workers AI (`WORKERS_AI_MODEL`);
+3. só responde `429` se todos os provedores falharem, com `Retry-After` e mensagem honesta.
+
+O cliente HTTP **não retenta `429`**; retries ficam restritos a rede, timeout e `5xx`. O cache reduz o consumo de cota e pode ser desligado com `ENABLE_CACHE=false`.
 
 ---
 
@@ -79,9 +98,10 @@ flowchart TD
 | **Estilização & Temas** | **Tailwind CSS + PostCSS** | Design System editorial adaptativo (Light & Dark Mode), WCAG 2.1 AA |
 | **IA & Metodologia** | **SDD + RAG** | Aplicação de IA no ciclo de desenvolvimento com Spec-Driven Development e RAG |
 | **Build & Bundle Tool** | **Vite** | HMR ultrarrápido, otimização de assets e build modular com Rollup |
-| **Backend de IA** | **Cloudflare Workers** | CORS, prompt grounded, retries e fallback de modelos |
+| **Backend de IA** | **Cloudflare Workers** | CORS, prompt grounded, cache e fallback de provedor |
 | **Embeddings** | **Cloudflare Workers AI** | `@cf/baai/bge-m3` para indexação e consulta |
-| **Modelo de Linguagem (LLM)** | **OpenRouter** | Cadeia de modelos gratuitos com fallback |
+| **Modelo de Linguagem (LLM)** | **OpenRouter + Workers AI** | Cadeia gratuita com fallback para Workers AI em 429/5xx |
+| **Cache** | **Cloudflare Cache API** | Respostas RAG-aware por pergunta e `sourceHash` |
 | **Recuperação** | **RAG híbrido** | Cosseno + BM25, threshold e citação de fontes |
 | **Padronização de Comandos** | **GNU Make** | Automação unificada de tarefas via `Makefile` |
 | **Containerização** | **Docker & Compose** | Ambientes de desenvolvimento e execução isolados e replicáveis |
@@ -118,6 +138,15 @@ npx wrangler login
 npx wrangler secret put OPENROUTER_API_KEY
 npx wrangler deploy
 ```
+
+Variáveis não sensíveis do Worker (em `wrangler.toml`):
+
+| Variável | Padrão | Função |
+|---|---|---|
+| `MODELS` | cadeia `:free` | Modelos da OpenRouter, em ordem de preferência |
+| `WORKERS_AI_MODEL` | `@cf/meta/llama-3.1-8b-instruct-fp8` | Modelo de fallback quando a OpenRouter esgota |
+| `CACHE_TTL_SECONDS` | `86400` | TTL do cache RAG-aware |
+| `ENABLE_CACHE` | `true` | Desativa o cache com `false` |
 
 Para atualizar o corpus:
 

@@ -40,6 +40,8 @@ export function isTransientError(error) {
     status === 404 ||
     status === 413 ||
     status === 422 ||
+    status === 429 ||
+    message.includes('429') ||
     message.includes('api key') ||
     message.includes('invalid argument') ||
     message.includes('not found') ||
@@ -54,14 +56,12 @@ export function isTransientError(error) {
   if (
     status === 408 ||
     status === 425 ||
-    status === 429 ||
     status === 500 ||
     status === 502 ||
     status === 503 ||
     status === 504 ||
     error.name === 'AbortError' ||
     error.name === 'TimeoutError' ||
-    message.includes('429') ||
     message.includes('500') ||
     message.includes('502') ||
     message.includes('503') ||

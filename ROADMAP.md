@@ -4,7 +4,7 @@
 
 ---
 
-## Versão Atual: v1.11.1 (2026-10-21)
+## Versão Atual: v1.12.0 (2026-11-05)
 
 - [x] Arquitetura Vue 3 + Vite + Tailwind CSS.
 - [x] Design editorial com tema Dark/Light persistido.
@@ -20,6 +20,7 @@
 - [x] **SPEC-008:** RAG real com Cloudflare Worker, corpus Markdown, embeddings, retrieval híbrido, fontes e remoção de LangChain/Gemini do cliente.
 - [x] **SPEC-009:** prompt do assistente com fidelidade factual, contato determinístico e fallback seguro.
 - [x] **SPEC-012:** Vite 6.4.5 e remediação dos alertas Dependabot #116–#120.
+- [x] **SPEC-013:** fallback de geração para Workers AI, cache RAG-aware e resiliência contra `429` da OpenRouter.
 
 ---
 
@@ -28,8 +29,8 @@
 > Execução futura somente mediante SPEC aprovada pelo Product Owner.
 
 ### 1. [Performance] SPEC-010: Code splitting e cache de embeddings
-- **Contexto:** o bundle principal está em ~211 KB; o índice e as chamadas de embedding podem ser otimizados.
-- **Objetivo:** avaliar `manualChunks`, lazy loading do chat e cache de embeddings para perguntas repetidas.
+- **Contexto:** o bundle principal está em ~211 KB; o índice e as chamadas de embedding podem ser otimizados. O cache de respostas da SPEC-013 já cobre perguntas repetidas; resta avaliar cache de embeddings por similaridade.
+- **Objetivo:** avaliar `manualChunks`, lazy loading do chat e cache semântico de embeddings.
 - **Impacto:** menor First Load JS e menor latência em consultas recorrentes.
 
 ### 2. [Experiência] SPEC-011: Histórico conversacional

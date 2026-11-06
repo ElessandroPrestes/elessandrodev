@@ -1,3 +1,12 @@
 # Chave da OpenRouter para desenvolvimento local com `wrangler dev`.
 # Copie para .dev.vars e preencha. Nunca commite .dev.vars.
 OPENROUTER_API_KEY=coloque_sua_chave_aqui
+
+# Opcional: sobrescreve o modelo de fallback do Workers AI.
+# WORKERS_AI_MODEL=@cf/meta/llama-3.1-8b-instruct-fp8
+
+# Opcional: TTL do cache de respostas em segundos (padrão 86400).
+# CACHE_TTL_SECONDS=86400
+
+# Opcional: desativa o cache RAG-aware com "false".
+# ENABLE_CACHE=true

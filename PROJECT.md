@@ -13,7 +13,7 @@
 | **Repositório**   | `ElessandroPrestes/elessandrodev`                                                                        |
 | **URL Produção**  | [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/) |
 | **Deploy**        | GitHub Pages via GitHub Actions                                                                          |
-| **Versão**        | 1.11.1                                                                                                   |
+| **Versão**        | 1.12.0                                                                                                   |
 | **Autor**         | Elessandro Prestes Macedo (Software Engineer & Tech Lead)                                                |
 | **Contato**       | [LinkedIn](https://www.linkedin.com/in/elessandro-prestes-macedo/) • WhatsApp: +55 (45) 99917-8290       |
 | **Governança**    | **Universal SDD (Spec-Driven Development)**                                                              |
@@ -46,8 +46,9 @@ O projeto conta com:
 | Tecnologia                     | Versão   | Papel / Justificativa                                                    |
 |--------------------------------|----------|--------------------------------------------------------------------------|
 | **Cloudflare Workers**         | runtime  | Backend do chat, CORS, prompt grounded e fallback de modelos             |
-| **Cloudflare Workers AI**      | binding  | Embeddings com `@cf/baai/bge-m3`                                         |
+| **Cloudflare Workers AI**      | binding  | Embeddings (`bge-m3`) e fallback de geração de texto                     |
 | **OpenRouter**                 | API      | Geração de texto com cadeia de modelos gratuitos                         |
+| **Cloudflare Cache API**       | nativa   | Cache RAG-aware de respostas por pergunta e `sourceHash`                 |
 | **RAG híbrido**                | local    | Cosseno + BM25, threshold e citação de fontes                            |
 
 ### 3.3 Infraestrutura, Tooling & CI/CD
@@ -91,7 +92,9 @@ scripts/
 shared/retrieval.js      # Tokenização, cosseno, BM25 e score híbrido
 
 worker/
-├── index.js             # HTTP, CORS, contato, RAG e OpenRouter
+├── index.js             # HTTP, CORS, contato, cache e orquestração
+├── cache.js             # Chave e I/O do cache RAG-aware
+├── providers.js         # OpenRouter e fallback Workers AI
 ├── prompt.js            # Ficha, regras e contato determinístico
 └── rag/
     ├── index.json       # Índice versionado
@@ -113,16 +116,18 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 [aiService.js]
   ├─ POST { question, locale } para VITE_CHAT_API_URL
   ├─ Timeout via AbortController
-  └─ Retry com backoff em 429/5xx/timeout/rede
+  └─ Retry com backoff em 5xx/timeout/rede (429 não é retentado)
          │
          ▼
 [Cloudflare Worker]
   ├─ Valida Origin, payload e limites
   ├─ Intenção de contato ──► resposta determinística sem LLM
+  ├─ Cache RAG-aware (pergunta + locale + sourceHash)
   ├─ Workers AI: embedding da pergunta
   ├─ Recuperação híbrida + threshold
   ├─ Sem chunks relevantes ──► fallback sem LLM
-  └─ OpenRouter: geração com prompt canônico e fallback de modelos
+  ├─ OpenRouter: geração com prompt canônico e cadeia de modelos
+  └─ Workers AI: fallback de geração em 429/5xx
          │
          ▼
 [Resposta { response, sources }]
@@ -142,8 +147,10 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
    - 320px, 640px, 768px, 1024px, 1280px e 1536px testados sem overflow horizontal.
 4. **Resiliência do assistente:**
    - Suíte `src/services/aiService.test.mjs` com 16 testes: sucesso, 429, 5xx, 400, timeout, rede e configuração ausente.
-   - Suítes do Worker com 10 testes de prompt e 7 de integração; `npm test` executa 33 testes.
+   - Suítes do Worker com 10 testes de prompt e 12 de integração; `npm test` executa 38 testes.
    - `rag:eval` com hit@4 de 100% e MRR 0.975.
+   - Cache RAG-aware e fallback OpenRouter → Workers AI cobertos por teste.
+   - `429` não dispara retry no cliente; a mensagem final do Worker é preservada.
 
 ---
 
@@ -156,6 +163,7 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 - Limites de payload (2000 bytes) e pergunta (500 caracteres).
 - O prompt usa a ficha canônica como fonte da verdade e os trechos recuperados como complemento; recusa quando não há base.
 - O Worker sanitiza artefatos de idioma indevidos na resposta.
+- O cache guarda apenas resposta e fontes públicas; a chave usa hash da pergunta e inclui `sourceHash`.
 
 ---
 
@@ -171,6 +179,7 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 - [x] **SPEC-008 [Segurança & RAG]:** Migração para Cloudflare Worker, corpus Markdown, índice de embeddings, retrieval híbrido, citação de fontes e remoção de LangChain/Gemini do cliente (Concluída em v1.10.0).
 - [x] **SPEC-009 [IA & Prompt]:** Prompt canônico com ficha, fidelidade factual, contato determinístico, fallback seguro e corpus alinhado ao currículo (Concluída em v1.11.0).
 - [x] **SPEC-012 [Segurança]:** Vite atualizado para 6.4.5, corrigindo os alertas Dependabot #116–#120 da cadeia Vite/launch-editor (Concluída em v1.11.1).
+- [x] **SPEC-013 [IA & Resiliência]:** Fallback de geração para Workers AI, cache RAG-aware com `sourceHash`, semântica correta de `429` e remoção de retry inútil no cliente (Concluída em v1.12.0).
 
 > **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
 
