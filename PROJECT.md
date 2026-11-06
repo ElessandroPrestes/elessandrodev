@@ -13,7 +13,7 @@
 | **Repositório**   | `ElessandroPrestes/elessandrodev`                                                                        |
 | **URL Produção**  | [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/) |
 | **Deploy**        | GitHub Pages via GitHub Actions                                                                          |
-| **Versão**        | 1.12.0                                                                                                   |
+| **Versão**        | 1.13.0                                                                                                   |
 | **Autor**         | Elessandro Prestes Macedo (Software Engineer & Tech Lead)                                                |
 | **Contato**       | [LinkedIn](https://www.linkedin.com/in/elessandro-prestes-macedo/) • WhatsApp: +55 (45) 99917-8290       |
 | **Governança**    | **Universal SDD (Spec-Driven Development)**                                                              |
@@ -73,8 +73,8 @@ src/
 │   └── aiConfig.js      # URL do Worker, retries, timeout e telemetria
 ├── i18n/locales/        # pt.js e en.js
 ├── services/
-│   ├── aiService.js     # Cliente HTTP do Cloudflare Worker
-│   └── aiService.test.mjs # 16 testes com fetch mockado
+│   ├── aiService.js     # Cliente HTTP, timeout e diagnóstico por requestId
+│   └── aiService.test.mjs # 18 testes com fetch mockado
 ├── style.css
 ├── App.vue
 └── main.js
@@ -86,21 +86,24 @@ knowledge/
 scripts/
 ├── build-index.mjs      # Gera embeddings e índice
 ├── check-index.mjs      # Valida sourceHash e consistência
+├── check-models.mjs     # Valida IDs da OpenRouter no CI
 ├── eval-retrieval.mjs   # Mede hit@4, MRR e cobertura
 └── rag-lib.mjs          # Utilitários compartilhados
 
 shared/retrieval.js      # Tokenização, cosseno, BM25 e score híbrido
 
 worker/
-├── index.js             # HTTP, CORS, contato, cache e orquestração
-├── cache.js             # Chave e I/O do cache RAG-aware
+├── index.js             # HTTP, CORS, contato, cache, orçamento e observabilidade
+├── cache.js             # Chave, cache RAG-aware e cache negativo
+├── circuit.js           # Circuit breaker por modelo/provedor
 ├── providers.js         # OpenRouter e fallback Workers AI
 ├── prompt.js            # Ficha, regras e contato determinístico
 └── rag/
     ├── index.json       # Índice versionado
     └── retrieve.js      # Embedding, retrieval e fontes
 
-wrangler.toml            # Binding AI e variáveis não sensíveis
+docs/operations.md       # Runbook de diagnóstico e operação
+wrangler.toml            # Binding AI, rate limit, observability e variáveis
 ```
 
 ### 4.2 Fluxo de Execução do Assistente
@@ -120,17 +123,20 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
          │
          ▼
 [Cloudflare Worker]
-  ├─ Valida Origin, payload e limites
+  ├─ Valida Origin, payload, limites e rate limit por IP
   ├─ Intenção de contato ──► resposta determinística sem LLM
-  ├─ Cache RAG-aware (pergunta + locale + sourceHash)
+  ├─ Cache positivo e cache negativo (503) RAG-aware
   ├─ Workers AI: embedding da pergunta
   ├─ Recuperação híbrida + threshold
   ├─ Sem chunks relevantes ──► fallback sem LLM
-  ├─ OpenRouter: geração com prompt canônico e cadeia de modelos
+  ├─ OpenRouter: geração com prompt canônico e orçamento de tempo
+  ├─ Circuit breaker por modelo/provedor
   └─ Workers AI: fallback de geração em 429/5xx
          │
          ▼
 [Resposta { response, sources }]
+  ├─ Headers: X-Request-Id, X-Assistant-Stage, X-Assistant-Cache
+  ├─ Log JSON com stage, outcome, providerStatus e timings
   └─ Vue renderiza Markdown + seção/score das fontes
 ```
 
@@ -146,11 +152,12 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 3. **Design Editorial & Mobile First:**
    - 320px, 640px, 768px, 1024px, 1280px e 1536px testados sem overflow horizontal.
 4. **Resiliência do assistente:**
-   - Suíte `src/services/aiService.test.mjs` com 16 testes: sucesso, 429, 5xx, 400, timeout, rede e configuração ausente.
-   - Suítes do Worker com 10 testes de prompt e 12 de integração; `npm test` executa 38 testes.
+   - Suíte `src/services/aiService.test.mjs` com 18 testes: sucesso, 429, 5xx, 400, timeout, rede, configuração ausente e diagnóstico por `X-Request-Id`.
+   - Suítes do Worker com 10 testes de prompt e 20 de integração; `npm test` executa 48 testes.
    - `rag:eval` com hit@4 de 100% e MRR 0.975.
-   - Cache RAG-aware e fallback OpenRouter → Workers AI cobertos por teste.
+   - Cache positivo/negativo, circuit breaker, orçamento de tempo, rate limit, `/health` e fallback OpenRouter → Workers AI cobertos por teste.
    - `429` não dispara retry no cliente; a mensagem final do Worker é preservada.
+   - `npm run models:check` valida os IDs da OpenRouter no CI.
 
 ---
 
@@ -161,9 +168,12 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 - `CLOUDFLARE_API_TOKEN` de ingestão fica em `.env.ingest`, ignorado pelo Git.
 - CORS restrito às origens de produção e desenvolvimento local.
 - Limites de payload (2000 bytes) e pergunta (500 caracteres).
+- Rate limit por IP na rota de chat (10 req/60 s); `GET /health` não é limitado.
 - O prompt usa a ficha canônica como fonte da verdade e os trechos recuperados como complemento; recusa quando não há base.
 - O Worker sanitiza artefatos de idioma indevidos na resposta.
 - O cache guarda apenas resposta e fontes públicas; a chave usa hash da pergunta e inclui `sourceHash`.
+- Logs usam `questionHash` e metadados de etapa; pergunta crua, prompt e chave nunca são registrados.
+- `X-Request-Id` é um UUID sem dado sensível e serve apenas para correlação.
 
 ---
 
@@ -180,9 +190,9 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 - [x] **SPEC-009 [IA & Prompt]:** Prompt canônico com ficha, fidelidade factual, contato determinístico, fallback seguro e corpus alinhado ao currículo (Concluída em v1.11.0).
 - [x] **SPEC-012 [Segurança]:** Vite atualizado para 6.4.5, corrigindo os alertas Dependabot #116–#120 da cadeia Vite/launch-editor (Concluída em v1.11.1).
 - [x] **SPEC-013 [IA & Resiliência]:** Fallback de geração para Workers AI, cache RAG-aware com `sourceHash`, semântica correta de `429` e remoção de retry inútil no cliente (Concluída em v1.12.0).
+- [x] **SPEC-014 [IA & Resiliência]:** Modelos válidos, timeouts alinhados por orçamento, circuit breaker, cache negativo de `503`, rate limit por IP, `X-Request-Id`/`X-Assistant-Stage`, Workers Logs e `GET /health` (Concluída em v1.13.0).
 
 > **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
 
 1. **SPEC-010 [Performance]:** Code splitting adicional no Vite (`build.rollupOptions.output.manualChunks`) e avaliação de cache de embeddings.
 2. **SPEC-011 [Experiência de Usuário]:** Histórico conversacional com janela deslizante (últimas 3 a 5 mensagens) com teto controlado de tokens para manter contexto sem inflar custos.
-3. **SPEC-014 [IA & Resiliência]:** Timeouts alinhados, modelos válidos, circuit breaker, cache negativo, rate limiting e observabilidade do Worker, derivada da `AUDITORIA_RAG_PRODUCAO.md` (Rascunho — aguardando aprovação do PO).

@@ -5,7 +5,7 @@
 | **ID**        | SPEC-014                                                    |
 | **Data**      | 2026-11-06                                                  |
 | **Autor**     | Agente de IA (opencode)                                     |
-| **Status**    | Rascunho — aguardando aprovação do PO                       |
+| **Status**    | Aprovada pelo PO em 2026-11-06                              |
 | **Versão**    | 1.0                                                         |
 | **Aprovador** | Elessandro Prestes Macedo (Product Owner & Tech Lead)       |
 | **Origem**    | `AUDITORIA_RAG_PRODUCAO.md` (2026-11-06)                    |
@@ -298,28 +298,28 @@ provedores.
 
 ## 7. Critérios de Aceitação
 
-- [ ] `MODELS` contém apenas IDs existentes no catálogo público da OpenRouter.
-- [ ] `npm run models:check` valida os IDs e está no CI.
-- [ ] `WORKER_BUDGET_MS` limita o pior caso e o cliente espera mais que o Worker.
-- [ ] Nenhuma chamada de provedor ultrapassa o orçamento total.
-- [ ] `WORKERS_AI_MAX_TOKENS` configurável com padrão 768.
-- [ ] Circuit breaker abre após 3 falhas e fecha após a janela.
-- [ ] Cache negativo de `503` por 60 s; `429` nunca é cacheado.
-- [ ] Toda resposta inclui `X-Request-Id`; erros de geração incluem `X-Assistant-Stage`.
-- [ ] Logs JSON com `requestId`, `stage`, `providerStatus`, `cache`, `timings`,
+- [x] `MODELS` contém apenas IDs existentes no catálogo público da OpenRouter.
+- [x] `npm run models:check` valida os IDs e está no CI.
+- [x] `WORKER_BUDGET_MS` limita o pior caso e o cliente espera mais que o Worker.
+- [x] Nenhuma chamada de provedor ultrapassa o orçamento total.
+- [x] `WORKERS_AI_MAX_TOKENS` configurável com padrão 768.
+- [x] Circuit breaker abre após 3 falhas e fecha após a janela.
+- [x] Cache negativo de `503` por 60 s; `429` nunca é cacheado.
+- [x] Toda resposta inclui `X-Request-Id`; erros de geração incluem `X-Assistant-Stage`.
+- [x] Logs JSON com `requestId`, `stage`, `providerStatus`, `cache`, `timings`,
       `outcome` e `questionHash`.
-- [ ] Workers Logs habilitado em `wrangler.toml`.
-- [ ] Rate limit por IP responde `429` com `Retry-After`.
-- [ ] `GET /health` responde `200` sem IA e sem Origin.
-- [ ] Retrieval com dimensão errada retorna erro controlado.
-- [ ] `npm test` passa e falha se a resiliência for quebrada de propósito.
-- [ ] `npm run rag:check` e `npm run rag:eval` continuam verdes.
-- [ ] `npm run build` sem erros.
-- [ ] README, `PROJECT.md`, `docs/architecture.md`, `docs/operations.md`,
+- [x] Workers Logs habilitado em `wrangler.toml`.
+- [x] Rate limit por IP responde `429` com `Retry-After`.
+- [x] `GET /health` responde `200` sem IA e sem Origin.
+- [x] Retrieval com dimensão errada retorna erro controlado.
+- [x] `npm test` passa e falha se a resiliência for quebrada de propósito.
+- [x] `npm run rag:check` e `npm run rag:eval` continuam verdes.
+- [x] `npm run build` sem erros.
+- [x] README, `PROJECT.md`, `docs/architecture.md`, `docs/operations.md`,
       `CHANGELOG.md` e `ROADMAP.md` atualizados.
-- [ ] ADR-009, TASK-014, QA-014 e REVIEW-014 registrados.
-- [ ] Commits em Português do Brasil no padrão Conventional Commits.
-- [ ] Deploy do Worker validado em produção com `/health`, cache negativo e
+- [x] ADR-009, TASK-014, QA-014 e REVIEW-014 registrados.
+- [x] Commits em Português do Brasil no padrão Conventional Commits.
+- [x] Deploy do Worker validado em produção com `/health`, cache negativo e
       simulação de timeout.
 
 ---
@@ -395,7 +395,7 @@ provedores.
 
 | Campo | Valor |
 |---|---|
-| **Aprovado por** | |
-| **Data** | |
-| **Assinatura** | [ ] Aprovado [ ] Rejeitado |
-| **Observações** | |
+| **Aprovado por** | Elessandro Prestes Macedo |
+| **Data** | 2026-11-06 |
+| **Assinatura** | [x] Aprovado [ ] Rejeitado |
+| **Observações** | Aprovação registrada via opencode para execução da TASK-014. |

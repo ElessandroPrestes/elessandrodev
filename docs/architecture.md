@@ -56,15 +56,31 @@ Uma mudança de `sourceHash` também invalida automaticamente as entradas de cac
 
 ## 4. Resiliência e Limites de Provedor
 
-A OpenRouter aplica o limite gratuito por conta (~20 req/min e ~50 req/dia), compartilhado entre todos os modelos `:free`. O fluxo de resiliência é:
+A OpenRouter aplica o limite gratuito por conta (~20 req/min e ~50 req/dia), compartilhado entre todos os modelos `:free`. Desde a SPEC-014, o fluxo é:
 
-1. O Worker consulta o cache antes do embedding.
-2. Em miss, tenta os modelos de `MODELS` em ordem.
-3. Se receber `429` com `X-RateLimit-Remaining: 0`, interrompe a cadeia e aciona o Workers AI.
-4. Se o Workers AI também falhar, responde `429` com `Retry-After` e mensagem amigável.
-5. O cliente não retenta `429`; retries ficam restritos a rede, timeout e `5xx`.
+1. O Worker valida Origin, rota, payload e rate limit por IP (`CHAT_RATE_LIMITER`).
+2. Consulta o cache positivo antes do embedding; em miss, consulta o cache negativo de `503`.
+3. Tenta os modelos válidos de `MODELS` em ordem, respeitando `WORKER_BUDGET_MS`.
+4. Se receber `429` com `X-RateLimit-Remaining: 0`, interrompe a cadeia e aciona o Workers AI.
+5. O circuit breaker exclui temporariamente modelo/provedor que falhou em sequência.
+6. Se o Workers AI também falhar, responde `429` com `Retry-After` ou `503` com
+   `X-Assistant-Stage` e `X-Request-Id`.
+7. O cliente não retenta `429`; retries ficam restritos a rede, timeout e `5xx`.
 
-O cache é opt-out (`ENABLE_CACHE=false`) e tem TTL configurável (`CACHE_TTL_SECONDS`).
+Cada chamada de provedor usa o menor valor entre seu timeout específico e o tempo
+restante do orçamento total. O cliente usa timeout maior que o orçamento do Worker
+para não desistir antes do fim da cadeia.
+
+O cache positivo é opt-out (`ENABLE_CACHE=false`) e tem TTL configurável
+(`CACHE_TTL_SECONDS`). O cache negativo é exclusivo para `503`, dura no máximo 60 s
+e expõe `X-Assistant-Cache: NEGATIVE`; `429` nunca é cacheado.
+
+### Observabilidade
+
+O Worker emite um log JSON por requisição com `requestId`, `questionHash`, `stage`,
+`outcome`, `provider`, `model`, `providerStatus`, `cache`, `timings` e `attempts`.
+Workers Logs está habilitado em `wrangler.toml`. `GET /health` permite monitoramento
+sem IA. O runbook está em [`operations.md`](operations.md).
 
 ---
 
@@ -74,5 +90,7 @@ O cache é opt-out (`ENABLE_CACHE=false`) e tem TTL configurável (`CACHE_TTL_SE
 - `CLOUDFLARE_API_TOKEN` de ingestão fica em `.env.ingest` (ignorado pelo Git).
 - CORS restrito a `https://elessandroprestes.github.io`, `http://localhost:5212`, `http://127.0.0.1:5212` e `http://elessandrodev.localhost`.
 - Limites de payload (2000 bytes) e pergunta (500 caracteres).
+- Rate limit por IP na rota de chat (10 req/60 s), sem aplicar em `GET /health`.
+- Logs usam `questionHash`, nunca a pergunta crua, e não incluem prompt ou chave.
 - Prompt instrui o modelo a usar apenas o contexto recuperado e a recusar informações ausentes.
 - O cache armazena apenas resposta e fontes públicas; a chave usa hash da pergunta e nunca guarda prompt, chave ou dados sensíveis.

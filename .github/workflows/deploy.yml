@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate OpenRouter models
+        run: npm run models:check
+
       - name: Check RAG index
         run: npm run rag:check
 

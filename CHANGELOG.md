@@ -7,6 +7,57 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.13.0] - 2026-11-06
+
+### Adicionado
+- **Resiliência do fallback, timeouts e observabilidade (SPEC-014 / TASK-014)**:
+  - `WORKER_BUDGET_MS` como teto total de geração, com timeouts derivados do tempo restante.
+  - `OPENROUTER_TIMEOUT_MS`, `WORKERS_AI_TIMEOUT_MS`, `MIN_CALL_BUDGET_MS` e `*_MAX_TOKENS` configuráveis.
+  - `scripts/check-models.mjs` e `npm run models:check` para validar IDs da OpenRouter no CI.
+  - `worker/circuit.js` com circuit breaker por modelo/provedor.
+  - Cache negativo de `503` por até 60 s, com `X-Assistant-Cache: NEGATIVE`.
+  - Cabeçalhos `X-Request-Id` e `X-Assistant-Stage` em todas as respostas relevantes.
+  - Log JSON estruturado com `stage`, `outcome`, `providerStatus`, `timings`, `questionHash` e `attempts`.
+  - Workers Logs habilitado em `wrangler.toml`.
+  - Rate limit por IP na rota de chat (10 req/60 s) via binding `CHAT_RATE_LIMITER`.
+  - `GET /health` sem IA para monitoramento externo.
+  - `docs/operations.md` com runbook de diagnóstico, deploy e rollback.
+  - Testes de orçamento, circuit breaker, cache negativo, rate limit, health, cabeçalhos e retrieval com dimensão incompatível.
+
+### Modificado
+- `MODELS` corrigido para `google/gemma-4-31b-it:free` e `google/gemma-4-26b-a4b-it:free`; o ID inexistente `minimax/minimax-m3.1-flash:free` foi removido.
+- Timeout padrão do cliente elevado para 35000 ms, acima do orçamento do Worker.
+- Fallback Workers AI passa a usar 768 tokens de saída por padrão.
+- `retrieveChunks` protegido por `try/catch`, retornando `503` controlado com `X-Assistant-Stage: retrieval`.
+- Cliente registra `X-Request-Id` e `X-Assistant-Stage` no console em caso de erro.
+- `wrangler.toml`, `.dev.vars.example`, `.env.example`, README, `PROJECT.md`, `docs/architecture.md` e `ROADMAP.md` alinhados.
+
+### Corrigido
+- **503 intermitente em produção** causado por timeout de 20 s no fallback Workers AI.
+- Modelo inexistente na primeira posição da cadeia OpenRouter, que consumia uma tentativa inválida por requisição.
+- Desalinhamento entre o timeout do cliente (30 s) e o pior caso do Worker (~60 s).
+
+### Segurança
+- Rate limit por IP protege a cota compartilhada de OpenRouter e Workers AI.
+- Logs usam `questionHash` e metadados de etapa; pergunta crua, prompt e chave não são registrados.
+- Nenhuma credencial nova; `OPENROUTER_API_KEY` permanece como secret do Worker.
+
+### Qualidade
+- `npm test`: **48/48** (18 cliente + 10 prompt + 20 Worker).
+- `npm run models:check`: 2 modelos válidos no catálogo público.
+- `rag:check`: 36 chunks, 365.0 KB, `sourceHash` consistente.
+- `rag:eval`: hit@4 **100%**, MRR **0.975**, cobertura **100%**.
+- `npm run build`: sem erros; bundle sem segredos.
+- `wrangler deploy --dry-run`: configuração aceita com o binding de rate limit.
+
+### Deploy
+- Worker `elessandrodev-chat` publicado em produção (versão `29c41a5d`, 2026-11-06).
+- `GET /health`: `200` com `chunkCount: 36` e `sourceHash` consistente.
+- Pergunta inédita: `200`, `X-Assistant-Cache: MISS`, `X-Assistant-Provider: workers-ai`, `X-Assistant-Stage: workers-ai`.
+- Repetição da pergunta: `200`, `X-Assistant-Cache: HIT`, `X-Assistant-Stage: cache`.
+
+---
+
 ## [1.12.0] - 2026-11-05
 
 ### Adicionado

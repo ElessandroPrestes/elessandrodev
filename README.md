@@ -88,6 +88,25 @@ O limite gratuito da OpenRouter (~20 req/min e ~50 req/dia por conta) é compart
 
 O cliente HTTP **não retenta `429`**; retries ficam restritos a rede, timeout e `5xx`. O cache reduz o consumo de cota e pode ser desligado com `ENABLE_CACHE=false`.
 
+### Timeouts, fallback e observabilidade (SPEC-014)
+
+- `WORKER_BUDGET_MS` (padrão 25000) limita o tempo total de geração; cada chamada
+  recebe só o tempo restante do orçamento.
+- O cliente espera até `VITE_LLM_TIMEOUT_MS` (padrão 35000), sempre acima do
+  orçamento do Worker.
+- `npm run models:check` valida os IDs da OpenRouter no CI e impede modelos
+  inexistentes.
+- Circuit breaker e cache negativo curto evitam repetir falha de provedor a cada
+  retry.
+- Toda resposta inclui `X-Request-Id`; erros de geração incluem
+  `X-Assistant-Stage`; falhas repetidas de `503` podem vir com
+  `X-Assistant-Cache: NEGATIVE`.
+- Logs JSON com timings ficam disponíveis nos Workers Logs.
+- Rate limit por IP (10 req/60 s) protege a cota compartilhada.
+- `GET /health` responde sem IA para monitoramento externo.
+
+Runbook completo em [`docs/operations.md`](docs/operations.md).
+
 ---
 
 ## 🛠️ Stack Tecnológica
@@ -127,7 +146,7 @@ cp .env.example .env
 ```dotenv
 VITE_CHAT_API_URL=https://elessandrodev-chat.elessandrodev.workers.dev
 VITE_LLM_MAX_RETRIES=2
-VITE_LLM_TIMEOUT_MS=30000
+VITE_LLM_TIMEOUT_MS=35000
 VITE_LLM_BACKOFF_BASE_MS=500
 ```
 
@@ -145,8 +164,17 @@ Variáveis não sensíveis do Worker (em `wrangler.toml`):
 |---|---|---|
 | `MODELS` | cadeia `:free` | Modelos da OpenRouter, em ordem de preferência |
 | `WORKERS_AI_MODEL` | `@cf/meta/llama-3.1-8b-instruct-fp8` | Modelo de fallback quando a OpenRouter esgota |
+| `WORKER_BUDGET_MS` | `25000` | Teto total de geração no Worker |
+| `MIN_CALL_BUDGET_MS` | `2000` | Margem mínima para iniciar uma chamada |
+| `OPENROUTER_TIMEOUT_MS` | `8000` | Timeout por modelo da OpenRouter |
+| `WORKERS_AI_TIMEOUT_MS` | `12000` | Timeout do fallback Workers AI |
+| `OPENROUTER_MAX_TOKENS` | `3000` | Tokens de saída da OpenRouter |
+| `WORKERS_AI_MAX_TOKENS` | `768` | Tokens de saída do fallback |
+| `CIRCUIT_BREAKER_THRESHOLD` | `3` | Falhas consecutivas para abrir o breaker |
+| `CIRCUIT_BREAKER_MS` | `60000` | Janela de exclusão do breaker |
+| `NEGATIVE_CACHE_TTL_SECONDS` | `60` | TTL máximo do cache negativo de `503` |
 | `CACHE_TTL_SECONDS` | `86400` | TTL do cache RAG-aware |
-| `ENABLE_CACHE` | `true` | Desativa o cache com `false` |
+| `ENABLE_CACHE` | `true` | Desativa cache positivo e negativo com `false` |
 
 Para atualizar o corpus:
 

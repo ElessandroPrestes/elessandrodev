@@ -8,5 +8,32 @@ OPENROUTER_API_KEY=coloque_sua_chave_aqui
 # Opcional: TTL do cache de respostas em segundos (padrão 86400).
 # CACHE_TTL_SECONDS=86400
 
-# Opcional: desativa o cache RAG-aware com "false".
+# Opcional: desativa o cache RAG-aware (positivo e negativo) com "false".
 # ENABLE_CACHE=true
+
+# Opcional: orçamento total de geração no Worker (padrão 25000 ms).
+# WORKER_BUDGET_MS=25000
+
+# Opcional: margem mínima para iniciar uma chamada de provedor (padrão 2000 ms).
+# MIN_CALL_BUDGET_MS=2000
+
+# Opcional: timeouts por chamada, limitados pelo orçamento restante.
+# OPENROUTER_TIMEOUT_MS=8000
+# WORKERS_AI_TIMEOUT_MS=12000
+
+# Opcional: limite de tokens de saída por provedor.
+# OPENROUTER_MAX_TOKENS=3000
+# WORKERS_AI_MAX_TOKENS=768
+
+# Opcional: circuit breaker por modelo/provedor.
+# CIRCUIT_BREAKER_THRESHOLD=3
+# CIRCUIT_BREAKER_MS=60000
+
+# Opcional: TTL do cache negativo de 503 em segundos (máximo 60).
+# NEGATIVE_CACHE_TTL_SECONDS=60
+
+# Opcional: silencia os logs JSON estruturados durante testes locais.
+# LOG_LEVEL=silent
+
+# Rate limiting local: o binding CHAT_RATE_LIMITER é configurado em wrangler.toml.
+# Para desativar localmente, remova o binding ou use `wrangler dev --local`.

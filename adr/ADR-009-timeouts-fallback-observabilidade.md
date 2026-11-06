@@ -5,7 +5,7 @@
 | **ID**        | ADR-009                                    |
 | **Data**      | 2026-11-06                                 |
 | **Autor**     | Agente de IA (opencode)                    |
-| **Status**    | Proposto — aguardando aprovação do PO      |
+| **Status**    | Aceito em 2026-11-06                       |
 | **Decisores** | Elessandro Prestes Macedo                  |
 | **Relacionadas** | ADR-008, SPEC-014                       |
 

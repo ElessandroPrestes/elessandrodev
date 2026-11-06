@@ -11,7 +11,8 @@
     "rag:index": "node scripts/build-index.mjs",
     "rag:dry-run": "node scripts/build-index.mjs --dry-run",
     "rag:eval": "node scripts/eval-retrieval.mjs",
-    "rag:check": "node scripts/check-index.mjs"
+    "rag:check": "node scripts/check-index.mjs",
+    "models:check": "node scripts/check-models.mjs"
   },
   "dependencies": {
     "marked": "^18.0.10",
