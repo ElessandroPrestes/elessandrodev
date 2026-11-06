@@ -6,10 +6,28 @@ workers_dev = true
 [ai]
 binding = "AI"
 
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[[ratelimits]]
+name = "CHAT_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
 [vars]
 EMBEDDING_MODEL = "@cf/baai/bge-m3"
-MODELS = "minimax/minimax-m3.1-flash:free,google/gemma-4-31b-it:free"
+MODELS = "google/gemma-4-31b-it:free,google/gemma-4-26b-a4b-it:free"
 WORKERS_AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8"
+WORKERS_AI_MAX_TOKENS = "768"
+OPENROUTER_MAX_TOKENS = "3000"
+WORKER_BUDGET_MS = "25000"
+MIN_CALL_BUDGET_MS = "2000"
+OPENROUTER_TIMEOUT_MS = "8000"
+WORKERS_AI_TIMEOUT_MS = "12000"
+CIRCUIT_BREAKER_THRESHOLD = "3"
+CIRCUIT_BREAKER_MS = "60000"
+NEGATIVE_CACHE_TTL_SECONDS = "60"
 CACHE_TTL_SECONDS = "86400"
 ENABLE_CACHE = "true"
 TOP_K = "4"

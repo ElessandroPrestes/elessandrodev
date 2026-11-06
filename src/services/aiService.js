@@ -38,10 +38,15 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
     })
 
     const data = await response.json().catch(() => ({}))
+    const requestId = response.headers?.get?.('X-Request-Id') || null
+    const assistantStage =
+      response.headers?.get?.('X-Assistant-Stage') || null
 
     if (!response.ok) {
       const error = new Error(data?.error || `HTTP ${response.status}`)
       error.status = response.status
+      error.requestId = requestId
+      error.assistantStage = assistantStage
       throw error
     }
 
@@ -52,6 +57,8 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
           : 'O assistente retornou uma resposta vazia.'
       )
       error.status = 502
+      error.requestId = requestId
+      error.assistantStage = assistantStage
       throw error
     }
 
@@ -59,6 +66,8 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
       response: data.response,
       sources: Array.isArray(data.sources) ? data.sources : [],
       status: response.status,
+      requestId,
+      assistantStage,
     }
   } catch (error) {
     if (timedOut) {
@@ -132,6 +141,7 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
       })
 
       recordTelemetry({
+        requestId: result.requestId,
         status: result.status,
         retryCount: attempt,
         fallbackUsed: false,
@@ -168,11 +178,20 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
   }
 
   recordTelemetry({
+    requestId: lastError.requestId,
     status: lastError.status || 503,
     retryCount: retries,
     fallbackUsed: false,
     totalLatencyMs: performance.now() - startedAt,
   })
+
+  if (lastError.requestId || lastError.assistantStage) {
+    console.error('[assistant] diagnóstico:', {
+      requestId: lastError.requestId || null,
+      stage: lastError.assistantStage || null,
+      status: lastError.status || null,
+    })
+  }
 
   if (!lastError.userMessage) {
     const hasFriendlyWorkerMessage =

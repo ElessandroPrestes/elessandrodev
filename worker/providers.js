@@ -1,10 +1,13 @@
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 export const DEFAULT_WORKERS_AI_MODEL = '@cf/meta/llama-3.1-8b-instruct-fp8'
+export const DEFAULT_WORKERS_AI_MAX_TOKENS = 768
+export const DEFAULT_OPENROUTER_MAX_TOKENS = 3000
+export const DEFAULT_OPENROUTER_TIMEOUT_MS = 8000
+export const DEFAULT_WORKERS_AI_TIMEOUT_MS = 12000
 export const DEFAULT_MODELS = [
-  'minimax/minimax-m3.1-flash:free',
   'google/gemma-4-31b-it:free',
+  'google/gemma-4-26b-a4b-it:free',
 ]
-const MODEL_TIMEOUT_MS = 20000
 
 export function parseList(value, fallback = []) {
   const items = String(value ?? '')
@@ -58,9 +61,16 @@ function isQuotaExhausted({ status, remaining, detail }) {
   return /free-models-per-day|per-day|daily|credit/i.test(String(detail ?? ''))
 }
 
-export async function callOpenRouter({ env, model, system, user }) {
+export async function callOpenRouter({
+  env,
+  model,
+  system,
+  user,
+  timeoutMs = DEFAULT_OPENROUTER_TIMEOUT_MS,
+  maxTokens = DEFAULT_OPENROUTER_MAX_TOKENS,
+}) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const response = await fetch(OPENROUTER_URL, {
@@ -79,7 +89,7 @@ export async function callOpenRouter({ env, model, system, user }) {
           { role: 'user', content: user },
         ],
         temperature: 0.2,
-        max_tokens: 3000,
+        max_tokens: maxTokens,
       }),
       signal: controller.signal,
     })
@@ -137,7 +147,14 @@ export async function callOpenRouter({ env, model, system, user }) {
   }
 }
 
-export async function callWorkersAi({ env, model, system, user }) {
+export async function callWorkersAi({
+  env,
+  model,
+  system,
+  user,
+  timeoutMs = DEFAULT_WORKERS_AI_TIMEOUT_MS,
+  maxTokens = DEFAULT_WORKERS_AI_MAX_TOKENS,
+}) {
   if (!env?.AI || typeof env.AI.run !== 'function') {
     return { ok: false, status: 503, retryable: false, provider: 'workers-ai' }
   }
@@ -150,7 +167,7 @@ export async function callWorkersAi({ env, model, system, user }) {
         const error = new Error('workers-ai-timeout')
         error.name = 'AbortError'
         reject(error)
-      }, MODEL_TIMEOUT_MS)
+      }, timeoutMs)
     })
 
     const result = await Promise.race([
@@ -160,7 +177,7 @@ export async function callWorkersAi({ env, model, system, user }) {
           { role: 'user', content: user },
         ],
         temperature: 0.2,
-        max_tokens: 1024,
+        max_tokens: maxTokens,
       }),
       timeout,
     ])

@@ -4,7 +4,7 @@
 
 ---
 
-## Versão Atual: v1.12.0 (2026-11-05)
+## Versão Atual: v1.13.0 (2026-11-06)
 
 - [x] Arquitetura Vue 3 + Vite + Tailwind CSS.
 - [x] Design editorial com tema Dark/Light persistido.
@@ -21,6 +21,7 @@
 - [x] **SPEC-009:** prompt do assistente com fidelidade factual, contato determinístico e fallback seguro.
 - [x] **SPEC-012:** Vite 6.4.5 e remediação dos alertas Dependabot #116–#120.
 - [x] **SPEC-013:** fallback de geração para Workers AI, cache RAG-aware e resiliência contra `429` da OpenRouter.
+- [x] **SPEC-014:** modelos válidos, timeouts por orçamento, circuit breaker, cache negativo, rate limit, `X-Request-Id`/`X-Assistant-Stage`, Workers Logs e `GET /health`.
 
 ---
 
@@ -42,6 +43,7 @@
 - **Contexto:** o assistente cobre o corpus profissional, mas não consulta repositórios ou métricas em tempo real.
 - **Objetivo:** avaliar MCP para consultas de repositório e telemetria de satisfação.
 - **Impacto:** respostas mais verificáveis e visão de uso.
+
 
 ---
 

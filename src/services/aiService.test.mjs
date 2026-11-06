@@ -22,10 +22,13 @@ async function test(description, fn) {
   }
 }
 
-function jsonResponse(body, status = 200) {
+function jsonResponse(body, status = 200, headers = {}) {
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: {
+      get: (name) => headers[name] ?? null,
+    },
     json: async () => body,
   }
 }
@@ -244,6 +247,49 @@ await test('URL ausente: erro de configuração sem chamada de rede', async () =
 
   assert.strictEqual(called, false)
   AI_CONFIG.chatApiUrl = previousUrl
+})
+
+await test('Timeout padrão do cliente é maior que o orçamento do Worker', () => {
+  if (!process.env.VITE_LLM_TIMEOUT_MS) {
+    assert.strictEqual(AI_CONFIG.timeoutMs, 35000)
+  }
+})
+
+await test('Erro expõe X-Request-Id e X-Assistant-Stage para diagnóstico', async () => {
+  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  let calls = 0
+  const originalError = console.error
+  const diagnostics = []
+  console.error = (...args) => diagnostics.push(args)
+
+  globalThis.fetch = async () => {
+    calls++
+    return jsonResponse({ error: 'Serviço indisponível.' }, 503, {
+      'X-Request-Id': 'req-123',
+      'X-Assistant-Stage': 'workers-ai',
+    })
+  }
+
+  try {
+    await assert.rejects(
+      () => askAssistant('q', 'pt', { maxRetries: 0 }),
+      (err) => {
+        assert.strictEqual(err.status, 503)
+        assert.strictEqual(err.requestId, 'req-123')
+        assert.strictEqual(err.assistantStage, 'workers-ai')
+        return true
+      }
+    )
+
+    assert.strictEqual(calls, 1)
+    assert.ok(
+      diagnostics.some(
+        (entry) => entry[0] === '[assistant] diagnóstico:'
+      )
+    )
+  } finally {
+    console.error = originalError
+  }
 })
 
 await test('Compatibilidade: streamAssistant emite o texto completo uma vez', async () => {

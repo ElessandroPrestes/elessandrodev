@@ -16,7 +16,7 @@ const getEnv = (key, fallback = '') => {
 export const AI_CONFIG = {
   chatApiUrl: getEnv('VITE_CHAT_API_URL'),
   maxRetries: Number(getEnv('VITE_LLM_MAX_RETRIES', 2)),
-  timeoutMs: Number(getEnv('VITE_LLM_TIMEOUT_MS', 30000)),
+  timeoutMs: Number(getEnv('VITE_LLM_TIMEOUT_MS', 35000)),
   backoffBaseMs: Number(getEnv('VITE_LLM_BACKOFF_BASE_MS', 500)),
 }
 

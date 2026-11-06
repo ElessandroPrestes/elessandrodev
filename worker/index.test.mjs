@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
-import worker from './index.js'
+import worker, { __resetCircuitBreakerForTests } from './index.js'
 import { buildCacheKey } from './cache.js'
+import { DEFAULT_MODELS } from './providers.js'
 
 let passed = 0
 let failed = 0
@@ -33,6 +34,7 @@ function makeEnv({ aiRun } = {}) {
     OPENROUTER_API_KEY: 'test-key',
     ALLOWED_ORIGIN: 'http://localhost:5212',
     MIN_SCORE: '0.45',
+    LOG_LEVEL: 'silent',
     AI: {
       run: aiRun || (async () => ({ data: [Array(1024).fill(0)] })),
     },
@@ -373,6 +375,279 @@ await test('Cache desativado: duas chamadas iguais consultam o provedor', async 
   } finally {
     globalThis.fetch = originalFetch
     delete globalThis.caches
+  }
+})
+
+await test('Modelos padrão existem em quantidade e são gratuitos', () => {
+  assert.ok(DEFAULT_MODELS.length >= 2)
+  assert.ok(DEFAULT_MODELS.every((model) => model.endsWith(':free')))
+  assert.ok(!DEFAULT_MODELS.includes('minimax/minimax-m3.1-flash:free'))
+})
+
+await test('GET /health responde sem Origin, sem IA e ignora rate limit', async () => {
+  let aiCalls = 0
+  const env = makeEnv({
+    aiRun: async () => {
+      aiCalls += 1
+      throw new Error('IA não deveria ser chamada')
+    },
+  })
+  env.CHAT_RATE_LIMITER = {
+    limit: async () => ({ success: false }),
+  }
+
+  const response = await worker.fetch(
+    new Request('http://worker.test/health', { method: 'GET' }),
+    env,
+  )
+  const body = await response.json()
+
+  assert.equal(response.status, 200)
+  assert.equal(body.status, 'ok')
+  assert.ok(body.chunkCount > 0)
+  assert.ok(body.sourceHash)
+  assert.equal(body.cacheEnabled, true)
+  assert.ok(body.modelsConfigured >= 2)
+  assert.ok(response.headers.get('X-Request-Id'))
+  assert.equal(aiCalls, 0)
+})
+
+await test('Rate limit por IP retorna 429 com Retry-After sem chamar IA', async () => {
+  let aiCalls = 0
+  const env = makeEnv({
+    aiRun: async () => {
+      aiCalls += 1
+      return { data: [Array(1024).fill(0.01)] }
+    },
+  })
+  env.CHAT_RATE_LIMITER = {
+    limit: async () => ({ success: false }),
+  }
+
+  const response = await worker.fetch(
+    request('Qual a experiência com sistemas legados?'),
+    env,
+  )
+  const body = await response.json()
+
+  assert.equal(response.status, 429)
+  assert.equal(response.headers.get('Retry-After'), '60')
+  assert.equal(response.headers.get('X-Assistant-Stage'), 'rate-limit')
+  assert.ok(response.headers.get('X-Request-Id'))
+  assert.match(body.error, /limite de uso gratuito/)
+  assert.equal(aiCalls, 0)
+})
+
+await test('Orçamento esgotado não chama provedor e responde 503 controlado', async () => {
+  __resetCircuitBreakerForTests()
+  const originalFetch = globalThis.fetch
+  let fetchCalls = 0
+
+  globalThis.fetch = async () => {
+    fetchCalls += 1
+    throw new Error('provedor não deveria ser chamado')
+  }
+
+  const env = makeEnv({
+    aiRun: async (_model, input) => {
+      if (input?.text) return { data: [Array(1024).fill(0.01)] }
+      return { response: 'não deveria gerar' }
+    },
+  })
+  env.MIN_SCORE = '0'
+  env.ENABLE_CACHE = 'false'
+  env.MODELS = 'budget-model:free'
+  env.WORKER_BUDGET_MS = '1000'
+  env.MIN_CALL_BUDGET_MS = '2000'
+
+  try {
+    const response = await worker.fetch(
+      request('Pergunta sobre orçamento de tempo?'),
+      env,
+    )
+    const body = await response.json()
+
+    assert.equal(response.status, 503)
+    assert.equal(response.headers.get('X-Assistant-Stage'), 'workers-ai')
+    assert.ok(response.headers.get('X-Request-Id'))
+    assert.match(body.error, /temporariamente indisponível/)
+    assert.equal(fetchCalls, 0)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+await test('Circuit breaker abre após 3 falhas e evita nova chamada', async () => {
+  __resetCircuitBreakerForTests()
+  const originalFetch = globalThis.fetch
+  let fetchCalls = 0
+
+  globalThis.fetch = async () => {
+    fetchCalls += 1
+    return new Response(
+      JSON.stringify({ error: { message: 'provedor fora do ar' } }),
+      {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  }
+
+  const env = makeEnv({
+    aiRun: async (_model, input) => {
+      if (input?.messages) return { response: 'fallback ok' }
+      return { data: [Array(1024).fill(0.01)] }
+    },
+  })
+  env.MIN_SCORE = '0'
+  env.ENABLE_CACHE = 'false'
+  env.MODELS = 'circuit-model:free'
+
+  try {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const response = await worker.fetch(
+        request(`Pergunta de falha ${attempt}?`),
+        env,
+      )
+      assert.equal(response.status, 200)
+    }
+
+    const response = await worker.fetch(request('Pergunta após breaker?'), env)
+    const body = await response.json()
+
+    assert.equal(response.status, 200)
+    assert.match(body.response, /fallback ok/)
+    assert.equal(response.headers.get('X-Assistant-Provider'), 'workers-ai')
+    assert.equal(fetchCalls, 3)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+await test('Cache negativo evita repetir embedding e provedores em 503', async () => {
+  __resetCircuitBreakerForTests()
+  installCache()
+  const originalFetch = globalThis.fetch
+  let fetchCalls = 0
+  let embeddingCalls = 0
+  let generationCalls = 0
+  const question = 'Pergunta com cache negativo?'
+
+  globalThis.fetch = async () => {
+    fetchCalls += 1
+    return new Response(
+      JSON.stringify({ error: { message: 'provedor fora do ar' } }),
+      {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  }
+
+  const env = makeEnv({
+    aiRun: async (_model, input) => {
+      if (input?.messages) {
+        generationCalls += 1
+        throw new Error('workers-ai fora do ar')
+      }
+      embeddingCalls += 1
+      return { data: [Array(1024).fill(0.01)] }
+    },
+  })
+  env.MIN_SCORE = '0'
+  env.MODELS = 'negative-model:free'
+
+  try {
+    const first = await worker.fetch(request(question), env)
+    assert.equal(first.status, 503)
+    assert.equal(first.headers.get('X-Assistant-Cache'), 'MISS')
+
+    const second = await worker.fetch(request(question), env)
+    const body = await second.json()
+
+    assert.equal(second.status, 503)
+    assert.equal(second.headers.get('X-Assistant-Cache'), 'NEGATIVE')
+    assert.ok(second.headers.get('X-Request-Id'))
+    assert.match(body.error, /temporariamente indisponível/)
+    assert.equal(fetchCalls, 1)
+    assert.equal(embeddingCalls, 1)
+    assert.equal(generationCalls, 1)
+  } finally {
+    globalThis.fetch = originalFetch
+    delete globalThis.caches
+  }
+})
+
+await test('Retrieval com dimensão incompatível retorna 503 controlado', async () => {
+  __resetCircuitBreakerForTests()
+  const env = makeEnv({
+    aiRun: async (_model, input) => {
+      if (input?.text) return { data: [[0.1, 0.2, 0.3]] }
+      return { response: 'não deveria gerar' }
+    },
+  })
+  env.MIN_SCORE = '0'
+  env.ENABLE_CACHE = 'false'
+
+  const response = await worker.fetch(
+    request('Pergunta com dimensão incompatível?'),
+    env,
+  )
+  const body = await response.json()
+
+  assert.equal(response.status, 503)
+  assert.equal(response.headers.get('X-Assistant-Stage'), 'retrieval')
+  assert.ok(response.headers.get('X-Request-Id'))
+  assert.match(body.error, /temporariamente indisponível/)
+})
+
+await test('Log estruturado contém requestId, stage, timings e questionHash', async () => {
+  __resetCircuitBreakerForTests()
+  const originalFetch = globalThis.fetch
+  const originalLog = console.log
+  const logs = []
+
+  globalThis.fetch = async () =>
+    new Response(
+      JSON.stringify({
+        choices: [{ message: { content: 'Resposta observável.' } }],
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    )
+  console.log = (line) => {
+    logs.push(String(line))
+  }
+
+  const env = makeEnv()
+  env.MIN_SCORE = '0'
+  env.ENABLE_CACHE = 'false'
+  env.LOG_LEVEL = ''
+
+  try {
+    const response = await worker.fetch(request('Pergunta de log?'), env)
+    const requestId = response.headers.get('X-Request-Id')
+    const parsed = logs
+      .map((line) => {
+        try {
+          return JSON.parse(line)
+        } catch {
+          return null
+        }
+      })
+      .find((entry) => entry?.event === 'assistant')
+
+    assert.equal(response.status, 200)
+    assert.ok(parsed)
+    assert.equal(parsed.requestId, requestId)
+    assert.equal(parsed.stage, 'openrouter')
+    assert.equal(parsed.outcome, 'ok')
+    assert.equal(parsed.cache, 'OFF')
+    assert.match(parsed.questionHash, /^[a-f0-9]{64}$/)
+    assert.ok(parsed.timings.totalMs >= 0)
+    assert.ok(Array.isArray(parsed.attempts))
+  } finally {
+    console.log = originalLog
+    globalThis.fetch = originalFetch
   }
 })
 
