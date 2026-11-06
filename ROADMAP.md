@@ -43,6 +43,12 @@
 - **Objetivo:** avaliar MCP para consultas de repositório e telemetria de satisfação.
 - **Impacto:** respostas mais verificáveis e visão de uso.
 
+### 4. [IA & Resiliência] SPEC-014: timeouts, fallback e observabilidade
+- **Contexto:** a auditoria de produção de 2026-11-06 identificou `503` intermitente por timeout de 20 s no fallback Workers AI, modelo inválido na cadeia OpenRouter, timeouts desalinhados e ausência de observabilidade.
+- **Objetivo:** alinhar o orçamento de tempo, validar modelos no CI, adicionar circuit breaker, cache negativo, rate limiting, `X-Request-Id`/`X-Assistant-Stage`, Workers Logs e `GET /health`.
+- **Impacto:** elimina a causa dominante do `503`, encurta o diagnóstico e protege a cota compartilhada.
+- **Status:** SPEC-014 em rascunho, aguardando aprovação do PO.
+
 ---
 
 ## Visão de Longo Prazo (v2.0+)

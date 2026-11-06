@@ -185,3 +185,4 @@ wrangler.toml            # Binding AI e variáveis não sensíveis
 
 1. **SPEC-010 [Performance]:** Code splitting adicional no Vite (`build.rollupOptions.output.manualChunks`) e avaliação de cache de embeddings.
 2. **SPEC-011 [Experiência de Usuário]:** Histórico conversacional com janela deslizante (últimas 3 a 5 mensagens) com teto controlado de tokens para manter contexto sem inflar custos.
+3. **SPEC-014 [IA & Resiliência]:** Timeouts alinhados, modelos válidos, circuit breaker, cache negativo, rate limiting e observabilidade do Worker, derivada da `AUDITORIA_RAG_PRODUCAO.md` (Rascunho — aguardando aprovação do PO).
