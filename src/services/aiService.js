@@ -41,12 +41,15 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
     const requestId = response.headers?.get?.('X-Request-Id') || null
     const assistantStage =
       response.headers?.get?.('X-Assistant-Stage') || null
+    const assistantCache =
+      response.headers?.get?.('X-Assistant-Cache') || null
 
     if (!response.ok) {
       const error = new Error(data?.error || `HTTP ${response.status}`)
       error.status = response.status
       error.requestId = requestId
       error.assistantStage = assistantStage
+      error.assistantCache = assistantCache
       throw error
     }
 
@@ -59,6 +62,7 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
       error.status = 502
       error.requestId = requestId
       error.assistantStage = assistantStage
+      error.assistantCache = assistantCache
       throw error
     }
 
@@ -68,6 +72,7 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
       status: response.status,
       requestId,
       assistantStage,
+      assistantCache,
     }
   } catch (error) {
     if (timedOut) {
@@ -95,7 +100,7 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
 }
 
 /**
- * Envia a pergunta ao Cloudflare Worker e retorna a resposta grounded com fontes.
+ * Envia a pergunta ao backend Node e retorna a resposta grounded com fontes.
  *
  * @param {string} question
  * @param {'pt'|'en'} locale
@@ -120,8 +125,8 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
     throw createUserError(
       'MISSING_CHAT_API_URL',
       locale === 'en'
-        ? 'The assistant endpoint is not configured. Set VITE_CHAT_API_URL in your .env file.'
-        : 'O endpoint do assistente não está configurado. Defina VITE_CHAT_API_URL no arquivo .env.'
+        ? 'The assistant endpoint is not configured. Set VITE_CHAT_API_URL (default: /api/chat).'
+        : 'O endpoint do assistente não está configurado. Defina VITE_CHAT_API_URL (padrão: /api/chat).'
     )
   }
 
@@ -145,6 +150,7 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
         status: result.status,
         retryCount: attempt,
         fallbackUsed: false,
+        assistantCache: result.assistantCache,
         totalLatencyMs: performance.now() - startedAt,
         retrievalTopScore: result.sources[0]?.score ?? null,
         retrievalHits: result.sources.length,
@@ -182,6 +188,7 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
     status: lastError.status || 503,
     retryCount: retries,
     fallbackUsed: false,
+    assistantCache: lastError.assistantCache,
     totalLatencyMs: performance.now() - startedAt,
   })
 
@@ -189,6 +196,7 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
     console.error('[assistant] diagnóstico:', {
       requestId: lastError.requestId || null,
       stage: lastError.assistantStage || null,
+      cache: lastError.assistantCache || null,
       status: lastError.status || null,
     })
   }

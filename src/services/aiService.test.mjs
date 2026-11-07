@@ -1,11 +1,11 @@
 import assert from 'node:assert'
 
-process.env.VITE_CHAT_API_URL = 'https://worker.test'
+process.env.VITE_CHAT_API_URL = 'http://backend.test/api/chat'
 
 const { AI_CONFIG, isTransientError, calculateBackoff } = await import('../config/aiConfig.js')
 const { askAssistant, streamAssistant } = await import('./aiService.js')
 
-console.log('=== SUÍTE DE TESTES: CLIENTE DO CLOUDFLARE WORKER (Universal SDD) ===\n')
+console.log('=== SUÍTE DE TESTES: CLIENTE DO BACKEND NODE (Universal SDD) ===\n')
 
 let passedTests = 0
 let totalTests = 0
@@ -82,7 +82,7 @@ await test('Calcula backoff exponencial com jitter bounded', () => {
 
 await test('Sucesso: envia apenas { question, locale } e retorna fontes', async () => {
   let captured = null
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
 
   globalThis.fetch = async (url, init) => {
     captured = { url, init }
@@ -94,7 +94,7 @@ await test('Sucesso: envia apenas { question, locale } e retorna fontes', async 
 
   const result = await askAssistant('Quais clouds?', 'en')
 
-  assert.strictEqual(captured.url, 'https://worker.test')
+  assert.strictEqual(captured.url, 'http://backend.test/api/chat')
   assert.strictEqual(captured.init.method, 'POST')
   assert.strictEqual(captured.init.headers['Content-Type'], 'application/json')
   assert.deepStrictEqual(JSON.parse(captured.init.body), { question: 'Quais clouds?', locale: 'en' })
@@ -106,7 +106,7 @@ await test('Sucesso: envia apenas { question, locale } e retorna fontes', async 
 await test('Retry: 503 seguido de 200 preserva a resposta', async () => {
   let calls = 0
   const statuses = []
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
 
   globalThis.fetch = async () => {
     calls++
@@ -127,7 +127,7 @@ await test('Retry: 503 seguido de 200 preserva a resposta', async () => {
 
 await test('429: não faz retry e expõe mensagem amigável do Worker', async () => {
   let calls = 0
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
 
   globalThis.fetch = async () => {
     calls++
@@ -151,7 +151,7 @@ await test('429: não faz retry e expõe mensagem amigável do Worker', async ()
 
 await test('400: não faz retry e mantém a mensagem do Worker', async () => {
   let calls = 0
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
 
   globalThis.fetch = async () => {
     calls++
@@ -172,7 +172,7 @@ await test('400: não faz retry e mantém a mensagem do Worker', async () => {
 
 await test('Resposta vazia vira 502 transitório', async () => {
   let calls = 0
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
 
   globalThis.fetch = async () => {
     calls++
@@ -192,7 +192,7 @@ await test('Resposta vazia vira 502 transitório', async () => {
 
 await test('Rede: erro transitório é repetido', async () => {
   let calls = 0
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
 
   globalThis.fetch = async () => {
     calls++
@@ -206,7 +206,7 @@ await test('Rede: erro transitório é repetido', async () => {
 })
 
 await test('Timeout: retorna código TIMEOUT e status 504', async () => {
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
 
   globalThis.fetch = async (_url, init) => new Promise((_resolve, reject) => {
     init.signal.addEventListener('abort', () => {
@@ -249,14 +249,34 @@ await test('URL ausente: erro de configuração sem chamada de rede', async () =
   AI_CONFIG.chatApiUrl = previousUrl
 })
 
-await test('Timeout padrão do cliente é maior que o orçamento do Worker', () => {
+await test('Timeout padrão do cliente é maior que o orçamento do backend', () => {
   if (!process.env.VITE_LLM_TIMEOUT_MS) {
     assert.strictEqual(AI_CONFIG.timeoutMs, 35000)
   }
 })
 
+await test('Padrão não duplica retries: backend é a fonte de resiliência', async () => {
+  let calls = 0
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
+
+  globalThis.fetch = async () => {
+    calls++
+    return jsonResponse({ error: 'Serviço indisponível.' }, 503)
+  }
+
+  assert.strictEqual(AI_CONFIG.maxRetries, 0)
+  await assert.rejects(
+    () => askAssistant('q', 'pt'),
+    (err) => {
+      assert.strictEqual(err.status, 503)
+      return true
+    }
+  )
+  assert.strictEqual(calls, 1)
+})
+
 await test('Erro expõe X-Request-Id e X-Assistant-Stage para diagnóstico', async () => {
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
   let calls = 0
   const originalError = console.error
   const diagnostics = []
@@ -266,7 +286,8 @@ await test('Erro expõe X-Request-Id e X-Assistant-Stage para diagnóstico', asy
     calls++
     return jsonResponse({ error: 'Serviço indisponível.' }, 503, {
       'X-Request-Id': 'req-123',
-      'X-Assistant-Stage': 'workers-ai',
+      'X-Assistant-Stage': 'openrouter',
+      'X-Assistant-Cache': 'MISS',
     })
   }
 
@@ -276,7 +297,8 @@ await test('Erro expõe X-Request-Id e X-Assistant-Stage para diagnóstico', asy
       (err) => {
         assert.strictEqual(err.status, 503)
         assert.strictEqual(err.requestId, 'req-123')
-        assert.strictEqual(err.assistantStage, 'workers-ai')
+        assert.strictEqual(err.assistantStage, 'openrouter')
+        assert.strictEqual(err.assistantCache, 'MISS')
         return true
       }
     )
@@ -293,7 +315,7 @@ await test('Erro expõe X-Request-Id e X-Assistant-Stage para diagnóstico', asy
 })
 
 await test('Compatibilidade: streamAssistant emite o texto completo uma vez', async () => {
-  AI_CONFIG.chatApiUrl = 'https://worker.test'
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
 
   globalThis.fetch = async () => jsonResponse({ response: 'texto completo', sources: [] })
 

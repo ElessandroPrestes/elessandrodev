@@ -7,6 +7,54 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.14.0] - 2026-11-07
+
+> Migração paralela em branch isolada. Produção (GitHub Pages + Worker) permanece
+> na 1.13.0; nada foi publicado por esta entrega.
+
+### Adicionado
+- **Migração do RAG para Node.js, LangChain.js e Kubernetes (SPEC-015 / TASK-015)**:
+  - `backend/` com Node.js 24, TypeScript strict, Express 5 e configuração Zod.
+  - Loader do índice existente com 36 chunks, 1024 dimensões e `sourceHash`.
+  - Retrieval híbrido com paridade numérica e prompt grounded portado.
+  - Embeddings Cloudflare BGE-M3 e endpoint OpenAI-compatible.
+  - LLM OpenRouter via `ChatOpenAI`, com fallback, retry, timeout e circuit breaker.
+  - Cache positivo/negativo, rate limit, CORS, Helmet, request-id e logs Pino.
+  - Endpoints `/health`, `/ready`, `/api/chat` e alias `/chat`.
+  - 55 testes determinísticos com Vitest e Supertest.
+  - `backend/Dockerfile` multi-stage non-root com healthcheck.
+  - `Dockerfile` do frontend com `nginx-unprivileged` e proxy `/api`.
+  - `docker-compose.yml` local com backend + frontend e healthchecks.
+  - `k8s/base` e overlays `local`/`oracle` com Kustomize, probes, resources,
+    NetworkPolicy e Secret de exemplo.
+  - Workflows `backend.yml`, `frontend.yml` e `infra.yml`, sem deploy.
+  - ADR-010, ADR-011, ADR-012 e documentos de arquitetura, migração, segurança,
+    desenvolvimento local, Kubernetes, testes e relatório.
+
+### Modificado
+- `VITE_CHAT_API_URL` padrão passa a `/api/chat`.
+- `VITE_LLM_MAX_RETRIES` padrão passa a `0`: o backend é a fonte de resiliência.
+- `vite.config.js` faz proxy de `/api` para `127.0.0.1:3201`.
+- Cliente registra `X-Assistant-Cache` no diagnóstico.
+- `PROJECT.md`, `README.md`, `ROADMAP.md` e `TASK-015` atualizados.
+
+### Segurança
+- Imagens rodam como usuários non-root (backend UID 100, frontend UID 101).
+- Manifests usam `readOnlyRootFilesystem`, `drop: [ALL]`, seccomp e NetworkPolicy.
+- Nenhum secret real versionado; apenas exemplos com placeholders.
+- CI não possui etapa de deploy nem credenciais de produção.
+
+### Qualidade
+- Backend: `lint`, `typecheck`, **55/55** testes e `build` verdes.
+- Frontend: **49/49** testes e `npm run build` verde.
+- `docker compose config --quiet`: exit 0.
+- `kustomize build` válido em `local` e `oracle`.
+- Smoke do container: `/health` 200, `/ready` 503 esperado sem credenciais,
+  400 para pergunta vazia e 403 para origem inválida.
+- Revisão aprovada pelo PO em `REVIEW-015` (2026-11-07), sem autorização de deploy.
+
+---
+
 ## [1.13.0] - 2026-11-06
 
 ### Adicionado

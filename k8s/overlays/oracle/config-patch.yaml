@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elessandrodev-backend-config
+data:
+  LOG_LEVEL: info
+  CORS_ORIGINS: https://elessandrodev.example.com

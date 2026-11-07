@@ -6,6 +6,8 @@
 
 ## Versão Atual: v1.13.0 (2026-11-06)
 
+> Produção permanece em v1.13.0. A v1.14.0 está em branch isolada, sem deploy.
+
 - [x] Arquitetura Vue 3 + Vite + Tailwind CSS.
 - [x] Design editorial com tema Dark/Light persistido.
 - [x] Internacionalização nativa PT/EN.
@@ -22,6 +24,20 @@
 - [x] **SPEC-012:** Vite 6.4.5 e remediação dos alertas Dependabot #116–#120.
 - [x] **SPEC-013:** fallback de geração para Workers AI, cache RAG-aware e resiliência contra `429` da OpenRouter.
 - [x] **SPEC-014:** modelos válidos, timeouts por orçamento, circuit breaker, cache negativo, rate limit, `X-Request-Id`/`X-Assistant-Stage`, Workers Logs e `GET /health`.
+
+---
+
+## Em Validação: v1.14.0 (branch isolada, 2026-11-07)
+
+- [x] **SPEC-015:** backend paralelo em Node.js + TypeScript + Express + LangChain.js.
+- [x] Paridade de retrieval híbrido e prompt com o Worker.
+- [x] Embeddings Cloudflare/OpenAI-compatible, LLM OpenRouter com resiliência.
+- [x] Frontend apontando para `/api/chat` sem retries duplicados.
+- [x] Dockerfiles non-root, Compose e Kubernetes com Kustomize.
+- [x] CI independente de backend, frontend e infraestrutura, sem deploy.
+- [x] Revisão e aprovação do PO (REVIEW-015).
+- [ ] Validação em cluster real e definição de host/TLS/secrets.
+- [ ] Decisão sobre desligamento do Worker em SPEC posterior.
 
 ---
 
