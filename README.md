@@ -21,6 +21,33 @@ Além de apresentar a trajetória de mais de **9 anos de experiência em engenha
 
 ---
 
+## 🧩 Backend Node.js (branch de migração)
+
+A branch `feature/migrate-rag-node-langchain-kubernetes` adiciona uma implementação
+paralela do backend em **Node.js 24 + TypeScript + Express 5 + LangChain.js**,
+empacotada em Docker e descrita com Kustomize para Kubernetes. Produção continua no
+Cloudflare Worker até a validação e aprovação do PO.
+
+```bash
+# Terminal 1 — backend
+cd backend && cp .env.example .env && npm ci && npm run dev
+
+# Terminal 2 — frontend
+npm ci && npm run dev
+```
+
+- Frontend: `http://localhost:5212` com proxy `/api` para `127.0.0.1:3201`.
+- Backend: `http://127.0.0.1:3201` com `/health`, `/ready` e `/api/chat`.
+- Stack completa: `docker compose up`.
+- Kubernetes: `kubectl kustomize k8s/overlays/local`.
+
+Detalhes em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+[`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md) e
+[`docs/KUBERNETES.md`](docs/KUBERNETES.md).
+
+---
+
+
 ## 🧠 Arquitetura de IA: RAG real no Cloudflare Worker
 
 O assistente usa **RAG** com corpus Markdown versionado. A pergunta é vetorizada no Worker, comparada ao índice por similaridade de cosseno e BM25, e apenas os trechos acima do threshold entram no prompt. A resposta cita as fontes consultadas.
@@ -117,13 +144,14 @@ Runbook completo em [`docs/operations.md`](docs/operations.md).
 | **Estilização & Temas** | **Tailwind CSS + PostCSS** | Design System editorial adaptativo (Light & Dark Mode), WCAG 2.1 AA |
 | **IA & Metodologia** | **SDD + RAG** | Aplicação de IA no ciclo de desenvolvimento com Spec-Driven Development e RAG |
 | **Build & Bundle Tool** | **Vite** | HMR ultrarrápido, otimização de assets e build modular com Rollup |
-| **Backend de IA** | **Cloudflare Workers** | CORS, prompt grounded, cache e fallback de provedor |
+| **Backend de IA** | **Cloudflare Workers / Node.js** | Worker em produção; backend paralelo Node.js + Express + LangChain.js (SPEC-015) |
 | **Embeddings** | **Cloudflare Workers AI** | `@cf/baai/bge-m3` para indexação e consulta |
 | **Modelo de Linguagem (LLM)** | **OpenRouter + Workers AI** | Cadeia gratuita com fallback para Workers AI em 429/5xx |
-| **Cache** | **Cloudflare Cache API** | Respostas RAG-aware por pergunta e `sourceHash` |
+| **Cache** | **Cloudflare Cache API / TTL em memória** | Respostas RAG-aware no Worker; cache por réplica no backend Node |
 | **Recuperação** | **RAG híbrido** | Cosseno + BM25, threshold e citação de fontes |
 | **Padronização de Comandos** | **GNU Make** | Automação unificada de tarefas via `Makefile` |
 | **Containerização** | **Docker & Compose** | Ambientes de desenvolvimento e execução isolados e replicáveis |
+| **Orquestração** | **Kubernetes + Kustomize** | Overlays `local` e `oracle`, probes, resources e NetworkPolicy |
 | **Hospedagem & CI/CD** | **GitHub Pages & Actions** | Deploy automatizado de artefatos estáticos |
 
 ---

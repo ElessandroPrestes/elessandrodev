@@ -14,8 +14,10 @@ const getEnv = (key, fallback = '') => {
 }
 
 export const AI_CONFIG = {
-  chatApiUrl: getEnv('VITE_CHAT_API_URL'),
-  maxRetries: Number(getEnv('VITE_LLM_MAX_RETRIES', 2)),
+  chatApiUrl: getEnv('VITE_CHAT_API_URL', '/api/chat'),
+  // O backend Node já faz retry, fallback e circuit breaker. O cliente não
+  // deve repetir a chamada por padrão para não amplificar carga e latência.
+  maxRetries: Number(getEnv('VITE_LLM_MAX_RETRIES', 0)),
   timeoutMs: Number(getEnv('VITE_LLM_TIMEOUT_MS', 35000)),
   backoffBaseMs: Number(getEnv('VITE_LLM_BACKOFF_BASE_MS', 500)),
 }
@@ -102,10 +104,11 @@ export function calculateBackoff(attempt, baseMs = AI_CONFIG.backoffBaseMs) {
 export function recordTelemetry(telemetry) {
   const cleanLog = {
     request_id: telemetry.requestId || `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    provider: 'cloudflare-worker',
+    provider: 'node-backend',
     status: telemetry.status || 200,
     retry_count: telemetry.retryCount || 0,
     fallback_used: Boolean(telemetry.fallbackUsed),
+    assistant_cache: telemetry.assistantCache || null,
     retrieval_top_score: telemetry.retrievalTopScore ?? null,
     retrieval_hits: telemetry.retrievalHits ?? 0,
     total_latency_ms: telemetry.totalLatencyMs ? Math.round(telemetry.totalLatencyMs) : null,

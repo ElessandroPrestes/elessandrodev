@@ -1,14 +1,50 @@
 services:
-  app:
+  backend:
     build:
       context: .
-      target: dev
-    ports:
-      - "5173:5173"
-    volumes:
-      - .:/app
-      - /app/node_modules
+      dockerfile: backend/Dockerfile
+    image: elessandrodev-backend:local
+    restart: unless-stopped
     env_file:
-      - .env
+      - path: ./backend/.env
+        required: false
     environment:
-      - NODE_ENV=development
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3201"
+      RAG_INDEX_PATH: /app/data/rag-index.json
+      CORS_ORIGINS: http://localhost:5212,http://127.0.0.1:5212
+    ports:
+      - "3201:3201"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3201/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: elessandrodev-frontend:local
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5212:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true

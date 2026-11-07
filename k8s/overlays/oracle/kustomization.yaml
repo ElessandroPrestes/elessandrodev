@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - ingress.yaml
+images:
+  - name: ghcr.io/elessandroprestes/elessandrodev-backend
+    newName: ghcr.io/elessandroprestes/elessandrodev-backend
+    newTag: 1.0.0-migration
+  - name: ghcr.io/elessandroprestes/elessandrodev-frontend
+    newName: ghcr.io/elessandroprestes/elessandrodev-frontend
+    newTag: 1.0.0-migration
+replicas:
+  - name: elessandrodev-backend
+    count: 2
+  - name: elessandrodev-frontend
+    count: 2
+patches:
+  - path: config-patch.yaml

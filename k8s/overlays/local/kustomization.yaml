@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+images:
+  - name: ghcr.io/elessandroprestes/elessandrodev-backend
+    newName: elessandrodev-backend
+    newTag: local
+  - name: ghcr.io/elessandroprestes/elessandrodev-frontend
+    newName: elessandrodev-frontend
+    newTag: local
+replicas:
+  - name: elessandrodev-backend
+    count: 1
+  - name: elessandrodev-frontend
+    count: 1
+patches:
+  - path: config-patch.yaml
+  - path: service-frontend-patch.yaml

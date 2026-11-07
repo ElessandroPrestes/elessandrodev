@@ -1,0 +1,79 @@
+name: CI Infraestrutura
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/migrate-rag-node-langchain-kubernetes"
+    paths:
+      - "backend/**"
+      - "k8s/**"
+      - "deploy/**"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".github/workflows/infra.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "k8s/**"
+      - "deploy/**"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".github/workflows/infra.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compose:
+    name: Validar docker compose
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker Compose config
+        run: docker compose config --quiet
+
+  kustomize:
+    name: Validar manifests Kustomize
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.31.0
+
+      - name: Kustomize local
+        run: kubectl kustomize k8s/overlays/local > /tmp/local.yaml
+
+      - name: Kustomize oracle
+        run: kubectl kustomize k8s/overlays/oracle > /tmp/oracle.yaml
+
+  images:
+    name: Construir imagens Docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build backend
+        run: docker build -f backend/Dockerfile -t elessandrodev-backend:ci .
+
+      - name: Build frontend
+        run: docker build -t elessandrodev-frontend:ci .
+
+      - name: Verificar usuário non-root do backend
+        run: test "$(docker run --rm --entrypoint id elessandrodev-backend:ci -u)" != "0"
+
+      - name: Verificar usuário non-root do frontend
+        run: test "$(docker run --rm --entrypoint id elessandrodev-frontend:ci -u)" != "0"

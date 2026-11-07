@@ -13,7 +13,7 @@
 | **Repositório**   | `ElessandroPrestes/elessandrodev`                                                                        |
 | **URL Produção**  | [https://elessandroprestes.github.io/elessandrodev/](https://elessandroprestes.github.io/elessandrodev/) |
 | **Deploy**        | GitHub Pages via GitHub Actions                                                                          |
-| **Versão**        | 1.13.0                                                                                                   |
+| **Versão**        | 1.14.0 (migração paralela; produção ainda em 1.13.0)                                                     |
 | **Autor**         | Elessandro Prestes Macedo (Software Engineer & Tech Lead)                                                |
 | **Contato**       | [LinkedIn](https://www.linkedin.com/in/elessandro-prestes-macedo/) • WhatsApp: +55 (45) 99917-8290       |
 | **Governança**    | **Universal SDD (Spec-Driven Development)**                                                              |
@@ -50,6 +50,8 @@ O projeto conta com:
 | **OpenRouter**                 | API      | Geração de texto com cadeia de modelos gratuitos                         |
 | **Cloudflare Cache API**       | nativa   | Cache RAG-aware de respostas por pergunta e `sourceHash`                 |
 | **RAG híbrido**                | local    | Cosseno + BM25, threshold e citação de fontes                            |
+| **Node.js + TypeScript**       | 24 / 5.9 | Backend paralelo da migração, com Express 5 e tipos estritos             |
+| **LangChain.js**               | 1.x      | Integração de embeddings, retriever e geração no backend Node            |
 
 ### 3.3 Infraestrutura, Tooling & CI/CD
 | Tecnologia           | Versão   | Papel / Justificativa                                                     |
@@ -57,6 +59,8 @@ O projeto conta com:
 | **GNU Make**         | Padrão   | Automação unificada de comandos de desenvolvimento, teste e build         |
 | **Docker & Compose** | OCI      | Ambiente de desenvolvimento encapsulado e independente do SO host         |
 | **GitHub Actions**   | v4       | Pipeline automatizada de build, validação e deploy contínuo no Pages      |
+| **Kubernetes**       | v1.31    | Implantação containerizada com Kustomize, overlays e NetworkPolicy        |
+| **Nginx**            | 1.27     | Runtime non-root do frontend e proxy `/api` para o backend                |
 
 ---
 
@@ -102,6 +106,18 @@ worker/
     ├── index.json       # Índice versionado
     └── retrieve.js      # Embedding, retrieval e fontes
 
+backend/                 # Backend Node.js paralelo (SPEC-015)
+├── src/                 # config, rag, embeddings, llm, chat, health, middleware
+├── tests/               # 55 testes determinísticos (Vitest + Supertest)
+├── Dockerfile           # Multi-stage non-root com healthcheck
+└── .env.example         # Variáveis do backend, sem segredos
+
+k8s/                     # Manifests Kustomize (SPEC-015)
+├── base/                # ServiceAccount, ConfigMap, Deployments, Services, NetworkPolicy
+└── overlays/            # local (NodePort 30512) e oracle (Ingress de exemplo)
+
+deploy/nginx/            # Configuração do frontend non-root e proxy /api
+
 docs/operations.md       # Runbook de diagnóstico e operação
 wrangler.toml            # Binding AI, rate limit, observability e variáveis
 ```
@@ -140,6 +156,26 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
   └─ Vue renderiza Markdown + seção/score das fontes
 ```
 
+### 4.3 Arquitetura Paralela em Node.js (SPEC-015)
+
+A branch `feature/migrate-rag-node-langchain-kubernetes` adiciona uma segunda
+implementação do backend, sem trocar produção:
+
+```
+[SPA Vue 3] ──/api/chat──► [Nginx non-root] ──proxy──► [Node 24 + Express 5]
+                                                        ├─ índice worker/rag/index.json
+                                                        ├─ embeddings Cloudflare/OpenAI
+                                                        ├─ LangChain + OpenRouter
+                                                        ├─ cache TTL por réplica
+                                                        └─ /health, /ready, /api/chat
+```
+
+- Contrato externo inalterado: `{ question, locale } → { response, sources }`.
+- Paridade de retrieval e prompt coberta por testes dedicados.
+- Frontend usa `/api/chat` por padrão e `VITE_LLM_MAX_RETRIES=0`.
+- Worker atual permanece como rollback até validação e aprovação do PO.
+- Deploy em Kubernetes com Kustomize e CI sem etapa de deploy.
+
 ---
 
 ## 5. Padrões de Qualidade & Quality Gates
@@ -152,8 +188,10 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
 3. **Design Editorial & Mobile First:**
    - 320px, 640px, 768px, 1024px, 1280px e 1536px testados sem overflow horizontal.
 4. **Resiliência do assistente:**
-   - Suíte `src/services/aiService.test.mjs` com 18 testes: sucesso, 429, 5xx, 400, timeout, rede, configuração ausente e diagnóstico por `X-Request-Id`.
-   - Suítes do Worker com 10 testes de prompt e 20 de integração; `npm test` executa 48 testes.
+   - Suíte `src/services/aiService.test.mjs` com 19 testes: sucesso, 429, 5xx, 400, timeout, rede, configuração ausente, retries padrão 0 e diagnóstico por `X-Request-Id`/`X-Assistant-Cache`.
+   - Suítes do Worker com 10 testes de prompt e 20 de integração; `npm test` executa 49 testes no frontend.
+   - Backend Node com 55 testes determinísticos: paridade híbrida, prompt, HTTP, segurança, LLM, embeddings, retry, cache e configuração.
+   - `npm run lint`, `npm run typecheck`, `npm test` e `npm run build` verdes no backend.
    - `rag:eval` com hit@4 de 100% e MRR 0.975.
    - Cache positivo/negativo, circuit breaker, orçamento de tempo, rate limit, `/health` e fallback OpenRouter → Workers AI cobertos por teste.
    - `429` não dispara retry no cliente; a mensagem final do Worker é preservada.
@@ -174,6 +212,10 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
 - O cache guarda apenas resposta e fontes públicas; a chave usa hash da pergunta e inclui `sourceHash`.
 - Logs usam `questionHash` e metadados de etapa; pergunta crua, prompt e chave nunca são registrados.
 - `X-Request-Id` é um UUID sem dado sensível e serve apenas para correlação.
+- Backend Node usa Zod estrito, corpo de 4 KB, pergunta de 500 caracteres, CORS com allowlist e Helmet.
+- Containers rodam non-root com `readOnlyRootFilesystem`, `drop: [ALL]` e `seccompProfile: RuntimeDefault`.
+- Kubernetes nega tráfego por padrão e libera apenas frontend → backend, DNS e saída 443.
+- Apenas `secret.example.yaml` e `.env.example` são versionados; secrets reais ficam no cluster ou no ambiente local.
 
 ---
 
@@ -191,6 +233,7 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
 - [x] **SPEC-012 [Segurança]:** Vite atualizado para 6.4.5, corrigindo os alertas Dependabot #116–#120 da cadeia Vite/launch-editor (Concluída em v1.11.1).
 - [x] **SPEC-013 [IA & Resiliência]:** Fallback de geração para Workers AI, cache RAG-aware com `sourceHash`, semântica correta de `429` e remoção de retry inútil no cliente (Concluída em v1.12.0).
 - [x] **SPEC-014 [IA & Resiliência]:** Modelos válidos, timeouts alinhados por orçamento, circuit breaker, cache negativo de `503`, rate limit por IP, `X-Request-Id`/`X-Assistant-Stage`, Workers Logs e `GET /health` (Concluída em v1.13.0).
+- [x] **SPEC-015 [Arquitetura & Infra]:** Migração paralela do RAG para Node.js + TypeScript + Express + LangChain.js, Docker non-root, Kubernetes com Kustomize, CI independente e paridade de retrieval/prompt (Concluída em 2026-11-07; aprovada pelo PO em REVIEW-015, sem deploy).
 
 > **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
 

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elessandrodev-backend-config
+data:
+  NODE_ENV: development
+  LOG_LEVEL: debug
+  CORS_ORIGINS: http://localhost:30512,http://127.0.0.1:30512,http://localhost:5212,http://127.0.0.1:5212
