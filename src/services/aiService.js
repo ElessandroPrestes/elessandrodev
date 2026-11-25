@@ -39,6 +39,7 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
 
     const data = await response.json().catch(() => ({}))
     const requestId = response.headers?.get?.('X-Request-Id') || null
+    const assistantCache = response.headers?.get?.('X-Assistant-Cache') || null
     const assistantStage =
       response.headers?.get?.('X-Assistant-Stage') || null
 
@@ -64,10 +65,12 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
 
     return {
       response: data.response,
+      origin: data.origin,
       sources: Array.isArray(data.sources) ? data.sources : [],
       status: response.status,
       requestId,
       assistantStage,
+      assistantCache,
     }
   } catch (error) {
     if (timedOut) {
@@ -95,7 +98,7 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
 }
 
 /**
- * Envia a pergunta ao Cloudflare Worker e retorna a resposta grounded com fontes.
+ * Envia a pergunta ao backend do chat e retorna a resposta com fontes.
  *
  * @param {string} question
  * @param {'pt'|'en'} locale
@@ -105,7 +108,7 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
  * @param {number} options.maxRetries
  * @param {number} options.timeoutMs
  * @param {number} options.backoffBaseMs
- * @returns {Promise<{ response: string, sources: Array }>}
+ * @returns {Promise<{ response: string, sources: Array, origin?: string }>}
  */
 export async function askAssistant(question, locale = 'pt', options = {}) {
   const {
@@ -144,13 +147,18 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
         requestId: result.requestId,
         status: result.status,
         retryCount: attempt,
-        fallbackUsed: false,
+        fallbackUsed: result.origin === 'retrieval-only',
+        assistantCache: result.assistantCache,
         totalLatencyMs: performance.now() - startedAt,
         retrievalTopScore: result.sources[0]?.score ?? null,
         retrievalHits: result.sources.length,
       })
 
-      return { response: result.response, sources: result.sources }
+      return {
+        response: result.response,
+        sources: result.sources,
+        ...(result.origin ? { origin: result.origin } : {}),
+      }
     } catch (error) {
       lastError = error
 
@@ -194,17 +202,14 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
   }
 
   if (!lastError.userMessage) {
-    const hasFriendlyWorkerMessage =
-      Boolean(lastError.status) &&
-      Boolean(lastError.message) &&
-      !lastError.message.startsWith('HTTP ')
-
     if (lastError.status === 413) {
       lastError.userMessage = locale === 'en'
         ? 'The message is too long.'
         : 'A pergunta é muito longa.'
-    } else if (hasFriendlyWorkerMessage) {
-      lastError.userMessage = lastError.message
+    } else if (lastError.status === 400) {
+      lastError.userMessage = locale === 'en'
+        ? 'Check the question and try again.'
+        : 'Confira a pergunta e tente novamente.'
     } else {
       lastError.userMessage = locale === 'en'
         ? 'Could not process your message right now. Please try again in a few moments.'

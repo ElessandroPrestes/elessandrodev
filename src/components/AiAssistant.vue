@@ -139,12 +139,11 @@ async function sendMessage(textToSend) {
 
     messages.value[assistantMsgIndex].text = result.response
     messages.value[assistantMsgIndex].sources = result.sources
+    messages.value[assistantMsgIndex].origin = result.origin
   } catch (err) {
-    console.error('Erro na chamada do assistente:', err)
     messages.value[assistantMsgIndex].text = err?.userMessage || (locale.value === 'pt'
       ? 'Não consegui processar sua mensagem agora. Tente novamente em alguns instantes.'
       : 'Could not process your message right now. Please try again in a few moments.')
-    messages.value[assistantMsgIndex].isError = true
   } finally {
     isLoading.value = false
     transientStatus.value = ''
@@ -233,8 +232,6 @@ async function sendMessage(textToSend) {
               'flex flex-col max-w-[88%] text-xs sm:text-sm rounded p-3 leading-relaxed break-words',
               msg.role === 'user'
                 ? 'ml-auto bg-slate-900 text-white dark:bg-indigo-950/70 dark:border dark:border-indigo-800/60 dark:text-indigo-100 shadow-xs'
-                : msg.isError
-                ? 'mr-auto bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/60 dark:border-red-900 dark:text-red-200'
                 : 'mr-auto bg-white border border-slate-200/90 text-slate-800 dark:bg-[#12141a] dark:border-neutral-800 dark:text-neutral-200 shadow-xs'
             ]"
           >
@@ -244,6 +241,13 @@ async function sendMessage(textToSend) {
               v-html="renderMarkdown(msg.text)"
             />
             <p v-else class="whitespace-pre-wrap break-words text-xs sm:text-sm font-sans">{{ msg.text }}</p>
+
+            <p
+              v-if="msg.role === 'assistant' && i18n.aiAssistant.answerOrigins[msg.origin]"
+              class="mt-2 text-[11px] text-slate-500 dark:text-neutral-400"
+            >
+              {{ i18n.aiAssistant.answerOrigins[msg.origin] }}
+            </p>
 
             <div
               v-if="msg.role === 'assistant' && msg.sources?.length"

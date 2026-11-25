@@ -1,6 +1,6 @@
 # Operações — Assistente RAG
 
-Runbook do Cloudflare Worker `elessandrodev-chat` sob a SPEC-014 / ADR-009.
+Runbook do Cloudflare Worker `elessandrodev-chat` sob a SPEC-016 / ADR-013.
 
 ---
 
@@ -37,126 +37,58 @@ monitoramento externo.
 
 ---
 
-## 2. Cabeçalhos de diagnóstico
+## 2. Diagnóstico da resposta
 
-| Cabeçalho | Quando aparece | Uso |
+| Cabeçalho | Uso |
+|---|---|
+| `X-Request-Id` | Correlaciona a resposta com o Workers Logs |
+| `X-Assistant-Stage` | Etapa final: `cache`, `retrieval`, `openrouter`, `workers-ai` ou `contact` |
+| `X-Assistant-Cache` | `HIT`, `MISS` ou `OFF` |
+| `X-Assistant-Provider` | Provedor que gerou a resposta, inclusive no hit |
+
+`origin` no corpo informa `llm`, `cache`, `retrieval-only` ou `contact`.
+Uma resposta de contingência bem-sucedida usa HTTP 200. Um erro de validação
+de entrada continua usando seu código HTTP próprio.
+
+## 3. Logs e métricas
+
+O Worker emite eventos JSON por decisão. Use `requestId` para correlacionar as etapas
+da mesma consulta. Nos Workers Logs, agregue os seguintes campos:
+
+| Métrica | Filtro e agrupamento |
+|---|---|
+| Cache | `stage = cache`, por `outcome` (`hit`, `miss`, `off`) |
+| Geração | `stage = generation`, por `provider` e `outcome`. Use `durationMs` para latência |
+| Breaker | `stage = breaker`, por `outcome` (`open`, `closed`, `probe`, `stale`, `unknown`) e `shared` |
+| Degradação | Respostas finais com `origin = retrieval-only` ou `origin = contact` e `stage = retrieval` |
+| Redis indisponível | `stage = redis`, `outcome = unavailable`, `level = warn` |
+| Cota por visitante | `stage = rate-limit`, `outcome = limited` |
+
+Se o breaker ficar aberto, confira `stage = generation` para identificar cota, timeout
+ou falha do primário. Se a origem for `contact`, confira a etapa `retrieval` e
+distinga `unavailable` de `no-results`. Para falhas de embeddings, confirme o
+binding `AI` e rode `npm run rag:check`. A configuração de timeouts e variáveis
+fica no [README](../README.md#2-variáveis-de-ambiente).
+
+## 4. Simulações locais
+
+Rode `node --test --test-name-pattern='<filtro>' worker/index.test.mjs`.
+Os testes interceptam o transporte e usam o índice versionado. A tabela mostra
+o filtro, a condição injetada e o resultado esperado, sem chamadas externas.
+
+| Filtro | Condição | Resultado |
 |---|---|---|
-| `X-Request-Id` | Toda resposta | Correlaciona a resposta com o log JSON |
-| `X-Assistant-Stage` | Sucesso e erros de geração | Indica a etapa: `cache`, `embedding`, `retrieval`, `openrouter`, `workers-ai`, `rate-limit` |
-| `X-Assistant-Cache` | Rotas de chat | `HIT`, `MISS`, `NEGATIVE` ou `OFF` |
-| `X-Assistant-Provider` | Sucesso com geração | `openrouter`, `workers-ai` ou `cache` |
+| `Cache: miss` | Redis vazio e OpenRouter saudável. Em seguida, 429 e consulta equivalente | `llm` no miss e `cache` no hit, sem novo embedding nem LLM |
+| `Cota 429` | Resposta de cota do OpenRouter, com e sem alternativo | Workers AI ou `retrieval-only` |
+| `Timeout do OpenRouter` | Requisição pendente até o abort | Workers AI dentro do orçamento |
+| `5xx em ambos` | HTTP 503 e erro no alternativo | Trechos a cada miss |
+| `Breaker:` | Três 429, relógio controlado e duas consultas após cooldown | Sem OpenRouter no cooldown. Uma única sondagem depois |
+| `Redis fora do ar\|Timeout do Redis` | HTTP 503 ou Redis pendente até o abort | Aviso e fluxo segue sem cache |
+| `Rate limit` | Contador excedido ou rejeição do binding em contingência | Hit ou trechos sem chamar geração |
+| `Sem nenhum LLM` | Ambos os provedores desativados | Trechos com fontes |
+| `Falha total\|Dimensão` | Embedding lança erro ou retorna vetor de dimensão inválida | LinkedIn e e-mail, sem erro técnico |
 
-O cliente registra `X-Request-Id` e `X-Assistant-Stage` no console quando ocorre
-erro. Peça esse `requestId` ao visitante para localizar o evento no Workers Logs.
-
----
-
-## 3. Logs estruturados
-
-O Worker emite uma linha JSON por requisição:
-
-```json
-{
-  "event": "assistant",
-  "requestId": "uuid",
-  "questionHash": "sha256",
-  "stage": "workers-ai",
-  "outcome": "fallback",
-  "provider": "workers-ai",
-  "model": "@cf/meta/llama-3.1-8b-instruct-fp8",
-  "providerStatus": 200,
-  "cache": "MISS",
-  "timings": {
-    "embeddingMs": 120,
-    "retrievalMs": 8,
-    "generationMs": 4300,
-    "totalMs": 4450
-  },
-  "attempts": []
-}
-```
-
-`outcome` assume `ok`, `fallback`, `rate_limited` ou `unavailable`. A pergunta
-crua, o prompt e o corpo de erro do provedor nunca são logados.
-
-Workers Logs está habilitado em `wrangler.toml`:
-
-```toml
-[observability]
-enabled = true
-head_sampling_rate = 1
-```
-
-Reduza `head_sampling_rate` se o volume de logs crescer.
-
----
-
-## 4. Diagnóstico por sintoma
-
-### 4.1 `503` com `X-Assistant-Stage: workers-ai`
-
-- O fallback estourou o timeout ou falhou.
-- Verifique `timings.generationMs` e `attempts` no log.
-- Se recorrente, aumente `WORKERS_AI_TIMEOUT_MS` ou reduza
-  `WORKERS_AI_MAX_TOKENS`.
-- O budget total (`WORKER_BUDGET_MS`) sempre prevalece sobre o timeout da etapa.
-
-### 4.2 `503` com `X-Assistant-Stage: openrouter`
-
-- Todos os modelos falharam antes do fallback, ou o orçamento acabou.
-- Confira se `npm run models:check` está verde.
-- Verifique `providerStatus` em `attempts`.
-- Se o circuit breaker estiver aberto, aguarde `CIRCUIT_BREAKER_MS` ou faça deploy
-  de uma correção.
-
-### 4.3 `429` com `X-Assistant-Stage: rate-limit`
-
-- O rate limit por IP (10 req/60 s) foi excedido.
-- Não é cota de IA; a resposta não consumiu Workers AI nem OpenRouter.
-- Ajuste o binding `CHAT_RATE_LIMITER` em `wrangler.toml` se necessário.
-
-### 4.4 `429` com `X-Assistant-Stage: openrouter|workers-ai`
-
-- Cota gratuita esgotada nos dois provedores.
-- Respeite o `Retry-After` retornado.
-- O cache negativo não se aplica a `429`.
-
-### 4.5 `503` com `X-Assistant-Cache: NEGATIVE`
-
-- Uma falha `503` recente foi cacheada por até 60 s.
-- Aguarde o TTL ou use uma pergunta diferente para testar a recuperação.
-- Desative o cache negativo com `ENABLE_CACHE=false` se precisar investigar ao vivo.
-
-### 4.6 `503` com `X-Assistant-Stage: embedding` ou `retrieval`
-
-- Falha no Workers AI de embeddings ou dimensão incompatível no índice.
-- Rode `npm run rag:check`; se o índice estiver inconsistente, reindexe com
-  `npm run rag:index`.
-- Confirme que o binding `AI` está presente no Worker.
-
----
-
-## 5. Variáveis operacionais
-
-| Variável | Padrão | Efeito |
-|---|---|---|
-| `WORKER_BUDGET_MS` | `25000` | Teto total da geração no Worker |
-| `MIN_CALL_BUDGET_MS` | `2000` | Margem mínima para iniciar uma chamada |
-| `OPENROUTER_TIMEOUT_MS` | `8000` | Timeout por modelo OpenRouter |
-| `WORKERS_AI_TIMEOUT_MS` | `12000` | Timeout do fallback Workers AI |
-| `OPENROUTER_MAX_TOKENS` | `3000` | Tokens de saída da OpenRouter |
-| `WORKERS_AI_MAX_TOKENS` | `768` | Tokens de saída do fallback |
-| `CIRCUIT_BREAKER_THRESHOLD` | `3` | Falhas consecutivas para abrir o breaker |
-| `CIRCUIT_BREAKER_MS` | `60000` | Janela de exclusão do breaker |
-| `NEGATIVE_CACHE_TTL_SECONDS` | `60` | TTL máximo do cache negativo de `503` |
-| `VITE_LLM_TIMEOUT_MS` | `35000` | Timeout do cliente; deve ser maior que o budget |
-
-O timeout do cliente precisa ser maior que `WORKER_BUDGET_MS`; caso contrário, o
-navegador desiste antes do Worker concluir.
-
----
-
-## 6. Checklist de deploy do Worker
+## 5. Checklist de deploy do Worker
 
 ```bash
 npm run models:check
@@ -167,7 +99,7 @@ npx wrangler deploy
 curl -s https://elessandrodev-chat.elessandrodev.workers.dev/health
 ```
 
-Valide também uma pergunta inédita e a repetição dela:
+Com os secrets Redis e um modelo ativo configurados, valide uma pergunta inédita e a repetição dela:
 
 ```bash
 curl -i -X POST https://elessandrodev-chat.elessandrodev.workers.dev/ \
@@ -181,7 +113,7 @@ Espere `200`, `X-Request-Id`, `X-Assistant-Stage` e, na repetição,
 
 ---
 
-## 7. Rollback
+## 6. Rollback
 
 1. Reverta o commit problemático no repositório.
 2. Rode os quality gates novamente.

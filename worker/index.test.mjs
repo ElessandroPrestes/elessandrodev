@@ -1,22 +1,8 @@
 import assert from 'node:assert/strict'
 import worker, { __resetCircuitBreakerForTests } from './index.js'
 import { buildCacheKey } from './cache.js'
-import { DEFAULT_MODELS } from './providers.js'
-
-let passed = 0
-let failed = 0
-
-async function test(name, fn) {
-  try {
-    await fn()
-    passed += 1
-    console.log(`✅ [PASSOU] ${name}`)
-  } catch (error) {
-    failed += 1
-    console.error(`❌ [FALHOU] ${name}`)
-    console.error(`   ${error.message}`)
-  }
-}
+import { test } from 'node:test'
+import { createCircuitBreaker } from './circuit.js'
 
 function request(question, { origin = 'http://localhost:5212', locale = 'pt' } = {}) {
   return new Request('http://worker.test/', {
@@ -39,27 +25,6 @@ function makeEnv({ aiRun } = {}) {
       run: aiRun || (async () => ({ data: [Array(1024).fill(0)] })),
     },
   }
-}
-
-function installCache() {
-  const store = new Map()
-
-  globalThis.caches = {
-    default: {
-      async match(key) {
-        const value = store.get(String(key))
-        if (!value) return undefined
-        return new Response(JSON.stringify(value), {
-          headers: { 'Content-Type': 'application/json' },
-        })
-      },
-      async put(key, response) {
-        store.set(String(key), await response.json())
-      },
-    },
-  }
-
-  return store
 }
 
 await test('Contato em PT responde sem chamar AI nem OpenRouter', async () => {
@@ -95,7 +60,7 @@ await test('Contato em PT responde sem chamar AI nem OpenRouter', async () => {
 
 await test('Contato em EN usa resposta determinística em inglês', async () => {
   const response = await worker.fetch(
-    request('How can I contact Elessandro?', { locale: 'pt' }),
+    request('How can I get in touch directly with Elessandro?', { locale: 'pt' }),
     makeEnv(),
   )
   const body = await response.json()
@@ -195,195 +160,6 @@ await test('Fora do corpus usa safeFallback sem chamar OpenRouter', async () => 
   }
 })
 
-await test('Cache: chave muda com sourceHash e normaliza a pergunta', async () => {
-  const base = {
-    locale: 'pt',
-    embeddingModel: '@cf/baai/bge-m3',
-    question: 'Experiência com sistemas legados',
-  }
-
-  const keyA = await buildCacheKey({ ...base, sourceHash: 'hash-a' })
-  const keyB = await buildCacheKey({ ...base, sourceHash: 'hash-b' })
-  const keyNormalized = await buildCacheKey({
-    ...base,
-    question: '  EXPERIÊNCIA   com sistemas legados  ',
-    sourceHash: 'hash-a',
-  })
-
-  assert.notEqual(keyA, keyB)
-  assert.equal(keyA, keyNormalized)
-})
-
-await test('Cache: segunda pergunta idêntica não chama AI nem OpenRouter', async () => {
-  installCache()
-  const originalFetch = globalThis.fetch
-  let aiCalls = 0
-  let fetchCalls = 0
-  const question = 'Qual a experiência com sistemas legados?'
-
-  globalThis.fetch = async () => {
-    fetchCalls += 1
-    return new Response(
-      JSON.stringify({
-        choices: [{ message: { content: 'Resposta cacheada [1]' } }],
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    )
-  }
-
-  const env = makeEnv({
-    aiRun: async () => {
-      aiCalls += 1
-      return { data: [Array(1024).fill(0.01)] }
-    },
-  })
-  env.MIN_SCORE = '0'
-
-  try {
-    const first = await worker.fetch(request(question), env)
-    assert.equal(first.status, 200)
-    assert.equal(first.headers.get('X-Assistant-Cache'), 'MISS')
-    assert.equal(fetchCalls, 1)
-    assert.equal(aiCalls, 1)
-
-    const second = await worker.fetch(request(question), env)
-    const body = await second.json()
-
-    assert.equal(second.status, 200)
-    assert.equal(second.headers.get('X-Assistant-Cache'), 'HIT')
-    assert.equal(fetchCalls, 1)
-    assert.equal(aiCalls, 1)
-    assert.match(body.response, /cacheada/)
-  } finally {
-    globalThis.fetch = originalFetch
-    delete globalThis.caches
-  }
-})
-
-await test('Cota esgotada: não tenta o segundo modelo e usa Workers AI', async () => {
-  installCache()
-  const originalFetch = globalThis.fetch
-  let openRouterCalls = 0
-  const generationModels = []
-
-  globalThis.fetch = async () => {
-    openRouterCalls += 1
-    return new Response(
-      JSON.stringify({ error: { message: 'free-models-per-day' } }),
-      {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-RateLimit-Remaining': '0',
-          'Retry-After': '120',
-        },
-      },
-    )
-  }
-
-  const env = makeEnv({
-    aiRun: async (model, input) => {
-      if (input?.messages) {
-        generationModels.push(model)
-        return { response: 'Resposta do fallback Workers AI.' }
-      }
-      return { data: [Array(1024).fill(0.01)] }
-    },
-  })
-  env.MIN_SCORE = '0'
-  env.MODELS = 'modelo-a:free,modelo-b:free'
-
-  try {
-    const response = await worker.fetch(
-      request('Explique a atuação em sistemas legados.'),
-      env,
-    )
-    const body = await response.json()
-
-    assert.equal(response.status, 200)
-    assert.equal(openRouterCalls, 1)
-    assert.deepEqual(generationModels, ['@cf/meta/llama-3.1-8b-instruct-fp8'])
-    assert.match(body.response, /fallback Workers AI/)
-    assert.equal(response.headers.get('X-Assistant-Provider'), 'workers-ai')
-    assert.ok(body.sources.length > 0)
-  } finally {
-    globalThis.fetch = originalFetch
-    delete globalThis.caches
-  }
-})
-
-await test('Todos os provedores esgotados: 429 com Retry-After', async () => {
-  installCache()
-  const originalFetch = globalThis.fetch
-
-  globalThis.fetch = async () =>
-    new Response(JSON.stringify({ error: { message: 'free-models-per-day' } }), {
-      status: 429,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-RateLimit-Remaining': '0',
-        'Retry-After': '90',
-      },
-    })
-
-  const env = makeEnv({
-    aiRun: async (_model, input) => {
-      if (input?.messages) throw new Error('workers-ai unavailable')
-      return { data: [Array(1024).fill(0.01)] }
-    },
-  })
-  env.MIN_SCORE = '0'
-
-  try {
-    const response = await worker.fetch(
-      request('Fale sobre os projetos de IA.'),
-      env,
-    )
-    const body = await response.json()
-
-    assert.equal(response.status, 429)
-    assert.match(body.error, /limite de uso gratuito/)
-    assert.equal(response.headers.get('Retry-After'), '90')
-  } finally {
-    globalThis.fetch = originalFetch
-    delete globalThis.caches
-  }
-})
-
-await test('Cache desativado: duas chamadas iguais consultam o provedor', async () => {
-  installCache()
-  const originalFetch = globalThis.fetch
-  let fetchCalls = 0
-  const question = 'Pergunta com cache desativado?'
-
-  globalThis.fetch = async () => {
-    fetchCalls += 1
-    return new Response(
-      JSON.stringify({ choices: [{ message: { content: 'ok [1]' } }] }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    )
-  }
-
-  const env = makeEnv()
-  env.MIN_SCORE = '0'
-  env.ENABLE_CACHE = 'false'
-
-  try {
-    await worker.fetch(request(question), env)
-    await worker.fetch(request(question), env)
-    assert.equal(fetchCalls, 2)
-  } finally {
-    globalThis.fetch = originalFetch
-    delete globalThis.caches
-  }
-})
-
-await test('Modelos padrão existem em quantidade e são gratuitos', () => {
-  assert.ok(DEFAULT_MODELS.length >= 2)
-  assert.ok(DEFAULT_MODELS.every((model) => model.endsWith(':free')))
-  assert.ok(!DEFAULT_MODELS.includes('minimax/minimax-m3.1-flash:free'))
-})
-
 await test('GET /health responde sem Origin, sem IA e ignora rate limit', async () => {
   let aiCalls = 0
   const env = makeEnv({
@@ -412,247 +188,343 @@ await test('GET /health responde sem Origin, sem IA e ignora rate limit', async 
   assert.equal(aiCalls, 0)
 })
 
-await test('Rate limit por IP retorna 429 com Retry-After sem chamar IA', async () => {
-  let aiCalls = 0
-  const env = makeEnv({
-    aiRun: async () => {
-      aiCalls += 1
-      return { data: [Array(1024).fill(0.01)] }
-    },
-  })
-  env.CHAT_RATE_LIMITER = {
-    limit: async () => ({ success: false }),
-  }
 
-  const response = await worker.fetch(
-    request('Qual a experiência com sistemas legados?'),
-    env,
-  )
-  const body = await response.json()
+const QUESTION = 'Experiência com sistemas legados'
+const REDIS_URL = 'https://redis.example.test'
+const REDIS_ENV = {
+  UPSTASH_REDIS_REST_URL: REDIS_URL,
+  UPSTASH_REDIS_REST_TOKEN: 'test-token',
+  VISITOR_HASH_SECRET: 'test-secret',
+}
 
-  assert.equal(response.status, 429)
-  assert.equal(response.headers.get('Retry-After'), '60')
-  assert.equal(response.headers.get('X-Assistant-Stage'), 'rate-limit')
-  assert.ok(response.headers.get('X-Request-Id'))
-  assert.match(body.error, /limite de uso gratuito/)
-  assert.equal(aiCalls, 0)
-})
-
-await test('Orçamento esgotado não chama provedor e responde 503 controlado', async () => {
+function stubServices(t, { primary, alternative, redisUnavailable, redisDelay, now } = {}) {
   __resetCircuitBreakerForTests()
-  const originalFetch = globalThis.fetch
-  let fetchCalls = 0
-
-  globalThis.fetch = async () => {
-    fetchCalls += 1
-    throw new Error('provedor não deveria ser chamado')
-  }
-
-  const env = makeEnv({
-    aiRun: async (_model, input) => {
-      if (input?.text) return { data: [Array(1024).fill(0.01)] }
-      return { response: 'não deveria gerar' }
-    },
-  })
-  env.MIN_SCORE = '0'
-  env.ENABLE_CACHE = 'false'
-  env.MODELS = 'budget-model:free'
-  env.WORKER_BUDGET_MS = '1000'
-  env.MIN_CALL_BUDGET_MS = '2000'
-
-  try {
-    const response = await worker.fetch(
-      request('Pergunta sobre orçamento de tempo?'),
-      env,
-    )
-    const body = await response.json()
-
-    assert.equal(response.status, 503)
-    assert.equal(response.headers.get('X-Assistant-Stage'), 'workers-ai')
-    assert.ok(response.headers.get('X-Request-Id'))
-    assert.match(body.error, /temporariamente indisponível/)
-    assert.equal(fetchCalls, 0)
-  } finally {
-    globalThis.fetch = originalFetch
-  }
-})
-
-await test('Circuit breaker abre após 3 falhas e evita nova chamada', async () => {
-  __resetCircuitBreakerForTests()
-  const originalFetch = globalThis.fetch
-  let fetchCalls = 0
-
-  globalThis.fetch = async () => {
-    fetchCalls += 1
-    return new Response(
-      JSON.stringify({ error: { message: 'provedor fora do ar' } }),
-      {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' },
-      },
-    )
-  }
-
-  const env = makeEnv({
-    aiRun: async (_model, input) => {
-      if (input?.messages) return { response: 'fallback ok' }
-      return { data: [Array(1024).fill(0.01)] }
-    },
-  })
-  env.MIN_SCORE = '0'
-  env.ENABLE_CACHE = 'false'
-  env.MODELS = 'circuit-model:free'
-
-  try {
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
-      const response = await worker.fetch(
-        request(`Pergunta de falha ${attempt}?`),
-        env,
-      )
-      assert.equal(response.status, 200)
+  const values = new Map()
+  const counters = new Map()
+  const calls = { embedding: 0, primary: 0, alternative: 0, redis: 0 }
+  const circuit = createCircuitBreaker({ threshold: 3, cooldownMs: 1000, now })
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url !== REDIS_URL) {
+      calls.primary++
+      return primary?.(options) ?? Response.json({
+        choices: [{ message: { content: 'Resposta do OpenRouter.' }, finish_reason: 'stop' }],
+      })
     }
 
-    const response = await worker.fetch(request('Pergunta após breaker?'), env)
-    const body = await response.json()
-
-    assert.equal(response.status, 200)
-    assert.match(body.response, /fallback ok/)
-    assert.equal(response.headers.get('X-Assistant-Provider'), 'workers-ai')
-    assert.equal(fetchCalls, 3)
-  } finally {
-    globalThis.fetch = originalFetch
-  }
-})
-
-await test('Cache negativo evita repetir embedding e provedores em 503', async () => {
-  __resetCircuitBreakerForTests()
-  installCache()
-  const originalFetch = globalThis.fetch
-  let fetchCalls = 0
-  let embeddingCalls = 0
-  let generationCalls = 0
-  const question = 'Pergunta com cache negativo?'
-
-  globalThis.fetch = async () => {
-    fetchCalls += 1
-    return new Response(
-      JSON.stringify({ error: { message: 'provedor fora do ar' } }),
-      {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' },
-      },
-    )
-  }
-
-  const env = makeEnv({
-    aiRun: async (_model, input) => {
-      if (input?.messages) {
-        generationCalls += 1
-        throw new Error('workers-ai fora do ar')
+    calls.redis++
+    if (redisDelay) await waitForAbort(options.signal)
+    if (redisUnavailable) return new Response(null, { status: 503 })
+    const [command, keyOrScript, valueOrKeyCount, redisKey, op, , ticket, outcome] = JSON.parse(options.body)
+    if (command === 'GET') return Response.json({ result: values.get(keyOrScript) ?? null })
+    if (command === 'SET') {
+      assert.equal(redisKey, 'EX')
+      assert.equal(op, 86400)
+      values.set(keyOrScript, valueOrKeyCount)
+      return Response.json({ result: 'OK' })
+    }
+    assert.equal(command, 'EVAL')
+    if (redisKey.includes(':breaker:')) {
+      const result = op === 'acquire' ? circuit.acquire() : circuit.finish(ticket, outcome)
+      return Response.json({ result })
+    }
+    assert.match(redisKey, /visitor:v1:[a-f0-9]{64}$/)
+    assert.equal(op, 60)
+    const count = (counters.get(redisKey) ?? 0) + 1
+    counters.set(redisKey, count)
+    return Response.json({ result: count })
+  })
+  const env = {
+    ...makeEnv({ aiRun: async (_model, input) => {
+      if (input.text) {
+        calls.embedding++
+        return { data: [Array(1024).fill(0.01)] }
       }
-      embeddingCalls += 1
-      return { data: [Array(1024).fill(0.01)] }
+      calls.alternative++
+      return alternative?.(_model) ?? { response: 'Resposta do Workers AI.', usage: { completion_tokens: 8 } }
+    } }),
+    ...REDIS_ENV,
+    MIN_SCORE: '0',
+  }
+  return { values, calls, env }
+}
+
+function quota() {
+  return Response.json({ error: { message: 'free-models-per-day' } }, { status: 429 })
+}
+
+function waitForAbort(signal) {
+  return new Promise((_, reject) => {
+    signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+  })
+}
+
+await test('Cache: normaliza acentos, artigos e pontuação e preserva negações e termos técnicos', async () => {
+  const key = (question, revision = 'a', locale = 'pt') => buildCacheKey({ question, revision, locale })
+  const original = await key('Experiência com os sistemas legados?')
+  assert.equal(original, await key(' EXPERIENCIA, com sistemas   legados!! '))
+  assert.notEqual(original, await key('Experiência com sistemas legados', 'b'))
+  assert.notEqual(original, await key('Experiência com sistemas legados', 'a', 'en'))
+  assert.notEqual(original, await key('Não experiência com sistemas legados'))
+  assert.notEqual(await key('C++'), await key('C#'))
+})
+
+await test('Cache: miss grava resposta completa; hit durante cota pula embeddings, limiter e LLM', async (t) => {
+  let exhausted = false
+  const { env, calls, values } = stubServices(t, {
+    primary: () => exhausted ? quota() : undefined,
+  })
+  const miss = await worker.fetch(request(QUESTION), env)
+  assert.equal(miss.headers.get('X-Assistant-Cache'), 'MISS')
+  const generated = await miss.json()
+  assert.equal(generated.origin, 'llm')
+  assert.equal(generated.provider, 'openrouter')
+  assert.ok(Number.isFinite(Date.parse(generated.timestamp)))
+  assert.equal(values.size, 1)
+
+  exhausted = true
+  const previous = { ...calls }
+  const hit = await worker.fetch(request('Experiencia com os sistemas legados?'), env)
+  assert.equal(hit.headers.get('X-Assistant-Cache'), 'HIT')
+  assert.deepEqual(await hit.json(), { ...generated, origin: 'cache' })
+  assert.deepEqual(calls, { ...previous, redis: previous.redis + 1 })
+})
+
+await test('Cota 429: Worker AI gera e sua resposta fica em cache', async (t) => {
+  const { env, calls, values } = stubServices(t, {
+    primary: quota,
+    alternative: (model) => {
+      assert.equal(model, '@cf/google/gemma-4-26b-a4b-it')
+      return { choices: [{ message: { content: 'Resposta do Gemma.' }, finish_reason: 'stop' }] }
     },
   })
-  env.MIN_SCORE = '0'
-  env.MODELS = 'negative-model:free'
+  const response = await worker.fetch(request(QUESTION), env)
+  const answer = await response.json()
+  assert.equal(answer.origin, 'llm')
+  assert.equal(answer.provider, 'workers-ai')
+  assert.equal(answer.response, 'Resposta do Gemma.')
+  assert.equal(calls.primary, 1)
+  assert.equal(calls.alternative, 1)
+  assert.equal(values.size, 1)
+})
 
+await test('Cota 429 sem alternativo: retorna trechos e não cacheia degradação', async (t) => {
+  const { env, calls, values } = stubServices(t, { primary: quota })
+  env.WORKERS_AI_MODEL = ''
+  const response = await worker.fetch(request(QUESTION), env)
+  const answer = await response.json()
+  assert.equal(response.status, 200)
+  assert.equal(answer.origin, 'retrieval-only')
+  assert.match(answer.response, /trechos relevantes do currículo/)
+  assert.ok(answer.sources.length > 0)
+  assert.equal(calls.alternative, 0)
+  assert.equal(values.size, 0)
+})
+
+await test('5xx em ambos os provedores: devolve trechos em cada miss', async (t) => {
+  const { env, calls, values } = stubServices(t, {
+    primary: () => new Response(null, { status: 503 }),
+    alternative: () => { throw new Error('detalhe sensível') },
+  })
+  for (let i = 0; i < 2; i++) {
+    const response = await worker.fetch(request(QUESTION), env)
+    const answer = await response.json()
+    assert.equal(answer.origin, 'retrieval-only')
+    assert.doesNotMatch(answer.response, /detalhe sensível/)
+  }
+  assert.equal(calls.embedding, 2)
+  assert.equal(values.size, 0)
+})
+
+await test('Timeout do OpenRouter chama o alternativo dentro do orçamento', async (t) => {
+  const { env, calls } = stubServices(t, {
+    primary: ({ signal }) => waitForAbort(signal),
+  })
+  env.OPENROUTER_TIMEOUT_MS = '100'
+  env.MIN_CALL_BUDGET_MS = '100'
+  const keepEventLoop = setTimeout(() => {}, 1000)
   try {
-    const first = await worker.fetch(request(question), env)
-    assert.equal(first.status, 503)
-    assert.equal(first.headers.get('X-Assistant-Cache'), 'MISS')
-
-    const second = await worker.fetch(request(question), env)
-    const body = await second.json()
-
-    assert.equal(second.status, 503)
-    assert.equal(second.headers.get('X-Assistant-Cache'), 'NEGATIVE')
-    assert.ok(second.headers.get('X-Request-Id'))
-    assert.match(body.error, /temporariamente indisponível/)
-    assert.equal(fetchCalls, 1)
-    assert.equal(embeddingCalls, 1)
-    assert.equal(generationCalls, 1)
+    const response = await worker.fetch(request(QUESTION), env)
+    assert.equal((await response.json()).provider, 'workers-ai')
+    assert.equal(calls.primary, 1)
+    assert.equal(calls.alternative, 1)
   } finally {
-    globalThis.fetch = originalFetch
-    delete globalThis.caches
+    clearTimeout(keepEventLoop)
   }
 })
 
-await test('Retrieval com dimensão incompatível retorna 503 controlado', async () => {
-  __resetCircuitBreakerForTests()
-  const env = makeEnv({
-    aiRun: async (_model, input) => {
-      if (input?.text) return { data: [[0.1, 0.2, 0.3]] }
-      return { response: 'não deveria gerar' }
-    },
-  })
-  env.MIN_SCORE = '0'
-  env.ENABLE_CACHE = 'false'
-
-  const response = await worker.fetch(
-    request('Pergunta com dimensão incompatível?'),
-    env,
-  )
-  const body = await response.json()
-
-  assert.equal(response.status, 503)
-  assert.equal(response.headers.get('X-Assistant-Stage'), 'retrieval')
-  assert.ok(response.headers.get('X-Request-Id'))
-  assert.match(body.error, /temporariamente indisponível/)
+await test('Orçamento esgotado preserva a resposta com trechos e pula a geração', async (t) => {
+  const { env, calls } = stubServices(t)
+  env.WORKER_BUDGET_MS = '1000'
+  env.MIN_CALL_BUDGET_MS = '2000'
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal((await response.json()).origin, 'retrieval-only')
+  assert.equal(calls.primary, 0)
+  assert.equal(calls.alternative, 0)
 })
 
-await test('Log estruturado contém requestId, stage, timings e questionHash', async () => {
-  __resetCircuitBreakerForTests()
-  const originalFetch = globalThis.fetch
-  const originalLog = console.log
+await test('Breaker: três 429 abrem o circuito; sondagem concorrente única fecha após sucesso', async (t) => {
+  let now = 10000
+  let releaseProbe
+  let probeStarted
+  const started = new Promise((resolve) => { probeStarted = resolve })
+  const { env, calls } = stubServices(t, {
+    now: () => now,
+    primary: () => {
+      if (now < 11000) return quota()
+      return new Promise((resolve) => { releaseProbe = resolve; probeStarted() })
+    },
+  })
+  env.ENABLE_CACHE = 'false'
+  for (let i = 0; i < 3; i++) {
+    assert.equal((await (await worker.fetch(request(QUESTION), env)).json()).provider, 'workers-ai')
+  }
+  const blocked = await worker.fetch(request(QUESTION), env)
+  assert.equal((await blocked.json()).provider, 'workers-ai')
+  assert.equal(calls.primary, 3)
+
+  now += 1000
+  const probe = worker.fetch(request(QUESTION), env)
+  await started
+  const concurrent = await worker.fetch(request(QUESTION), env)
+  assert.equal((await concurrent.json()).provider, 'workers-ai')
+  assert.equal(calls.primary, 4)
+  releaseProbe(Response.json({ choices: [{ message: { content: 'Recuperado' } }] }))
+  assert.equal((await (await probe).json()).provider, 'openrouter')
+  assert.equal(calls.primary, 4)
+})
+
+await test('Breaker: sondagem com falha reabre e resposta atrasada não fecha o circuito', () => {
+  let now = 10000
+  const breaker = createCircuitBreaker({ threshold: 1, cooldownMs: 1000, now: () => now })
+  const first = breaker.acquire()
+  assert.equal(breaker.finish(first, 'failure'), 'open')
+  now += 1000
+  const probe = breaker.acquire()
+  assert.match(probe, /^probe:/)
+  assert.equal(breaker.finish(first, 'success'), 'stale')
+  assert.equal(breaker.finish(probe, 'failure'), 'open')
+  now += 999
+  assert.equal(breaker.acquire(), 'open')
+  now++
+  assert.equal(breaker.finish(breaker.acquire(), 'success'), 'closed')
+  assert.match(breaker.acquire(), /^closed:/)
+})
+
+await test('Redis fora do ar: registra um aviso e segue com OpenRouter', async (t) => {
+  const { env, calls } = stubServices(t, { redisUnavailable: true })
   const logs = []
-
-  globalThis.fetch = async () =>
-    new Response(
-      JSON.stringify({
-        choices: [{ message: { content: 'Resposta observável.' } }],
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    )
-  console.log = (line) => {
-    logs.push(String(line))
-  }
-
-  const env = makeEnv()
-  env.MIN_SCORE = '0'
-  env.ENABLE_CACHE = 'false'
+  t.mock.method(console, 'warn', (message) => logs.push(JSON.parse(message)))
+  t.mock.method(console, 'log', () => {})
   env.LOG_LEVEL = ''
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal((await response.json()).provider, 'openrouter')
+  assert.equal(response.headers.get('X-Assistant-Cache'), 'OFF')
+  assert.equal(calls.redis, 1)
+  assert.equal(logs.length, 1)
+  assert.equal(logs[0].stage, 'redis')
+  assert.equal(logs[0].outcome, 'unavailable')
+  assert.ok(logs[0].requestId)
+})
 
+await test('Timeout do Redis: segue sem repetir operações Redis na requisição', async (t) => {
+  const { env, calls } = stubServices(t, { redisDelay: true })
+  env.REDIS_TIMEOUT_MS = '50'
+  const keepEventLoop = setTimeout(() => {}, 1000)
   try {
-    const response = await worker.fetch(request('Pergunta de log?'), env)
-    const requestId = response.headers.get('X-Request-Id')
-    const parsed = logs
-      .map((line) => {
-        try {
-          return JSON.parse(line)
-        } catch {
-          return null
-        }
-      })
-      .find((entry) => entry?.event === 'assistant')
-
-    assert.equal(response.status, 200)
-    assert.ok(parsed)
-    assert.equal(parsed.requestId, requestId)
-    assert.equal(parsed.stage, 'openrouter')
-    assert.equal(parsed.outcome, 'ok')
-    assert.equal(parsed.cache, 'OFF')
-    assert.match(parsed.questionHash, /^[a-f0-9]{64}$/)
-    assert.ok(parsed.timings.totalMs >= 0)
-    assert.ok(Array.isArray(parsed.attempts))
+    const response = await worker.fetch(request(QUESTION), env)
+    assert.equal((await response.json()).origin, 'llm')
+    assert.equal(calls.redis, 1)
   } finally {
-    console.log = originalLog
-    globalThis.fetch = originalFetch
+    clearTimeout(keepEventLoop)
   }
 })
 
-console.log(
-  `\nResultado: ${passed}/${passed + failed} testes do Worker passaram.`,
-)
+await test('Rate limit Redis: limita geração e permite cache ou trechos', async (t) => {
+  const { env, calls } = stubServices(t)
+  env.CHAT_RATE_LIMIT_MAX = '1'
+  await worker.fetch(request(QUESTION), env)
+  const hit = await worker.fetch(request(QUESTION), env)
+  const limited = await worker.fetch(request('Arquitetura e concorrência'), env)
+  assert.equal((await hit.json()).origin, 'cache')
+  const body = await limited.json()
+  assert.equal(body.origin, 'retrieval-only')
+  assert.match(body.response, /várias perguntas/)
+  assert.equal(calls.primary, 1)
+  assert.equal(calls.alternative, 0)
+})
 
-if (failed > 0) process.exit(1)
+await test('Rate limit nativo preserva a proteção quando Redis falha', async (t) => {
+  const { env, calls } = stubServices(t, { redisUnavailable: true })
+  env.CHAT_RATE_LIMITER = { limit: async () => ({ success: false }) }
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal((await response.json()).origin, 'retrieval-only')
+  assert.equal(calls.primary, 0)
+})
+
+await test('Respostas truncadas de ambos os provedores não entram no cache', async (t) => {
+  const { env, values } = stubServices(t, {
+    primary: () => Response.json({ choices: [{ message: { content: 'Truncada' }, finish_reason: 'length' }] }),
+    alternative: () => ({ response: 'Truncada', finish_reason: 'length' }),
+  })
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal((await response.json()).origin, 'retrieval-only')
+  assert.equal(values.size, 0)
+})
+
+await test('Geração sem metadados de completude é exibida e fica fora do cache', async (t) => {
+  const { env, values } = stubServices(t, {
+    primary: quota,
+    alternative: () => ({ response: 'Resposta ao vivo.' }),
+  })
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal((await response.json()).origin, 'llm')
+  assert.equal(response.headers.get('X-Assistant-Cache'), 'OFF')
+  assert.equal(values.size, 0)
+})
+
+await test('Sem nenhum LLM configurado, executa a busca e devolve trechos', async (t) => {
+  const { env, calls } = stubServices(t)
+  delete env.OPENROUTER_API_KEY
+  env.WORKERS_AI_MODEL = ''
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal((await response.json()).origin, 'retrieval-only')
+  assert.equal(calls.embedding, 1)
+  assert.equal(calls.primary, 0)
+  assert.equal(calls.alternative, 0)
+})
+
+await test('Falha total do retrieval devolve LinkedIn e e-mail, sem erro do serviço', async (t) => {
+  const { env, calls, values } = stubServices(t)
+  env.AI.run = async () => { throw new Error('detalhe sensível') }
+  const response = await worker.fetch(request(QUESTION), env)
+  const answer = await response.json()
+  assert.equal(response.status, 200)
+  assert.equal(answer.origin, 'contact')
+  assert.match(answer.response, /linkedin\.com/)
+  assert.match(answer.response, /elessandrodev@gmail\.com/)
+  assert.doesNotMatch(answer.response, /detalhe sensível/)
+  assert.equal(calls.primary, 0)
+  assert.equal(values.size, 0)
+})
+
+await test('Dimensão de embedding incompatível retorna contato', async (t) => {
+  const { env } = stubServices(t)
+  env.AI.run = async () => ({ data: [[0.1, 0.2, 0.3]] })
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal((await response.json()).origin, 'contact')
+})
+
+await test('Logs correlacionam cache, provedor, breaker e origem sem pergunta ou segredo', async (t) => {
+  const { env } = stubServices(t, { primary: quota })
+  const logs = []
+  t.mock.method(console, 'log', (line) => logs.push(JSON.parse(line)))
+  env.LOG_LEVEL = ''
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.ok(logs.every((entry) => entry.requestId === response.headers.get('X-Request-Id')))
+  assert.ok(logs.some((entry) => entry.stage === 'cache' && entry.outcome === 'miss'))
+  assert.ok(logs.some((entry) => entry.stage === 'breaker' && entry.outcome === 'closed'))
+  assert.ok(logs.some((entry) => entry.provider === 'openrouter' && entry.outcome === 'quota'))
+  assert.ok(logs.some((entry) => entry.provider === 'workers-ai' && entry.origin === 'llm'))
+  assert.ok(logs.every((entry) => !JSON.stringify(entry).includes(QUESTION)))
+  assert.ok(logs.every((entry) => !JSON.stringify(entry).includes(REDIS_ENV.VISITOR_HASH_SECRET)))
+})

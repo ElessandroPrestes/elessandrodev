@@ -7,6 +7,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [Não publicado]
+
+- **SPEC-016 / TASK-016:** cache Redis versionado, breaker distribuído para
+  OpenRouter e limite de geração por visitante. A indisponibilidade do Redis
+  aciona contingência local no Worker.
+- Fallback para Workers AI, trechos do currículo ou canais de contato. A interface
+  informa a origem da resposta em português e inglês.
+- Comando `npm run rag:warm` para aquecer o cache com as perguntas dos chips.
+  README e runbook documentam configuração, simulação de falhas e métricas.
+
 ## [1.13.0] - 2026-11-06
 
 ### Adicionado

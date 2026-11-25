@@ -125,7 +125,20 @@ await test('Retry: 503 seguido de 200 preserva a resposta', async () => {
   assert.ok(statuses.length >= 1)
 })
 
-await test('429: não faz retry e expõe mensagem amigável do Worker', async () => {
+await test('Mantém a origem de uma resposta simplificada', async () => {
+  AI_CONFIG.chatApiUrl = 'http://backend.test/api/chat'
+  globalThis.fetch = async () => jsonResponse({
+    response: 'Trechos do currículo.',
+    sources: [{ section: 'Projetos' }],
+    origin: 'retrieval-only',
+  })
+
+  const answer = await askAssistant('q', 'pt')
+  assert.equal(answer.origin, 'retrieval-only')
+  assert.equal(answer.sources[0].section, 'Projetos')
+})
+
+await test('429 legado: não faz retry e apresenta mensagem neutra', async () => {
   let calls = 0
   AI_CONFIG.chatApiUrl = 'https://worker.test'
 
@@ -141,7 +154,7 @@ await test('429: não faz retry e expõe mensagem amigável do Worker', async ()
     () => askAssistant('q', 'pt', { maxRetries: 2, backoffBaseMs: 1 }),
     (err) => {
       assert.strictEqual(err.status, 429)
-      assert.match(err.userMessage, /limite de uso gratuito/)
+      assert.match(err.userMessage, /Não consegui processar/)
       return true
     }
   )
@@ -149,7 +162,7 @@ await test('429: não faz retry e expõe mensagem amigável do Worker', async ()
   assert.strictEqual(calls, 1)
 })
 
-await test('400: não faz retry e mantém a mensagem do Worker', async () => {
+await test('400: não faz retry e orienta a conferir a pergunta', async () => {
   let calls = 0
   AI_CONFIG.chatApiUrl = 'https://worker.test'
 
@@ -162,7 +175,7 @@ await test('400: não faz retry e mantém a mensagem do Worker', async () => {
     () => askAssistant('q', 'pt', { maxRetries: 2, backoffBaseMs: 1 }),
     (err) => {
       assert.strictEqual(err.status, 400)
-      assert.strictEqual(err.userMessage, 'Pergunta obrigatória.')
+      assert.strictEqual(err.userMessage, 'Confira a pergunta e tente novamente.')
       return true
     }
   )

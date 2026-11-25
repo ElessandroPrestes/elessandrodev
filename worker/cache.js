@@ -1,148 +1,44 @@
-const CACHE_ORIGIN = 'https://assistant-cache.elessandrodev.internal'
-const CACHE_PATH = '/chat'
-const NEGATIVE_CACHE_SUFFIX = '?negative'
 export const DEFAULT_CACHE_TTL_SECONDS = 86400
-export const DEFAULT_NEGATIVE_CACHE_TTL_SECONDS = 60
+
+const STOP_WORDS = new Set([
+  'a', 'as', 'o', 'os', 'de', 'do', 'da', 'dos', 'das', 'um', 'uma',
+  'the', 'an', 'of',
+])
 
 export function normalizeQuestion(question) {
-  return String(question ?? '')
-    .trim()
-    .replace(/\s+/g, ' ')
-    .toLowerCase()
+  const words = question.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
+    .match(/[\p{L}\p{N}]+(?:[+#]+|\.[\p{L}\p{N}]+)*/gu) ?? []
+  return words.filter((word) => !STOP_WORDS.has(word)).join(' ')
 }
 
 async function sha256Hex(value) {
-  const digest = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(String(value ?? '')),
-  )
-
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-export async function hashQuestion(question) {
-  return sha256Hex(normalizeQuestion(question))
+export async function buildCacheKey({ question, locale, revision }) {
+  const normalized = normalizeQuestion(question)
+  if (!normalized) return null
+  return `elessandrodev:chat:v1:${revision}:${locale}:${await sha256Hex(normalized)}`
 }
 
-export async function buildCacheKey({
-  question,
-  locale,
-  sourceHash,
-  embeddingModel,
-}) {
-  const material = [
-    locale,
-    normalizeQuestion(question),
-    String(sourceHash ?? ''),
-    String(embeddingModel ?? ''),
-  ].join('\n')
-
-  return `${CACHE_ORIGIN}${CACHE_PATH}/${await sha256Hex(material)}`
-}
-
-export function buildNegativeCacheKey(key) {
-  if (!key) return null
-  return `${key}${NEGATIVE_CACHE_SUFFIX}`
-}
-
-function resolveCache(cacheStorage) {
-  if (cacheStorage) return cacheStorage
-  if (typeof caches !== 'undefined' && caches.default) return caches.default
+export async function readCachedAnswer(redis, key) {
+  const value = await redis(['GET', key])
+  if (value === undefined) return undefined
+  try {
+    const answer = JSON.parse(value)
+    if (answer?.origin === 'llm' && typeof answer.response === 'string' &&
+        answer.response.trim() && Array.isArray(answer.sources) &&
+        answer.sources.length && typeof answer.provider === 'string' &&
+        Number.isFinite(Date.parse(answer.timestamp))) {
+      return { ...answer, origin: 'cache' }
+    }
+  } catch {
+    // Um valor inválido equivale a um miss.
+  }
   return null
 }
 
-export async function readCachedAnswer({ cacheStorage, key } = {}) {
-  const cache = resolveCache(cacheStorage)
-  if (!cache || !key) return null
-
-  try {
-    const cached = await cache.match(key)
-    if (!cached) return null
-    const body = await cached.json()
-    if (!body || typeof body.response !== 'string') return null
-    return {
-      response: body.response,
-      sources: Array.isArray(body.sources) ? body.sources : [],
-    }
-  } catch {
-    return null
-  }
-}
-
-export async function writeCachedAnswer({
-  cacheStorage,
-  key,
-  body,
-  ttlSeconds = DEFAULT_CACHE_TTL_SECONDS,
-} = {}) {
-  const cache = resolveCache(cacheStorage)
-  if (!cache || !key || !body) return
-
-  const ttl = Number.isFinite(ttlSeconds)
-    ? Math.max(60, Math.floor(ttlSeconds))
-    : DEFAULT_CACHE_TTL_SECONDS
-
-  try {
-    const response = new Response(JSON.stringify(body), {
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': `public, max-age=${ttl}`,
-      },
-    })
-    await cache.put(key, response)
-  } catch {
-    // Falha de cache nunca deve quebrar a resposta ao visitante.
-  }
-}
-
-export async function readCachedFailure({ cacheStorage, key } = {}) {
-  const cache = resolveCache(cacheStorage)
-  if (!cache || !key) return null
-
-  try {
-    const cached = await cache.match(key)
-    if (!cached) return null
-
-    const body = await cached.json()
-    if (!body || body.negative !== true) return null
-
-    return {
-      status: Number.isFinite(Number(body.status)) ? Number(body.status) : 503,
-      stage: typeof body.stage === 'string' ? body.stage : 'generation',
-    }
-  } catch {
-    return null
-  }
-}
-
-export async function writeCachedFailure({
-  cacheStorage,
-  key,
-  status = 503,
-  stage = 'generation',
-  ttlSeconds = DEFAULT_NEGATIVE_CACHE_TTL_SECONDS,
-} = {}) {
-  const cache = resolveCache(cacheStorage)
-  if (!cache || !key) return
-
-  const ttl = Number.isFinite(ttlSeconds)
-    ? Math.min(60, Math.max(1, Math.floor(ttlSeconds)))
-    : DEFAULT_NEGATIVE_CACHE_TTL_SECONDS
-
-  try {
-    const response = new Response(
-      JSON.stringify({ negative: true, status, stage }),
-      {
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Cache-Control': `public, max-age=${ttl}`,
-        },
-      },
-    )
-    await cache.put(key, response)
-  } catch {
-    // Falha de cache nunca deve quebrar a resposta ao visitante.
-  }
+export function writeCachedAnswer(redis, key, answer, ttlSeconds) {
+  return redis(['SET', key, JSON.stringify(answer), 'EX', ttlSeconds])
 }

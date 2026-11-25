@@ -2,13 +2,21 @@
 # Copie para .dev.vars e preencha. Nunca commite .dev.vars.
 OPENROUTER_API_KEY=coloque_sua_chave_aqui
 
-# Opcional: sobrescreve o modelo de fallback do Workers AI.
-# WORKERS_AI_MODEL=@cf/meta/llama-3.1-8b-instruct-fp8
+# Redis de desenvolvimento. Use uma base separada da produção.
+# UPSTASH_REDIS_REST_URL=
+# UPSTASH_REDIS_REST_TOKEN=
+# VISITOR_HASH_SECRET=
+# REDIS_TIMEOUT_MS=500
+# CHAT_RATE_LIMIT_MAX=10
+# CHAT_RATE_LIMIT_WINDOW_SECONDS=60
+
+# Opcional: sobrescreve o modelo de fallback do Workers AI. Vazio desativa.
+# WORKERS_AI_MODEL=@cf/google/gemma-4-26b-a4b-it
 
 # Opcional: TTL do cache de respostas em segundos (padrão 86400).
 # CACHE_TTL_SECONDS=86400
 
-# Opcional: desativa o cache RAG-aware (positivo e negativo) com "false".
+# Opcional: desativa o cache de respostas com "false".
 # ENABLE_CACHE=true
 
 # Opcional: orçamento total de geração no Worker (padrão 25000 ms).
@@ -20,17 +28,15 @@ OPENROUTER_API_KEY=coloque_sua_chave_aqui
 # Opcional: timeouts por chamada, limitados pelo orçamento restante.
 # OPENROUTER_TIMEOUT_MS=8000
 # WORKERS_AI_TIMEOUT_MS=12000
+# EMBEDDING_TIMEOUT_MS=5000
 
 # Opcional: limite de tokens de saída por provedor.
 # OPENROUTER_MAX_TOKENS=3000
 # WORKERS_AI_MAX_TOKENS=768
 
-# Opcional: circuit breaker por modelo/provedor.
+# Opcional: circuit breaker do OpenRouter.
 # CIRCUIT_BREAKER_THRESHOLD=3
 # CIRCUIT_BREAKER_MS=60000
-
-# Opcional: TTL do cache negativo de 503 em segundos (máximo 60).
-# NEGATIVE_CACHE_TTL_SECONDS=60
 
 # Opcional: silencia os logs JSON estruturados durante testes locais.
 # LOG_LEVEL=silent

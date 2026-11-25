@@ -14,13 +14,14 @@
          │                   │ POST { question, locale }
          │                   ▼
          └───► Cloudflare Worker (elessandrodev-chat)
-                   ├─── Cache RAG-aware (Cache API, chave com sourceHash)
+                   ├─── Upstash Redis: cache por revisão, breaker e rate limit
                    ├─── Workers AI: embedding da pergunta (@cf/baai/bge-m3)
                    ├─── Índice RAG versionado (worker/rag/index.json)
                    ├─── Recuperação híbrida: cosseno + BM25
                    ├─── Threshold de relevância e fontes
                    ├─── OpenRouter: geração com cadeia de modelos free
-                   └─── Workers AI: fallback de geração em 429/5xx
+                   ├─── Workers AI: fallback de geração
+                   └─── Trechos do currículo ou canais de contato
 ```
 
 O frontend é estático. A chave da OpenRouter existe apenas como secret do Worker; nunca é embutida no bundle do GitHub Pages.
@@ -34,8 +35,8 @@ O frontend é estático. A chave da OpenRouter existe apenas como secret do Work
 3. **RAG real com corpus Markdown:** o conteúdo profissional fica em `knowledge/rag/`, é dividido em chunks por seção e indexado com embeddings multilíngues.
 4. **Recuperação híbrida:** combina similaridade de cosseno com BM25 lexical (`HYBRID_ALPHA=0.6`), reduzindo falhas em perguntas com termos exatos.
 5. **Threshold e fallback:** se nenhum chunk atinge `MIN_SCORE=0.45`, o Worker responde sem chamar o LLM. Se a cadeia OpenRouter falha, o Worker tenta o Workers AI com o mesmo prompt.
-6. **Cache RAG-aware:** respostas fundamentadas são cacheadas por `SHA-256(locale + pergunta normalizada + sourceHash + embeddingModel)`. Cache hit não gera embedding nem chamada de LLM; reindexar o corpus invalida a chave.
-7. **Citação de fontes:** a resposta retorna `{ response, sources }`; a UI mostra seção e score de cada fonte.
+6. **Cache RAG-aware:** respostas completas são cacheadas em Redis por revisão do índice, idioma e SHA-256 da pergunta normalizada. Um hit pula embedding e LLM. Cada reindexação muda o prefixo.
+7. **Citação de fontes:** a resposta retorna `{ response, sources, origin, provider, timestamp }`. A interface mostra origem, seção e score.
 8. **Composables nativos:** tema e idioma sem stores globais.
 
 ---
@@ -50,37 +51,23 @@ npm run rag:check   # valida sourceHash e consistência sem chamar APIs
 
 O `rag:check` roda no CI e falha se o índice divergir do corpus.
 
-Uma mudança de `sourceHash` também invalida automaticamente as entradas de cache, porque o hash do índice entra na chave.
+O prefixo de cache inclui `sourceHash` e `createdAt`. Reindexar o corpus e publicar o índice muda o prefixo. As chaves antigas expiram por TTL.
 
 ---
 
 ## 4. Resiliência e Limites de Provedor
 
-A OpenRouter aplica o limite gratuito por conta (~20 req/min e ~50 req/dia), compartilhado entre todos os modelos `:free`. Desde a SPEC-014, o fluxo é:
+O Worker valida a requisição e consulta o cache. Em miss, verifica o limite por
+visitante, recupera os trechos e tenta o OpenRouter se o breaker permitir. Na
+falha do primário, o Workers AI pode gerar com o mesmo contexto. Se a geração
+estiver indisponível, devolve os trechos recuperados. Se a busca falhar ou não
+encontrar trechos relevantes, devolve os canais de contato.
 
-1. O Worker valida Origin, rota, payload e rate limit por IP (`CHAT_RATE_LIMITER`).
-2. Consulta o cache positivo antes do embedding; em miss, consulta o cache negativo de `503`.
-3. Tenta os modelos válidos de `MODELS` em ordem, respeitando `WORKER_BUDGET_MS`.
-4. Se receber `429` com `X-RateLimit-Remaining: 0`, interrompe a cadeia e aciona o Workers AI.
-5. O circuit breaker exclui temporariamente modelo/provedor que falhou em sequência.
-6. Se o Workers AI também falhar, responde `429` com `Retry-After` ou `503` com
-   `X-Assistant-Stage` e `X-Request-Id`.
-7. O cliente não retenta `429`; retries ficam restritos a rede, timeout e `5xx`.
-
-Cada chamada de provedor usa o menor valor entre seu timeout específico e o tempo
-restante do orçamento total. O cliente usa timeout maior que o orçamento do Worker
-para não desistir antes do fim da cadeia.
-
-O cache positivo é opt-out (`ENABLE_CACHE=false`) e tem TTL configurável
-(`CACHE_TTL_SECONDS`). O cache negativo é exclusivo para `503`, dura no máximo 60 s
-e expõe `X-Assistant-Cache: NEGATIVE`; `429` nunca é cacheado.
-
-### Observabilidade
-
-O Worker emite um log JSON por requisição com `requestId`, `questionHash`, `stage`,
-`outcome`, `provider`, `model`, `providerStatus`, `cache`, `timings` e `attempts`.
-Workers Logs está habilitado em `wrangler.toml`. `GET /health` permite monitoramento
-sem IA. O runbook está em [`operations.md`](operations.md).
+O breaker e o contador usam operações atômicas no Redis. Na falha do Redis,
+o Worker usa o breaker por instância e o binding nativo `CHAT_RATE_LIMITER`.
+O cache só recebe gerações completas, com TTL configurável. Os eventos do Worker
+usam `requestId` para correlacionar as etapas. O [runbook](operations.md) descreve
+as métricas, a configuração e os cenários de falha.
 
 ---
 
@@ -90,7 +77,7 @@ sem IA. O runbook está em [`operations.md`](operations.md).
 - `CLOUDFLARE_API_TOKEN` de ingestão fica em `.env.ingest` (ignorado pelo Git).
 - CORS restrito a `https://elessandroprestes.github.io`, `http://localhost:5212`, `http://127.0.0.1:5212` e `http://elessandrodev.localhost`.
 - Limites de payload (2000 bytes) e pergunta (500 caracteres).
-- Rate limit por IP na rota de chat (10 req/60 s), sem aplicar em `GET /health`.
-- Logs usam `questionHash`, nunca a pergunta crua, e não incluem prompt ou chave.
+- Rate limit de geração por IP pseudonimizado (10 consultas/60 s).
+- Logs usam `requestId` e metadados de etapa. O Worker não registra perguntas, IPs, prompts ou chaves.
 - Prompt instrui o modelo a usar apenas o contexto recuperado e a recusar informações ausentes.
 - O cache armazena apenas resposta e fontes públicas; a chave usa hash da pergunta e nunca guarda prompt, chave ou dados sensíveis.
