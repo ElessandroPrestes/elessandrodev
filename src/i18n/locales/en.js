@@ -355,6 +355,7 @@ export default {
     clearChat: 'CLEAR',
     disclaimer: 'Responses generated with RAG on a Cloudflare Worker, grounded exclusively on Elessandro\'s professional history.',
     answerOrigins: {
+      'stale-cache': 'Previously saved answer (the AI service is unstable).',
       llm: 'Live answer',
       cache: 'Cached answer',
       'retrieval-only': 'Simplified mode: résumé excerpts',

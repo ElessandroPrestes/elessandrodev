@@ -66,6 +66,7 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
     return {
       response: data.response,
       origin: data.origin,
+      cachedAt: data.origin === 'stale-cache' ? data.cachedAt : undefined,
       sources: Array.isArray(data.sources) ? data.sources : [],
       status: response.status,
       requestId,
@@ -108,7 +109,7 @@ async function requestOnce({ url, question, locale, timeoutMs, signal }) {
  * @param {number} options.maxRetries
  * @param {number} options.timeoutMs
  * @param {number} options.backoffBaseMs
- * @returns {Promise<{ response: string, sources: Array, origin?: string }>}
+ * @returns {Promise<{ response: string, sources: Array, origin?: string, cachedAt?: string }>}
  */
 export async function askAssistant(question, locale = 'pt', options = {}) {
   const {
@@ -158,6 +159,7 @@ export async function askAssistant(question, locale = 'pt', options = {}) {
         response: result.response,
         sources: result.sources,
         ...(result.origin ? { origin: result.origin } : {}),
+        ...(result.cachedAt ? { cachedAt: result.cachedAt } : {}),
       }
     } catch (error) {
       lastError = error

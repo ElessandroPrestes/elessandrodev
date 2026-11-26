@@ -355,6 +355,7 @@ export default {
     clearChat: 'LIMPAR',
     disclaimer: 'Respostas geradas com RAG no Cloudflare Worker, baseadas exclusivamente no histórico profissional de Elessandro.',
     answerOrigins: {
+      'stale-cache': 'Resposta salva anteriormente (o serviço de IA está instável)',
       llm: 'Resposta gerada ao vivo',
       cache: 'Resposta em cache',
       'retrieval-only': 'Modo simplificado: trechos do currículo',

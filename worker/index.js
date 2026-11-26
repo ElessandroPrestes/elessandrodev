@@ -17,6 +17,8 @@ import {
   readCachedAnswer,
   writeCachedAnswer,
   DEFAULT_CACHE_TTL_SECONDS,
+  DEFAULT_CACHE_HARD_TTL_SECONDS,
+  classifyCachedAnswer,
 } from './cache.js'
 import { createRedis } from './redis.js'
 import { isRateLimited } from './rate-limit.js'
@@ -380,11 +382,24 @@ export default {
     const cacheKey = redis && isCacheEnabled(env)
       ? await buildCacheKey({ question, locale: answerLocale, revision })
       : null
+    const hardTtl = readInt(env.CACHE_HARD_TTL_SECONDS, DEFAULT_CACHE_HARD_TTL_SECONDS, 60, 31536000)
+    const freshTtl = Math.min(hardTtl, readInt(env.CACHE_TTL_SECONDS, DEFAULT_CACHE_TTL_SECONDS, 60, 31536000))
     let cache = 'OFF'
+    let stale
     if (cacheKey) {
       const cached = await readCachedAnswer(redis, cacheKey)
-      if (cached) return reply(cached, 'cache', 'HIT', 'hit')
+      const state = classifyCachedAnswer(cached, freshTtl, hardTtl)
+      if (state === 'FRESH') return reply({ ...cached, origin: 'cache' }, 'cache', 'HIT', 'hit')
+      if (state === 'STALE') stale = cached
       if (cached !== undefined) cache = 'MISS'
+    }
+
+    function serveStale() {
+      if (classifyCachedAnswer(stale, freshTtl, hardTtl) !== 'STALE') return null
+      return reply(
+        { ...stale, origin: 'stale-cache', cachedAt: stale.timestamp },
+        'cache', 'STALE', 'degraded',
+      )
     }
     log({ stage: 'cache', outcome: cache.toLowerCase() })
 
@@ -394,7 +409,11 @@ export default {
       readInt(env.CHAT_RATE_LIMIT_MAX, 10, 1, 1000),
       readInt(env.CHAT_RATE_LIMIT_WINDOW_SECONDS, 60, 1, 3600),
     )
-    if (limited) log({ stage: 'rate-limit', outcome: 'limited' })
+    if (limited) {
+      log({ stage: 'rate-limit', outcome: 'limited' })
+      const cachedReply = serveStale()
+      if (cachedReply) return cachedReply
+    }
 
     let retrieved
     try {
@@ -412,10 +431,10 @@ export default {
         minScore: readFloat(env.MIN_SCORE, 0.45, 0, 1),
       })
     } catch {
-      return reply(answerBody(safeFallback(en), 'contact'), 'retrieval', cache, 'unavailable')
+      return serveStale() ?? reply(answerBody(safeFallback(en), 'contact'), 'retrieval', cache, 'unavailable')
     }
     if (!retrieved.length) {
-      return reply(answerBody(safeFallback(en), 'contact'), 'retrieval', cache, 'no-results')
+      return serveStale() ?? reply(answerBody(safeFallback(en), 'contact'), 'retrieval', cache, 'no-results')
     }
 
     const sources = formatSources(retrieved)
@@ -424,6 +443,8 @@ export default {
       circuit: getCircuitBreaker(env, redis), log,
     })
     if (!answer?.text) {
+      const cachedReply = serveStale()
+      if (cachedReply) return cachedReply
       const intro = limited
         ? (en ? 'You’ve sent several questions in a short time. Here are relevant excerpts from the résumé.' : 'Você enviou várias perguntas em pouco tempo. Aqui estão trechos relevantes do currículo.')
         : (en ? 'Live answers are temporarily unavailable. Here are relevant excerpts from the résumé.' : 'As respostas ao vivo estão temporariamente indisponíveis. Aqui estão trechos relevantes do currículo.')
@@ -437,7 +458,7 @@ ${chunk.text}`)
     if (cacheKey && answer.cacheable) {
       const stored = await writeCachedAnswer(
         redis, cacheKey, body,
-        readInt(env.CACHE_TTL_SECONDS, DEFAULT_CACHE_TTL_SECONDS, 60, 604800),
+        hardTtl,
       )
       if (stored !== 'OK') cache = 'OFF'
     } else if (cacheKey) {

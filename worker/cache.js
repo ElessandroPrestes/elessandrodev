@@ -1,4 +1,5 @@
 export const DEFAULT_CACHE_TTL_SECONDS = 86400
+export const DEFAULT_CACHE_HARD_TTL_SECONDS = 604800
 
 const STOP_WORDS = new Set([
   'a', 'as', 'o', 'os', 'de', 'do', 'da', 'dos', 'das', 'um', 'uma',
@@ -31,7 +32,7 @@ export async function readCachedAnswer(redis, key) {
         answer.response.trim() && Array.isArray(answer.sources) &&
         answer.sources.length && typeof answer.provider === 'string' &&
         Number.isFinite(Date.parse(answer.timestamp))) {
-      return { ...answer, origin: 'cache' }
+      return answer
     }
   } catch {
     // Um valor inválido equivale a um miss.
@@ -41,4 +42,11 @@ export async function readCachedAnswer(redis, key) {
 
 export function writeCachedAnswer(redis, key, answer, ttlSeconds) {
   return redis(['SET', key, JSON.stringify(answer), 'EX', ttlSeconds])
+}
+
+export function classifyCachedAnswer(answer, freshTtlSeconds, hardTtlSeconds, now = Date.now()) {
+  if (!answer) return 'MISS'
+  const ageMs = now - Date.parse(answer.timestamp)
+  if (ageMs < 0 || ageMs > hardTtlSeconds * 1000) return 'MISS'
+  return ageMs <= freshTtlSeconds * 1000 ? 'FRESH' : 'STALE'
 }
