@@ -28,26 +28,30 @@ O assistente usa **RAG** com corpus Markdown versionado. A pergunta é vetorizad
 ```mermaid
 flowchart TD
     Q[Pergunta] --> C{Cache Redis}
-    C -- Hit --> H[Resposta em cache]
-    C -- Miss ou Redis indisponível --> V[Consulta limite por visitante]
-    V --> R[Busca híbrida no índice do currículo]
-    R -- Falha ou sem resultados --> F[LinkedIn e e-mail]
-    R -- Limite atingido --> T[Modo simplificado com trechos]
-    R -- Geração elegível --> B{Breaker do OpenRouter}
-    B -- Primário disponível --> O[OpenRouter]
-    B -- Breaker aberto ou primário ausente --> A[Workers AI se configurado]
-    O -- Falha --> A
-    O -- Geração válida --> L[Resposta ao vivo]
-    A -- Geração válida --> L
-    A -- Ausente ou indisponível --> T
-    L -. Resposta completa com TTL .-> C
+    C -- Fresco --> H[Resposta em cache]
+    C -- Stale, miss ou Redis indisponível --> V{Limite por visitante}
+    V -- Limite atingido e stale disponível --> S[Resposta salva anteriormente]
+    V -- Demais casos --> R[Busca híbrida]
+    R -- Falha ou busca vazia --> F{Stale disponível?}
+    F -- Sim --> S
+    F -- Não --> K[LinkedIn e e-mail]
+    R -- Trechos disponíveis --> G[Geração se permitida]
+    G -- OpenRouter ou Workers AI responde --> L[Resposta ao vivo]
+    G -- Falha ou limite atingido --> D{Stale disponível?}
+    D -- Sim --> S
+    D -- Não --> T[Trechos do currículo]
+    L -. Geração completa com fontes .-> C
 ```
 
-As perguntas de contato recebem os canais diretamente. O restante usa busca híbrida
-(cosseno + BM25) com os mesmos chunks, limiar e ranking. A busca acontece uma vez por
-miss e fornece o contexto para ambos os LLMs e os trechos para o modo simplificado.
-O limite é consultado após o cache e, se atingido, bloqueia a geração. O breaker
-reserva a sondagem imediatamente antes da geração, com os trechos disponíveis.
+As perguntas de contato recebem os canais diretamente. O projeto usa modelos
+gratuitos, que falham com frequência ou atingem cotas. Por isso, a
+[SPEC-017](specs/SPEC-017-stale-if-error.md) permite reutilizar respostas salvas
+quando a geração ou a busca falha. Por padrão, o cache fica fresco por 24 h e
+pode ser usado em contingência até completar 7 dias de idade. A interface
+identifica a resposta salva, e servir stale não prorroga sua retenção.
+
+A busca fornece o mesmo contexto para ambos os modelos e os trechos para o modo
+simplificado. O breaker aberto pula OpenRouter e preserva a tentativa no Workers AI.
 
 ### Qualidade do retrieval
 
@@ -154,7 +158,8 @@ Variáveis não sensíveis do Worker (em `wrangler.toml`):
 | `EMBEDDING_TIMEOUT_MS` | `5000` | Timeout do embedding da pergunta |
 | `CHAT_RATE_LIMIT_MAX` | `10` | Máximo de consultas inéditas que podem gerar por visitante e janela |
 | `CHAT_RATE_LIMIT_WINDOW_SECONDS` | `60` | Janela do contador Redis |
-| `CACHE_TTL_SECONDS` | `86400` | TTL do cache RAG-aware |
+| `CACHE_TTL_SECONDS` | `86400` | Janela fresca do cache de respostas |
+| `CACHE_HARD_TTL_SECONDS` | `604800` | Retenção total da resposta no Redis |
 | `ENABLE_CACHE` | `true` | Desativa o cache de respostas com `false` |
 
 Para atualizar o corpus:

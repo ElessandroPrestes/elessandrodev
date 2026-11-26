@@ -127,14 +127,15 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
 [Cloudflare Worker]
   ├─ Valida Origin e payload
   ├─ Intenção de contato ──► canais diretos
-  ├─ Cache Redis ──► hit retorna sem embedding nem LLM
-  ├─ Miss ──► consulta o contador por visitante e busca no currículo
-  ├─ Falha na busca ou sem resultados ──► LinkedIn e e-mail
+  ├─ Cache Redis ──► hit fresco retorna sem embedding nem LLM
+  ├─ Stale ou miss ──► consulta o contador por visitante e busca no currículo
+  ├─ Limite por visitante com stale ──► responde do cache sem executar a busca
+  ├─ Falha na busca ou sem resultados ──► stale, depois LinkedIn e e-mail
   ├─ Geração elegível ──► OpenRouter com breaker Redis, depois Workers AI
-  └─ Sem geração ──► trechos da busca com indicação do modo simplificado
+  └─ Sem geração ──► stale, depois trechos da busca
          │
          ▼
-[Resposta { response, sources, origin, provider, timestamp }]
+[Resposta { response, sources, origin, provider, timestamp, cachedAt? }]
   ├─ Headers: X-Request-Id, X-Assistant-Stage, X-Assistant-Cache
   ├─ Logs JSON por decisão, correlacionados por requestId
   └─ Vue renderiza Markdown, origem e fontes
@@ -193,6 +194,8 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
 - [x] **SPEC-014 [IA & Resiliência]:** Modelos válidos, timeouts alinhados por orçamento, circuit breaker, cache negativo de `503`, rate limit por IP, `X-Request-Id`/`X-Assistant-Stage`, Workers Logs e `GET /health` (Concluída em v1.13.0).
 
 - [x] **SPEC-016 [IA & Resiliência]:** Cache Redis versionado, breaker compartilhado, limite de geração, modo simplificado e warm-up implementados no Worker, pendentes de review e publicação.
+
+- [x] **SPEC-017 [IA & Resiliência]:** Cache fresco de 24 h e retenção padrão de 7 dias. Worker serve stale em contingência com aviso localizado. Implementada na branch de release da SPEC-016, pendente de review e publicação.
 
 > **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
 
