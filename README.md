@@ -27,85 +27,64 @@ O assistente usa **RAG** com corpus Markdown versionado. A pergunta é vetorizad
 
 ```mermaid
 flowchart TD
-    subgraph Ingestion["1. Ingestão do corpus"]
-        Corpus["knowledge/rag/*.md"]
-        Chunking["Chunking por seção"]
-        Embeddings["Workers AI: @cf/baai/bge-m3"]
-        Index[("worker/rag/index.json")]
-
-        Corpus --> Chunking --> Embeddings --> Index
-    end
-
-    subgraph Runtime["2. Execução no Cloudflare Worker"]
-        UserQuery["Pergunta do visitante"]
-        Cache{"Cache RAG-aware\n(sourceHash + pergunta)"}
-        QueryEmbedding["Embedding da pergunta"]
-        Retrieval["Cosseno + BM25 + threshold"]
-        Prompt["Prompt grounded + fontes"]
-        OpenRouter["OpenRouter: modelos free"]
-        WorkersAI["Workers AI: fallback de geração"]
-
-        UserQuery --> Cache
-        Cache -- hit --> Sources
-        Cache -- miss --> QueryEmbedding --> Retrieval
-        Index -.-> Retrieval
-        Retrieval --> Prompt --> OpenRouter
-        OpenRouter -- 429/5xx --> WorkersAI
-        OpenRouter --> Sources
-        WorkersAI --> Sources
-    end
-
-    subgraph UI["3. Interface"]
-        ChatUI["AiAssistant.vue"]
-        Sources["Resposta + fontes e scores"]
-
-        Sources --> ChatUI
-    end
+    Q[Pergunta] --> C{Cache Redis}
+    C -- Fresco --> H[Resposta em cache]
+    C -- Stale, miss ou Redis indisponível --> V{Limite por visitante}
+    V -- Limite atingido e stale disponível --> S[Resposta salva anteriormente]
+    V -- Demais casos --> R[Busca híbrida]
+    R -- Falha ou busca vazia --> F{Stale disponível?}
+    F -- Sim --> S
+    F -- Não --> K[LinkedIn e e-mail]
+    R -- Trechos disponíveis --> G[Geração se permitida]
+    G -- OpenRouter ou Workers AI responde --> L[Resposta ao vivo]
+    G -- Falha ou limite atingido --> D{Stale disponível?}
+    D -- Sim --> S
+    D -- Não --> T[Trechos do currículo]
+    L -. Geração completa com fontes .-> C
 ```
 
-### Pilares da solução:
+As perguntas de contato recebem os canais diretamente. O projeto usa modelos
+gratuitos, que falham com frequência ou atingem cotas. Por isso, a
+[SPEC-017](specs/SPEC-017-stale-if-error.md) permite reutilizar respostas salvas
+quando a geração ou a busca falha. Por padrão, o cache fica fresco por 24 h e
+pode ser usado em contingência até completar 7 dias de idade. A interface
+identifica a resposta salva, e servir stale não prorroga sua retenção.
 
-1. **Corpus estruturado:** `knowledge/rag/` cobre perfil, experiências, projetos e FAQ, com aliases em PT/EN.
-2. **Retrieval híbrido:** cosseno + BM25 (`HYBRID_ALPHA=0.6`, `TOP_K=4`, `MIN_SCORE=0.45`).
-3. **Grounded answer:** o Worker envia apenas os chunks recuperados e instrui o modelo a não inventar fatos.
-4. **Fallback sem LLM:** se nada atinge o threshold, a resposta é gerada sem chamada ao provedor.
-5. **Cache RAG-aware:** perguntas repetidas são respondidas do cache por até 24 h, sem consumir embedding nem LLM. A chave inclui o `sourceHash` do índice, então reindexar invalida respostas antigas.
-6. **Fallback de provedor:** se a OpenRouter esgotar a cota gratuita ou falhar, o Worker usa Cloudflare Workers AI para gerar a resposta com o mesmo prompt e as mesmas fontes.
-7. **Segurança:** a chave da OpenRouter fica como secret do Worker; o frontend envia apenas `{ question, locale }`.
+A busca fornece o mesmo contexto para ambos os modelos e os trechos para o modo
+simplificado. O breaker aberto pula OpenRouter e preserva a tentativa no Workers AI.
 
 ### Qualidade do retrieval
 
 - `npm run rag:eval`: **100% hit@4**, MRR **0.975**, cobertura do threshold **100%**.
 - `npm run rag:check`: valida `sourceHash`, dimensões e consistência do índice no CI.
 
-### Resiliência contra 429 e custos
+### Decisões de resiliência (SPEC-016)
 
-O limite gratuito da OpenRouter (~20 req/min e ~50 req/dia por conta) é compartilhado entre todos os modelos `:free`. Quando ele zera, o Worker:
+- **Upstash Redis via HTTPS.** O Cloudflare Worker usa `fetch` nativo e compartilha
+  o estado entre instâncias. Redis em Docker exigiria um serviço de rede operado
+  à parte. LRU ficaria restrito à instância e Workers KV oferece consistência
+  eventual para chaves que precisam de operações atômicas. Com a hipótese de
+  100 consultas diárias e cinco comandos por consulta, a estimativa é de
+  15 mil comandos por mês. O volume real será observado após a publicação.
+- **Cache por revisão.** A chave combina versão do esquema, `sourceHash`,
+  data da indexação, modelo de embedding, idioma e hash da pergunta normalizada.
+  A troca do índice publicado muda o prefixo, e as chaves anteriores expiram pelo
+  TTL. O registro contém texto, fontes, origem, provedor e timestamp. Respostas
+  sem evidência de completude ficam fora do cache.
+- **Coordenação e contingência.** Operações atômicas no Redis controlam o contador
+  por visitante e concedem uma sondagem por vez após o cooldown. Na falha do Redis,
+  o Worker usa o breaker local à instância e o limite nativo da Cloudflare.
+  O limite protege a geração. A busca simplificada ainda usa embeddings.
+- **Métricas por eventos.** Workers Logs permite contar hits, misses, tentativas
+  por provedor, estados do breaker e origens das respostas pelo log JSON. O
+  `requestId` correlaciona as etapas. Perguntas, IPs e detalhes dos provedores
+  ficam fora dos logs emitidos pelo Worker.
 
-1. interrompe a cadeia OpenRouter ao detectar `X-RateLimit-Remaining: 0`;
-2. tenta a geração no Cloudflare Workers AI (`WORKERS_AI_MODEL`);
-3. só responde `429` se todos os provedores falharem, com `Retry-After` e mensagem honesta.
-
-O cliente HTTP **não retenta `429`**; retries ficam restritos a rede, timeout e `5xx`. O cache reduz o consumo de cota e pode ser desligado com `ENABLE_CACHE=false`.
-
-### Timeouts, fallback e observabilidade (SPEC-014)
-
-- `WORKER_BUDGET_MS` (padrão 25000) limita o tempo total de geração; cada chamada
-  recebe só o tempo restante do orçamento.
-- O cliente espera até `VITE_LLM_TIMEOUT_MS` (padrão 35000), sempre acima do
-  orçamento do Worker.
-- `npm run models:check` valida os IDs da OpenRouter no CI e impede modelos
-  inexistentes.
-- Circuit breaker e cache negativo curto evitam repetir falha de provedor a cada
-  retry.
-- Toda resposta inclui `X-Request-Id`; erros de geração incluem
-  `X-Assistant-Stage`; falhas repetidas de `503` podem vir com
-  `X-Assistant-Cache: NEGATIVE`.
-- Logs JSON com timings ficam disponíveis nos Workers Logs.
-- Rate limit por IP (10 req/60 s) protege a cota compartilhada.
-- `GET /health` responde sem IA para monitoramento externo.
-
-Runbook completo em [`docs/operations.md`](docs/operations.md).
+**Evolução proposta.** Se houver muitos misses por paráfrase, avaliar um cache
+semântico com embedding da pergunta e similaridade dentro do idioma e da versão
+do índice. Medir ganho de hits, falsos positivos entre empresas e projetos,
+latência e consumo de embeddings. O cache exato continua respondendo antes de
+toda chamada de IA.
 
 ---
 
@@ -120,7 +99,7 @@ Runbook completo em [`docs/operations.md`](docs/operations.md).
 | **Backend de IA** | **Cloudflare Workers** | CORS, prompt grounded, cache e fallback de provedor |
 | **Embeddings** | **Cloudflare Workers AI** | `@cf/baai/bge-m3` para indexação e consulta |
 | **Modelo de Linguagem (LLM)** | **OpenRouter + Workers AI** | Cadeia gratuita com fallback para Workers AI em 429/5xx |
-| **Cache** | **Cloudflare Cache API** | Respostas RAG-aware por pergunta e `sourceHash` |
+| **Cache** | **Upstash Redis** | Cache por revisão, circuit breaker e limite por visitante |
 | **Recuperação** | **RAG híbrido** | Cosseno + BM25, threshold e citação de fontes |
 | **Padronização de Comandos** | **GNU Make** | Automação unificada de tarefas via `Makefile` |
 | **Containerização** | **Docker & Compose** | Ambientes de desenvolvimento e execução isolados e replicáveis |
@@ -150,11 +129,14 @@ VITE_LLM_TIMEOUT_MS=35000
 VITE_LLM_BACKOFF_BASE_MS=500
 ```
 
-A chave da OpenRouter não vai no `.env` do frontend. Configure-a como secret do Worker:
+Configure as credenciais no Worker. Para desenvolvimento local, use `.dev.vars`:
 
 ```bash
 npx wrangler login
 npx wrangler secret put OPENROUTER_API_KEY
+npx wrangler secret put UPSTASH_REDIS_REST_URL
+npx wrangler secret put UPSTASH_REDIS_REST_TOKEN
+npx wrangler secret put VISITOR_HASH_SECRET
 npx wrangler deploy
 ```
 
@@ -163,8 +145,8 @@ Variáveis não sensíveis do Worker (em `wrangler.toml`):
 | Variável | Padrão | Função |
 |---|---|---|
 | `MODELS` | cadeia `:free` | Modelos da OpenRouter, em ordem de preferência |
-| `WORKERS_AI_MODEL` | `@cf/meta/llama-3.1-8b-instruct-fp8` | Modelo de fallback quando a OpenRouter esgota |
-| `WORKER_BUDGET_MS` | `25000` | Teto total de geração no Worker |
+| `WORKERS_AI_MODEL` | `@cf/google/gemma-4-26b-a4b-it` | Modelo de fallback quando a OpenRouter falha. Vazio desativa o fallback de geração |
+| `WORKER_BUDGET_MS` | `25000` | Orçamento para iniciar e executar chamadas de IA no Worker |
 | `MIN_CALL_BUDGET_MS` | `2000` | Margem mínima para iniciar uma chamada |
 | `OPENROUTER_TIMEOUT_MS` | `8000` | Timeout por modelo da OpenRouter |
 | `WORKERS_AI_TIMEOUT_MS` | `12000` | Timeout do fallback Workers AI |
@@ -172,9 +154,13 @@ Variáveis não sensíveis do Worker (em `wrangler.toml`):
 | `WORKERS_AI_MAX_TOKENS` | `768` | Tokens de saída do fallback |
 | `CIRCUIT_BREAKER_THRESHOLD` | `3` | Falhas consecutivas para abrir o breaker |
 | `CIRCUIT_BREAKER_MS` | `60000` | Janela de exclusão do breaker |
-| `NEGATIVE_CACHE_TTL_SECONDS` | `60` | TTL máximo do cache negativo de `503` |
-| `CACHE_TTL_SECONDS` | `86400` | TTL do cache RAG-aware |
-| `ENABLE_CACHE` | `true` | Desativa cache positivo e negativo com `false` |
+| `REDIS_TIMEOUT_MS` | `500` | Timeout por operação Redis |
+| `EMBEDDING_TIMEOUT_MS` | `5000` | Timeout do embedding da pergunta |
+| `CHAT_RATE_LIMIT_MAX` | `10` | Máximo de consultas inéditas que podem gerar por visitante e janela |
+| `CHAT_RATE_LIMIT_WINDOW_SECONDS` | `60` | Janela do contador Redis |
+| `CACHE_TTL_SECONDS` | `86400` | Janela fresca do cache de respostas |
+| `CACHE_HARD_TTL_SECONDS` | `604800` | Retenção total da resposta no Redis |
+| `ENABLE_CACHE` | `true` | Desativa o cache de respostas com `false` |
 
 Para atualizar o corpus:
 
@@ -184,6 +170,26 @@ npm run rag:eval
 npm run rag:check
 npx wrangler deploy
 ```
+
+Gere um valor aleatório para `VISITOR_HASH_SECRET` e configure o mesmo valor em
+todas as instâncias que compartilham o contador. Use um banco Redis separado
+para cada ambiente. O Workers AI usa Gemma 4 26B, substituto recomendado pela
+Cloudflare para modelos descontinuados e disponível no plano gratuito. A cota
+de Workers AI é compartilhada com os embeddings.
+[Modelos descontinuados](https://developers.cloudflare.com/changelog/post/2026-11-05-planned-model-deprecations/) ·
+[Disponibilidade no plano gratuito](https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/)
+
+Para aquecer o cache após publicar o índice, defina `CHAT_WARMUP_URL` com o
+endpoint e `CHAT_WARMUP_ORIGIN` com uma origem permitida. Execute:
+
+```bash
+npm run rag:warm
+```
+
+O comando envia as perguntas dos chips PT/EN em sequência. Consome cota nas
+perguntas inéditas e informa se alguma consulta ficou sem resposta cacheada.
+As perguntas de contato são atendidas diretamente. Veja como simular as falhas
+localmente em [Operações](docs/operations.md#simulações-locais).
 
 ### 3. Worker Local (opcional)
 

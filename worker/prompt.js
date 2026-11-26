@@ -7,7 +7,7 @@ export const CONTACT = {
 }
 
 export const CONTACT_INTENT =
-  /(entrar em contato|entro em contato|contato direto|como (posso )?(falar|contatar|chamar)|(qual (é )?o|me (passe|envie|mande|informe)|quero|preciso).*(e-?mail|telefone|whatsapp|linkedin)|how (can|do) i (contact|reach)|your (e-?mail|phone|linkedin))/i
+  /(entrar em contato|entro em contato|contato direto|como (posso )?(falar|contatar|chamar)|(qual (é )?o|me (passe|envie|mande|informe)|quero|preciso).*(e-?mail|telefone|whatsapp|linkedin)|how (can|do) i (contact|reach|get in touch)|your (e-?mail|phone|linkedin))/i
 
 export const isEnglish = (text) =>
   !/[ãõçáéíóúâêô]/i.test(text) &&
@@ -27,8 +27,8 @@ export function contactReply(en) {
 
 export function safeFallback(en) {
   return en
-    ? `I couldn't answer that reliably. Please check the résumé on this page or contact Elessandro directly: ${CONTACT.email}`
-    : `Não consegui responder isso com segurança. Consulte o currículo nesta página ou fale direto com o Elessandro: ${CONTACT.email}`
+    ? `I couldn't answer that reliably. Please check the résumé on this page or contact Elessandro directly by [email](mailto:${CONTACT.email}) or on [LinkedIn](${CONTACT.linkedin}).`
+    : `Não consegui responder isso com segurança. Consulte o currículo nesta página ou fale direto com o Elessandro por [e-mail](mailto:${CONTACT.email}) ou pelo [LinkedIn](${CONTACT.linkedin}).`
 }
 
 export function buildSystemPrompt(locale = 'pt') {

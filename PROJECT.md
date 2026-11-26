@@ -48,7 +48,7 @@ O projeto conta com:
 | **Cloudflare Workers**         | runtime  | Backend do chat, CORS, prompt grounded e fallback de modelos             |
 | **Cloudflare Workers AI**      | binding  | Embeddings (`bge-m3`) e fallback de geração de texto                     |
 | **OpenRouter**                 | API      | Geração de texto com cadeia de modelos gratuitos                         |
-| **Cloudflare Cache API**       | nativa   | Cache RAG-aware de respostas por pergunta e `sourceHash`                 |
+| **Upstash Redis**              | HTTPS    | Cache por revisão, circuit breaker distribuído e contador por visitante |
 | **RAG híbrido**                | local    | Cosseno + BM25, threshold e citação de fontes                            |
 
 ### 3.3 Infraestrutura, Tooling & CI/CD
@@ -94,8 +94,10 @@ shared/retrieval.js      # Tokenização, cosseno, BM25 e score híbrido
 
 worker/
 ├── index.js             # HTTP, CORS, contato, cache, orçamento e observabilidade
-├── cache.js             # Chave, cache RAG-aware e cache negativo
-├── circuit.js           # Circuit breaker por modelo/provedor
+├── cache.js             # Chave por revisão e cache de respostas completas
+├── redis.js             # Cliente HTTPS com timeout e continuidade na falha
+├── circuit.js           # Breaker distribuído do OpenRouter
+├── rate-limit.js        # Contador Redis e contingência Cloudflare
 ├── providers.js         # OpenRouter e fallback Workers AI
 ├── prompt.js            # Ficha, regras e contato determinístico
 └── rag/
@@ -123,21 +125,20 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
          │
          ▼
 [Cloudflare Worker]
-  ├─ Valida Origin, payload, limites e rate limit por IP
-  ├─ Intenção de contato ──► resposta determinística sem LLM
-  ├─ Cache positivo e cache negativo (503) RAG-aware
-  ├─ Workers AI: embedding da pergunta
-  ├─ Recuperação híbrida + threshold
-  ├─ Sem chunks relevantes ──► fallback sem LLM
-  ├─ OpenRouter: geração com prompt canônico e orçamento de tempo
-  ├─ Circuit breaker por modelo/provedor
-  └─ Workers AI: fallback de geração em 429/5xx
+  ├─ Valida Origin e payload
+  ├─ Intenção de contato ──► canais diretos
+  ├─ Cache Redis ──► hit fresco retorna sem embedding nem LLM
+  ├─ Stale ou miss ──► consulta o contador por visitante e busca no currículo
+  ├─ Limite por visitante com stale ──► responde do cache sem executar a busca
+  ├─ Falha na busca ou sem resultados ──► stale, depois LinkedIn e e-mail
+  ├─ Geração elegível ──► OpenRouter com breaker Redis, depois Workers AI
+  └─ Sem geração ──► stale, depois trechos da busca
          │
          ▼
-[Resposta { response, sources }]
+[Resposta { response, sources, origin, provider, timestamp, cachedAt? }]
   ├─ Headers: X-Request-Id, X-Assistant-Stage, X-Assistant-Cache
-  ├─ Log JSON com stage, outcome, providerStatus e timings
-  └─ Vue renderiza Markdown + seção/score das fontes
+  ├─ Logs JSON por decisão, correlacionados por requestId
+  └─ Vue renderiza Markdown, origem e fontes
 ```
 
 ---
@@ -152,11 +153,11 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
 3. **Design Editorial & Mobile First:**
    - 320px, 640px, 768px, 1024px, 1280px e 1536px testados sem overflow horizontal.
 4. **Resiliência do assistente:**
-   - Suíte `src/services/aiService.test.mjs` com 18 testes: sucesso, 429, 5xx, 400, timeout, rede, configuração ausente e diagnóstico por `X-Request-Id`.
-   - Suítes do Worker com 10 testes de prompt e 20 de integração; `npm test` executa 48 testes.
+   - Suíte `src/services/aiService.test.mjs` com testes de origem, sucesso, 429, 5xx, 400, timeout, rede, configuração ausente, retries padrão 0 e diagnóstico por `X-Request-Id`/`X-Assistant-Cache`.
+   - `npm test` executa as suítes do cliente, prompt e integração do Worker.
    - `rag:eval` com hit@4 de 100% e MRR 0.975.
-   - Cache positivo/negativo, circuit breaker, orçamento de tempo, rate limit, `/health` e fallback OpenRouter → Workers AI cobertos por teste.
-   - `429` não dispara retry no cliente; a mensagem final do Worker é preservada.
+   - Cache positivo, breaker, orçamento, rate limit, `/health`, fallback de provedor, trechos e contato cobertos por teste.
+   - `429` não dispara retry no cliente; o cliente exibe mensagens neutras em falhas de comunicação.
    - `npm run models:check` valida os IDs da OpenRouter no CI.
 
 ---
@@ -168,11 +169,11 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
 - `CLOUDFLARE_API_TOKEN` de ingestão fica em `.env.ingest`, ignorado pelo Git.
 - CORS restrito às origens de produção e desenvolvimento local.
 - Limites de payload (2000 bytes) e pergunta (500 caracteres).
-- Rate limit por IP na rota de chat (10 req/60 s); `GET /health` não é limitado.
+- Rate limit de geração por IP pseudonimizado (10 consultas/60 s). Hits e contato pulam o contador.
 - O prompt usa a ficha canônica como fonte da verdade e os trechos recuperados como complemento; recusa quando não há base.
 - O Worker sanitiza artefatos de idioma indevidos na resposta.
-- O cache guarda apenas resposta e fontes públicas; a chave usa hash da pergunta e inclui `sourceHash`.
-- Logs usam `questionHash` e metadados de etapa; pergunta crua, prompt e chave nunca são registrados.
+- O cache guarda resposta completa, fontes e metadados da geração. A chave inclui hash da pergunta e revisão do índice.
+- Logs usam `requestId` e metadados de etapa. IP, pergunta, prompt e chaves ficam fora do log do Worker.
 - `X-Request-Id` é um UUID sem dado sensível e serve apenas para correlação.
 
 ---
@@ -191,6 +192,10 @@ wrangler.toml            # Binding AI, rate limit, observability e variáveis
 - [x] **SPEC-012 [Segurança]:** Vite atualizado para 6.4.5, corrigindo os alertas Dependabot #116–#120 da cadeia Vite/launch-editor (Concluída em v1.11.1).
 - [x] **SPEC-013 [IA & Resiliência]:** Fallback de geração para Workers AI, cache RAG-aware com `sourceHash`, semântica correta de `429` e remoção de retry inútil no cliente (Concluída em v1.12.0).
 - [x] **SPEC-014 [IA & Resiliência]:** Modelos válidos, timeouts alinhados por orçamento, circuit breaker, cache negativo de `503`, rate limit por IP, `X-Request-Id`/`X-Assistant-Stage`, Workers Logs e `GET /health` (Concluída em v1.13.0).
+
+- [x] **SPEC-016 [IA & Resiliência]:** Cache Redis versionado, breaker compartilhado, limite de geração, modo simplificado e warm-up implementados no Worker, pendentes de review e publicação.
+
+- [x] **SPEC-017 [IA & Resiliência]:** Cache fresco de 24 h e retenção padrão de 7 dias. Worker serve stale em contingência com aviso localizado. Implementada na branch de release da SPEC-016, pendente de review e publicação.
 
 > **Backlog Estratégico (Mapeado em `ROADMAP.md` para execução futura mediante SPEC aprovada):**
 

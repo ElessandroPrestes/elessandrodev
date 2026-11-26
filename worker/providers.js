@@ -1,5 +1,5 @@
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
-export const DEFAULT_WORKERS_AI_MODEL = '@cf/meta/llama-3.1-8b-instruct-fp8'
+export const DEFAULT_WORKERS_AI_MODEL = '@cf/google/gemma-4-26b-a4b-it'
 export const DEFAULT_WORKERS_AI_MAX_TOKENS = 768
 export const DEFAULT_OPENROUTER_MAX_TOKENS = 3000
 export const DEFAULT_OPENROUTER_TIMEOUT_MS = 8000
@@ -18,47 +18,23 @@ export function parseList(value, fallback = []) {
   return items.length > 0 ? [...new Set(items)] : fallback
 }
 
-function parseRetryAfter(value) {
-  if (!value) return null
-
-  const seconds = Number(value)
-  if (Number.isFinite(seconds) && seconds > 0) return Math.ceil(seconds)
-
-  const date = Date.parse(value)
-  if (Number.isFinite(date)) {
-    return Math.max(1, Math.ceil((date - Date.now()) / 1000))
-  }
-
-  return null
+function classifyFailure(status, detail, remaining) {
+  if (status === 402 || (status === 429 && (
+    remaining === '0' || /free-models-per-day|per-day|daily|credit|quota/i.test(detail)
+  ))) return 'quota'
+  if (status === 429) return 'rate-limit'
+  if (status === 504) return 'timeout'
+  if (status >= 500) return 'upstream'
+  return 'rejected'
 }
 
-function parseReset(value) {
-  if (!value) return null
-
-  const numeric = Number(value)
-  if (!Number.isFinite(numeric) || numeric <= 0) return null
-
-  if (numeric > 1e12) {
-    return Math.max(1, Math.ceil(numeric / 1000 - Date.now() / 1000))
+function completionState(reason, usage, maxTokens) {
+  if (reason) {
+    return ['stop', 'eos', 'end_turn', 'stop_sequence'].includes(reason) ? 'complete' : 'incomplete'
   }
-
-  if (numeric > 1e9) {
-    return Math.max(1, Math.ceil(numeric - Date.now() / 1000))
-  }
-
-  return Math.max(1, Math.ceil(numeric))
-}
-
-function parseRemaining(value) {
-  if (value === null || value === undefined || value === '') return null
-  const numeric = Number(value)
-  return Number.isFinite(numeric) ? numeric : null
-}
-
-function isQuotaExhausted({ status, remaining, detail }) {
-  if (status !== 429) return false
-  if (remaining !== null && remaining <= 0) return true
-  return /free-models-per-day|per-day|daily|credit/i.test(String(detail ?? ''))
+  const tokens = usage?.completion_tokens
+  if (Number.isFinite(tokens) && tokens > 0) return tokens < maxTokens ? 'complete' : 'incomplete'
+  return 'unknown'
 }
 
 export async function callOpenRouter({
@@ -102,46 +78,33 @@ export async function callOpenRouter({
       payload = null
     }
 
-    const remaining = parseRemaining(
-      response.headers.get('X-RateLimit-Remaining'),
-    )
-    const retryAfter =
-      parseRetryAfter(response.headers.get('Retry-After')) ??
-      parseReset(response.headers.get('X-RateLimit-Reset'))
-
-    if (!response.ok) {
-      const detail = payload?.error?.message || payload?.message || ''
-      const normalizedDetail = String(detail).slice(0, 160)
-
-      return {
-        ok: false,
-        status: response.status,
-        retryable: response.status === 429 || response.status >= 500,
-        detail: normalizedDetail,
-        quotaExhausted: isQuotaExhausted({
-          status: response.status,
-          remaining,
-          detail: normalizedDetail,
-        }),
-        retryAfter,
-      }
+    if (!response.ok || payload?.error) {
+      const status = response.ok ? Number(payload.error.code) || 502 : response.status
+      const reason = classifyFailure(
+        status,
+        String(payload?.error?.message ?? payload?.message ?? ''),
+        response.headers.get('X-RateLimit-Remaining'),
+      )
+      return { ok: false, status, reason }
     }
 
-    const content = payload?.choices?.[0]?.message?.content
+    const choice = payload?.choices?.[0]
+    const content = choice?.message?.content
     const text = Array.isArray(content)
       ? content
           .map((part) => (typeof part === 'string' ? part : part?.text || ''))
           .join('')
       : content
 
-    if (typeof text !== 'string' || !text.trim()) {
-      return { ok: false, status: 502, retryable: true, retryAfter }
+    const completion = completionState(choice?.finish_reason, payload?.usage, maxTokens)
+    if (typeof text !== 'string' || !text.trim() || completion === 'incomplete') {
+      return { ok: false, status: 502, reason: 'incomplete' }
     }
 
-    return { ok: true, text: text.trim(), provider: 'openrouter', model }
+    return { ok: true, text: text.trim(), cacheable: completion === 'complete' }
   } catch (error) {
-    const aborted = error?.name === 'AbortError'
-    return { ok: false, status: aborted ? 504 : 502, retryable: true }
+    const aborted = controller.signal.aborted || error?.name === 'AbortError'
+    return { ok: false, status: aborted ? 504 : 502, reason: aborted ? 'timeout' : 'upstream' }
   } finally {
     clearTimeout(timer)
   }
@@ -156,7 +119,7 @@ export async function callWorkersAi({
   maxTokens = DEFAULT_WORKERS_AI_MAX_TOKENS,
 }) {
   if (!env?.AI || typeof env.AI.run !== 'function') {
-    return { ok: false, status: 503, retryable: false, provider: 'workers-ai' }
+    return { ok: false, status: 503, reason: 'unconfigured' }
   }
 
   let timer
@@ -182,33 +145,25 @@ export async function callWorkersAi({
       timeout,
     ])
 
-    const text = typeof result === 'string' ? result : result?.response
-
-    if (typeof text !== 'string' || !text.trim()) {
+    const choice = result?.choices?.[0]
+    const text = typeof result === 'string' ? result : choice?.message?.content ?? result?.response
+    const completion = completionState(choice?.finish_reason ?? result?.finish_reason, result?.usage, maxTokens)
+    if (typeof text !== 'string' || !text.trim() || completion === 'incomplete') {
       return {
         ok: false,
         status: 502,
-        retryable: true,
-        provider: 'workers-ai',
-        detail: 'empty response',
+        reason: 'incomplete',
       }
     }
 
     return {
       ok: true,
       text: text.trim(),
-      provider: 'workers-ai',
-      model,
+      cacheable: completion === 'complete',
     }
   } catch (error) {
-    const aborted = error?.name === 'AbortError'
-    return {
-      ok: false,
-      status: aborted ? 504 : 502,
-      retryable: true,
-      provider: 'workers-ai',
-      detail: String(error?.message || 'unknown error').slice(0, 160),
-    }
+    const status = error?.name === 'AbortError' ? 504 : Number(error?.status) || 502
+    return { ok: false, status, reason: classifyFailure(status, '', null) }
   } finally {
     clearTimeout(timer)
   }

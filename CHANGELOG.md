@@ -7,6 +7,21 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [Não publicado]
+
+- **SPEC-017 / TASK-017:** o Worker pode servir uma resposta antiga com fontes
+  quando a geração ou o retrieval falha, ou quando o visitante atinge o limite.
+  A janela fresca padrão é de 24 h e a retenção total é de 7 dias. O chat sinaliza
+  a resposta salva em PT-BR e inglês.
+
+- **SPEC-016 / TASK-016:** cache Redis versionado, breaker distribuído para
+  OpenRouter e limite de geração por visitante. A indisponibilidade do Redis
+  aciona contingência local no Worker.
+- Fallback para Workers AI, trechos do currículo ou canais de contato. A interface
+  informa a origem da resposta em português e inglês.
+- Comando `npm run rag:warm` para aquecer o cache com as perguntas dos chips.
+  README e runbook documentam configuração, simulação de falhas e métricas.
+
 ## [1.13.0] - 2026-11-06
 
 ### Adicionado
