@@ -1,4 +1,6 @@
 import assert from 'node:assert'
+import pt from '../i18n/locales/pt.js'
+import en from '../i18n/locales/en.js'
 
 process.env.VITE_CHAT_API_URL = 'https://worker.test'
 
@@ -136,6 +138,23 @@ await test('Mantém a origem de uma resposta simplificada', async () => {
   const answer = await askAssistant('q', 'pt')
   assert.equal(answer.origin, 'retrieval-only')
   assert.equal(answer.sources[0].section, 'Projetos')
+})
+
+await test('Preserva a origem e a data do cache antigo para o aviso em PT e EN', async () => {
+  const cachedAt = '2026-11-24T12:00:00.000Z'
+  for (const [locale, dictionary, notice] of [
+    ['pt', pt, 'Resposta salva anteriormente (o serviço de IA está instável)'],
+    ['en', en, 'Previously saved answer (the AI service is unstable).'],
+  ]) {
+    for (const origin of ['stale-cache', 'cache', 'llm', 'retrieval-only', 'contact']) {
+      globalThis.fetch = async () => jsonResponse({ response: 'ok', origin, cachedAt })
+      const answer = await askAssistant('q', locale)
+      assert.equal(answer.origin, origin)
+      assert.equal(answer.cachedAt, origin === 'stale-cache' ? cachedAt : undefined)
+      const label = dictionary.aiAssistant.answerOrigins[answer.origin]
+      assert.equal(label === notice, origin === 'stale-cache')
+    }
+  }
 })
 
 await test('429 legado: não faz retry e apresenta mensagem neutra', async () => {

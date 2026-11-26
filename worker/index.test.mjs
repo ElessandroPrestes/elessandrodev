@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import worker, { __resetCircuitBreakerForTests } from './index.js'
-import { buildCacheKey } from './cache.js'
+import { buildCacheKey, classifyCachedAnswer } from './cache.js'
 import { test } from 'node:test'
 import { createCircuitBreaker } from './circuit.js'
 
@@ -197,11 +197,11 @@ const REDIS_ENV = {
   VISITOR_HASH_SECRET: 'test-secret',
 }
 
-function stubServices(t, { primary, alternative, redisUnavailable, redisDelay, now } = {}) {
+function stubServices(t, { primary, alternative, redisUnavailable, redisDelay, now, embedding, hardTtl = 604800 } = {}) {
   __resetCircuitBreakerForTests()
   const values = new Map()
   const counters = new Map()
-  const calls = { embedding: 0, primary: 0, alternative: 0, redis: 0 }
+  const calls = { embedding: 0, primary: 0, alternative: 0, redis: 0, writes: 0 }
   const circuit = createCircuitBreaker({ threshold: 3, cooldownMs: 1000, now })
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url !== REDIS_URL) {
@@ -218,7 +218,8 @@ function stubServices(t, { primary, alternative, redisUnavailable, redisDelay, n
     if (command === 'GET') return Response.json({ result: values.get(keyOrScript) ?? null })
     if (command === 'SET') {
       assert.equal(redisKey, 'EX')
-      assert.equal(op, 86400)
+      assert.equal(op, hardTtl)
+      calls.writes++
       values.set(keyOrScript, valueOrKeyCount)
       return Response.json({ result: 'OK' })
     }
@@ -237,13 +238,14 @@ function stubServices(t, { primary, alternative, redisUnavailable, redisDelay, n
     ...makeEnv({ aiRun: async (_model, input) => {
       if (input.text) {
         calls.embedding++
-        return { data: [Array(1024).fill(0.01)] }
+        return embedding?.() ?? { data: [Array(1024).fill(0.01)] }
       }
       calls.alternative++
       return alternative?.(_model) ?? { response: 'Resposta do Workers AI.', usage: { completion_tokens: 8 } }
     } }),
     ...REDIS_ENV,
     MIN_SCORE: '0',
+    ...(hardTtl !== 604800 ? { CACHE_HARD_TTL_SECONDS: String(hardTtl) } : {}),
   }
   return { values, calls, env }
 }
@@ -527,4 +529,170 @@ await test('Logs correlacionam cache, provedor, breaker e origem sem pergunta ou
   assert.ok(logs.some((entry) => entry.provider === 'workers-ai' && entry.origin === 'llm'))
   assert.ok(logs.every((entry) => !JSON.stringify(entry).includes(QUESTION)))
   assert.ok(logs.every((entry) => !JSON.stringify(entry).includes(REDIS_ENV.VISITOR_HASH_SECRET)))
+})
+
+function ageCachedAnswer(values, seconds) {
+  assert.equal(values.size, 1)
+  const [[key, value]] = values
+  const answer = { ...JSON.parse(value), timestamp: new Date(Date.now() - seconds * 1000).toISOString() }
+  values.set(key, JSON.stringify(answer))
+  return answer
+}
+
+async function assertStale(response, saved) {
+  assert.equal(response.status, 200)
+  assert.equal(response.headers.get('X-Assistant-Cache'), 'STALE')
+  assert.deepEqual(await response.json(), {
+    ...saved, origin: 'stale-cache', cachedAt: saved.timestamp,
+  })
+}
+
+await test('Cache: respeita os limites inclusivos de frescor e retenção', () => {
+  const answer = { timestamp: '2026-11-26T12:00:00.000Z' }
+  const start = Date.parse(answer.timestamp)
+  const stateAt = (ageMs) => classifyCachedAnswer(answer, 60, 120, start + ageMs)
+  assert.equal(stateAt(60000), 'FRESH')
+  assert.equal(stateAt(60001), 'STALE')
+  assert.equal(stateAt(120000), 'STALE')
+  assert.equal(stateAt(120001), 'MISS')
+})
+
+await test('Cache: geração após frescor configurado renova timestamp e grava com retenção configurada', async (t) => {
+  const { env, calls, values } = stubServices(t, { hardTtl: 120 })
+  env.CACHE_TTL_SECONDS = '60'
+  await worker.fetch(request(QUESTION), env)
+  const saved = ageCachedAnswer(values, 61)
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal(response.headers.get('X-Assistant-Cache'), 'MISS')
+  const generated = await response.json()
+  assert.equal(generated.origin, 'llm')
+  assert.ok(Date.parse(generated.timestamp) > Date.parse(saved.timestamp))
+  assert.deepEqual(JSON.parse([...values.values()][0]), generated)
+  assert.equal(calls.embedding, 2)
+  assert.equal(calls.primary, 2)
+  assert.equal(calls.writes, 2)
+})
+
+for (const [name, fail] of Object.entries({
+  '429': quota,
+  '5xx': () => new Response(null, { status: 503 }),
+  timeout: ({ signal }) => waitForAbort(signal),
+})) {
+  await test(`Cache: ${name} seguido de falha do alternativo serve stale sem regravar`, async (t) => {
+    let failing = false
+    const { env, calls, values } = stubServices(t, {
+      primary: (options) => failing ? fail(options) : undefined,
+      alternative: () => { throw new Error('indisponível') },
+    })
+    env.OPENROUTER_TIMEOUT_MS = '100'
+    env.MIN_CALL_BUDGET_MS = '100'
+    await worker.fetch(request(QUESTION), env)
+    const saved = ageCachedAnswer(values, 86401)
+    failing = true
+    const timer = setTimeout(() => {}, 1000)
+    try {
+      await assertStale(await worker.fetch(request(QUESTION), env), saved)
+      assert.equal(calls.primary, 2)
+      assert.equal(calls.alternative, 1)
+      assert.equal(calls.writes, 1)
+      assert.deepEqual(JSON.parse([...values.values()][0]), saved)
+    } finally {
+      clearTimeout(timer)
+    }
+  })
+}
+
+await test('Cache: breaker aberto preserva tentativa no Workers AI antes de stale', async (t) => {
+  let failing = false
+  const { env, calls, values } = stubServices(t, {
+    now: () => 10000,
+    primary: quota,
+    alternative: () => {
+      if (failing) throw new Error('indisponível')
+      return { response: 'Alternativa disponível.', usage: { completion_tokens: 8 } }
+    },
+  })
+  await worker.fetch(request(QUESTION), env)
+  for (const question of ['Histórico em projetos', 'Carreira profissional']) {
+    await worker.fetch(request(question), { ...env, ENABLE_CACHE: 'false' })
+  }
+  ageCachedAnswer(values, 86401)
+  const live = await worker.fetch(request(QUESTION), env)
+  assert.equal((await live.json()).origin, 'llm')
+  assert.equal(calls.primary, 3)
+  assert.equal(calls.alternative, 4)
+  const saved = ageCachedAnswer(values, 86401)
+  failing = true
+  await assertStale(await worker.fetch(request(QUESTION), env), saved)
+  assert.equal(calls.primary, 3)
+  assert.equal(calls.alternative, 5)
+  assert.equal(calls.writes, 2)
+})
+
+await test('Cache: limite por visitante serve stale antes dos embeddings', async (t) => {
+  const { env, calls, values } = stubServices(t)
+  env.CHAT_RATE_LIMIT_MAX = '1'
+  await worker.fetch(request(QUESTION), env)
+  const saved = ageCachedAnswer(values, 86401)
+  await assertStale(await worker.fetch(request(QUESTION), env), saved)
+  assert.equal(calls.embedding, 1)
+  assert.equal(calls.primary, 1)
+  assert.equal(calls.alternative, 0)
+  assert.equal(calls.writes, 1)
+})
+
+await test('Cache: falha de embedding, vetor inválido e busca vazia preferem stale ao contato', async (t) => {
+  let mode
+  const { env, calls, values } = stubServices(t, {
+    embedding: () => {
+      if (mode === 'unavailable') throw new Error('embedding indisponível')
+      if (mode === 'invalid') return { data: [[1]] }
+    },
+  })
+  await worker.fetch(request(QUESTION), env)
+  const saved = ageCachedAnswer(values, 86401)
+  for (const failure of ['unavailable', 'invalid']) {
+    mode = failure
+    await assertStale(await worker.fetch(request(QUESTION), env), saved)
+  }
+  mode = undefined
+  await assertStale(await worker.fetch(request(QUESTION), { ...env, MIN_SCORE: '1' }), saved)
+  assert.equal(calls.primary, 1)
+  assert.equal(calls.writes, 1)
+})
+
+await test('Cache: retenção excedida e outra revisão do índice retornam trechos quando a geração falha', async (t) => {
+  let failing = false
+  const { env, calls, values } = stubServices(t, {
+    primary: () => failing ? quota() : undefined,
+  })
+  env.WORKERS_AI_MODEL = ''
+  await worker.fetch(request(QUESTION), env)
+  failing = true
+  ageCachedAnswer(values, 86401)
+  const revision = await worker.fetch(request(QUESTION), { ...env, EMBEDDING_MODEL: 'outra-revisao' })
+  assert.equal((await revision.json()).origin, 'retrieval-only')
+  ageCachedAnswer(values, 604801)
+  const expired = await worker.fetch(request(QUESTION), env)
+  assert.equal(expired.headers.get('X-Assistant-Cache'), 'MISS')
+  assert.equal((await expired.json()).origin, 'retrieval-only')
+  assert.equal(calls.writes, 1)
+})
+
+await test('Cache: Redis e geração indisponíveis preservam trechos', async (t) => {
+  const { env, calls } = stubServices(t, { redisUnavailable: true, primary: quota })
+  env.WORKERS_AI_MODEL = ''
+  const response = await worker.fetch(request(QUESTION), env)
+  assert.equal(response.status, 200)
+  assert.equal(response.headers.get('X-Assistant-Cache'), 'OFF')
+  assert.equal((await response.json()).origin, 'retrieval-only')
+  assert.equal(calls.writes, 0)
+})
+
+await test('Cache: contato e entrada inválida nunca gravam uma resposta reutilizável', async (t) => {
+  const { env, calls } = stubServices(t)
+  assert.equal((await (await worker.fetch(request('Qual é o e-mail de contato?'), env)).json()).origin, 'contact')
+  assert.equal((await worker.fetch(request(''), env)).status, 400)
+  assert.equal(calls.redis, 0)
+  assert.equal(calls.writes, 0)
 })
